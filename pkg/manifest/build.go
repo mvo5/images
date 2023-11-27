@@ -109,6 +109,8 @@ func (p *Build) getSELinuxLabels() map[string]string {
 		switch pkg.Name {
 		case "coreutils":
 			labels["/usr/bin/cp"] = "system_u:object_r:install_exec_t:s0"
+			labels["/usr/bin/mount"] = "system_u:object_r:install_exec_t:s0"
+			labels["/usr/bin/umount"] = "system_u:object_r:install_exec_t:s0"
 		case "tar":
 			labels["/usr/bin/tar"] = "system_u:object_r:install_exec_t:s0"
 		}
