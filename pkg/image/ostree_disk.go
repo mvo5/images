@@ -113,8 +113,26 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
+
 	buildPipeline := manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
 	buildPipeline.Checkpoint()
+
+	return img.instantiateManifestWithPipeline(m, buildPipeline)
+}
+
+func (img *OSTreeDiskImage) InstantiateManifestFromContainersSpec(m *manifest.Manifest,
+	containers []container.Spec,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+
+	// TODO: testing
+	buildPipeline := manifest.NewBuildFromContainersSpec(m, runner, containers, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	buildPipeline.Checkpoint()
+
+	return img.instantiateManifestWithPipeline(m, buildPipeline)
+}
+
+func (img *OSTreeDiskImage) instantiateManifestWithPipeline(m *manifest.Manifest, buildPipeline *manifest.Build) (*artifact.Artifact, error) {
 
 	// don't support compressing non-raw images
 	imgFormat := img.Platform.GetImageFormat()
