@@ -25,6 +25,7 @@ type Build struct {
 
 	// XXX: does it make sense to have multiple container inputs for
 	// the build root? if not we should change the API
+	containers     []container.SourceSpec
 	containerSpecs []container.Spec
 
 	containerBuildable bool
@@ -58,17 +59,17 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 
 // NewBuildFromContainersSpec creates a new build pipeline from the given
 // container image ref
-func NewBuildFromContainersSpec(m *Manifest, runner runner.Runner, containers []container.Spec, opts *BuildOptions) *Build {
+func NewBuildFromContainersSpec(m *Manifest, runner runner.Runner, containers []container.SourceSpec, opts *BuildOptions) *Build {
 	if opts == nil {
 		opts = &BuildOptions{}
 	}
 
 	name := "build"
 	pipeline := &Build{
-		Base:           NewBase(m, name, nil),
-		runner:         runner,
-		dependents:     make([]Pipeline, 0),
-		containerSpecs: containers,
+		Base:       NewBase(m, name, nil),
+		runner:     runner,
+		dependents: make([]Pipeline, 0),
+		containers: containers,
 
 		containerBuildable: opts.ContainerBuildable,
 	}
@@ -106,6 +107,10 @@ func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 
 func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
+}
+
+func (p *Build) getContainerSources() []container.SourceSpec {
+	return p.containers
 }
 
 func (p *Build) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, _ []ostree.CommitSpec) {

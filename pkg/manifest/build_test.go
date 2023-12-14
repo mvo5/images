@@ -99,7 +99,9 @@ func TestNewBuildFromContainerSpecs(t *testing.T) {
 	build := NewBuildFromContainersSpec(&mf, runner, containers, nil)
 	require.NotNil(t, build)
 
+	build.serializeStart(nil, containers, nil)
 	osbuildPipeline := build.serialize()
+	build.serializeEnd()
 	require.Len(t, osbuildPipeline.Stages, 2)
 	assert.Equal(t, osbuildPipeline.Stages[0].Type, "org.osbuild.container-deploy")
 	// TODO: find a better way to test that the inputs made it
