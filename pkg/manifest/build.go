@@ -23,6 +23,10 @@ type Build struct {
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
 
+	// XXX: does it make sense to have multiple container inputs for
+	// the build root? if not we should change the API
+	containerSpecs []container.Spec
+
 	containerBuildable bool
 }
 
@@ -45,6 +49,26 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		runner:     runner,
 		dependents: make([]Pipeline, 0),
 		repos:      filterRepos(repos, name),
+
+		containerBuildable: opts.ContainerBuildable,
+	}
+	m.addPipeline(pipeline)
+	return pipeline
+}
+
+// NewBuildFromContainersSpec creates a new build pipeline from the given
+// containers specs
+func NewBuildFromContainersSpec(m *Manifest, runner runner.Runner, containers []container.Spec, opts *BuildOptions) *Build {
+	if opts == nil {
+		opts = &BuildOptions{}
+	}
+
+	name := "build"
+	pipeline := &Build{
+		Base:           NewBase(m, name, nil),
+		runner:         runner,
+		dependents:     make([]Pipeline, 0),
+		containerSpecs: containers,
 
 		containerBuildable: opts.ContainerBuildable,
 	}
@@ -84,33 +108,52 @@ func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
-func (p *Build) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
-	if len(p.packageSpecs) > 0 {
+func (p *Build) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, _ []ostree.CommitSpec) {
+	if len(p.packageSpecs) > 0 || len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
 	p.packageSpecs = packages
+	p.containerSpecs = containers
 }
 
 func (p *Build) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if p.packageSpecs == nil && p.containerSpecs == nil {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.packageSpecs = nil
 }
 
 func (p *Build) serialize() osbuild.Pipeline {
-	if len(p.packageSpecs) == 0 {
+	if p.packageSpecs == nil && p.containerSpecs == nil {
 		panic("serialization not started")
 	}
 	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
-	pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
-		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-		Labels:       p.getSELinuxLabels(),
-	},
-	))
+	// XXX: should we error if both imageRef/repos are used together?
+	switch {
+	case p.repos != nil:
+		pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+		pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
+			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+			Labels:       p.getSELinuxLabels(),
+		},
+		))
+	case p.containerSpecs != nil:
+		stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(p.containerSpecs))
+		if err != nil {
+			panic(err)
+		}
+		pipeline.AddStage(stage)
+		pipeline.AddStage(osbuild.NewSELinuxStage(
+			&osbuild.SELinuxStageOptions{
+				Labels: map[string]string{
+					"/usr/bin/bootc":  "system_u:object_r:install_exec_t:s0",
+					"/usr/bin/ostree": "system_u:object_r:install_exec_t:s0",
+				},
+			},
+		))
+	}
 
 	return pipeline
 }

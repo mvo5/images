@@ -5,7 +5,7 @@ package osbuild
 // A file contexts configuration file is sepcified that describes
 // the filesystem labels to apply to the image.
 type SELinuxStageOptions struct {
-	FileContexts     string            `json:"file_contexts"`
+	FileContexts     string            `json:"file_contexts,omitempty"`
 	Labels           map[string]string `json:"labels,omitempty"`
 	ForceAutorelabel *bool             `json:"force_autorelabel,omitempty"`
 }
