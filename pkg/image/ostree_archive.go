@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -45,6 +46,7 @@ func NewOSTreeArchive(ref string) *OSTreeArchive {
 
 func (img *OSTreeArchive) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)

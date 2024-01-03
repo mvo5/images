@@ -51,7 +51,7 @@ func TestOSTreeDiskImageManifestSetsContainerBuildable(t *testing.T) {
 		img.OSName = "osname"
 		img.ContainerBuildable = containerBuildable
 
-		_, err := img.InstantiateManifest(&mf, repos, r, rng)
+		_, err := img.InstantiateManifest(&mf, repos, nil, r, rng)
 		require.Nil(t, err)
 		require.NotNil(t, img)
 

@@ -25,6 +25,7 @@ func init() {
 
 func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple raw image!

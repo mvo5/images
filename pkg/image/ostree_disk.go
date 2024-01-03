@@ -111,6 +111,7 @@ var manifestNewBuild = manifest.NewBuild
 
 func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})

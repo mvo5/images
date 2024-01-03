@@ -7,6 +7,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -51,6 +52,7 @@ func NewAnacondaOSTreeInstaller(commit ostree.SourceSpec) *AnacondaOSTreeInstall
 
 func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)

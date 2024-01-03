@@ -261,7 +261,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 	mf := manifest.New()
 	mf.Distro = manifest.DISTRO_EL8
-	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
+	_, err = img.InstantiateManifest(&mf, repos, nil, t.arch.distro.runner, rng)
 	if err != nil {
 		return nil, nil, err
 	}

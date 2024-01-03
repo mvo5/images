@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
@@ -45,6 +46,7 @@ func NewAnacondaLiveInstaller() *AnacondaLiveInstaller {
 func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
+	containers []container.SourceSpec,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()

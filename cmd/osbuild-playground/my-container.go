@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -41,6 +42,7 @@ func init() {
 // for building.
 func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple OCI container!

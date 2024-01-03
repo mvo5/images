@@ -9,6 +9,7 @@ import (
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/disk"
@@ -71,6 +72,7 @@ func NewOSTreeSimplifiedInstaller(rawImage *OSTreeDiskImage, installDevice strin
 
 func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
