@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -56,11 +57,20 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 	return pipeline
 }
 
-// NewBuildFromContainersSpec creates a new build pipeline from the given
+// NewBuildFromContainersSourceSpec creates a new build pipeline from the given
 // containers specs
-func NewBuildFromContainersSpec(m *Manifest, runner runner.Runner, containers []container.Spec, opts *BuildOptions) *Build {
+func NewBuildFromContainersSourceSpec(m *Manifest, runner runner.Runner, containerSources []container.SourceSpec, opts *BuildOptions) *Build {
 	if opts == nil {
 		opts = &BuildOptions{}
+	}
+
+	resolver := container.NewResolver(arch.Current().String())
+	for _, c := range containerSources {
+		resolver.Add(c)
+	}
+	containers, err := resolver.Finish()
+	if err != nil {
+		panic(err)
 	}
 
 	name := "build"

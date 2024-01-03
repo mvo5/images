@@ -87,16 +87,16 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 }
 
 func TestNewBuildFromContainerSpecs(t *testing.T) {
-	containers := []container.Spec{
+	containers := []container.SourceSpec{
 		{
-			ImageID:   "sha256:511295a6eabcf0ca042017ed9e6561e4facd687b05910c0df56e4b11f4fb24b2",
-			LocalName: "ghcr.io/ondrejbudai/bootc:centos",
+			Name:   "Build container",
+			Source: "ghcr.io/ondrejbudai/booc:fedora",
 		},
 	}
 	mf := New()
 	runner := &runner.Fedora{Version: 39}
 
-	build := NewBuildFromContainersSpec(&mf, runner, containers, nil)
+	build := NewBuildFromContainersSourceSpec(&mf, runner, containers, nil)
 	require.NotNil(t, build)
 
 	osbuildPipeline := build.serialize()
