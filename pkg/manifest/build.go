@@ -1,7 +1,6 @@
 package manifest
 
 import (
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
@@ -104,12 +103,15 @@ func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	}
 }
 
+func (p *Build) getContainerSources() []container.SourceSpec {
+	return p.containers
+}
+
 func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
 	return p.packageSpecs
 }
 
 func (p *Build) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, _ []ostree.CommitSpec) {
-	println("serializeStart", p.packageSpecs, p.containerSpecs)
 	if len(p.packageSpecs) > 0 || len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
@@ -142,17 +144,7 @@ func (p *Build) serialize() osbuild.Pipeline {
 		},
 		))
 	case p.containers != nil:
-		resolver := container.NewResolver(arch.Current().String())
-		for _, c := range p.containers {
-			resolver.Add(c)
-		}
-		containers, err := resolver.Finish()
-		if err != nil {
-			panic(err)
-		}
-		println("containers", containers)
-
-		stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(containers))
+		stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(p.containerSpecs))
 		if err != nil {
 			panic(err)
 		}
