@@ -12,7 +12,7 @@ import (
 
 type FilesInput struct {
 	inputCommon
-	References FilesInputRef `json:"references"`
+	References FilesInputRef `json:"references,omitempty"`
 }
 
 const InputTypeFiles string = "org.osbuild.files"
