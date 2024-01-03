@@ -114,7 +114,16 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	var buildPipeline *manifest.Build
+	switch {
+	case repos != nil && containers != nil:
+		return nil, fmt.Errorf("cannot use both repos and containers in a build")
+	case containers != nil:
+		buildPipeline = manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	case repos != nil:
+		buildPipeline = manifest.NewBuildFromContainersSourceSpec(m, runner, containers, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	}
+
 	buildPipeline.Checkpoint()
 
 	// don't support compressing non-raw images
