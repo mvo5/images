@@ -24,8 +24,7 @@ type Build struct {
 	repos        []rpmmd.RepoConfig
 	packageSpecs []rpmmd.PackageSpec
 
-	// XXX: does it make sense to have multiple container inputs for
-	// the build root? if not we should change the API
+	containers     []container.SourceSpec
 	containerSpecs []container.Spec
 
 	containerBuildable bool
@@ -64,21 +63,12 @@ func NewBuildFromContainersSourceSpec(m *Manifest, runner runner.Runner, contain
 		opts = &BuildOptions{}
 	}
 
-	resolver := container.NewResolver(arch.Current().String())
-	for _, c := range containerSources {
-		resolver.Add(c)
-	}
-	containers, err := resolver.Finish()
-	if err != nil {
-		panic(err)
-	}
-
 	name := "build"
 	pipeline := &Build{
-		Base:           NewBase(m, name, nil),
-		runner:         runner,
-		dependents:     make([]Pipeline, 0),
-		containerSpecs: containers,
+		Base:       NewBase(m, name, nil),
+		runner:     runner,
+		dependents: make([]Pipeline, 0),
+		containers: containerSources,
 
 		containerBuildable: opts.ContainerBuildable,
 	}
@@ -119,6 +109,7 @@ func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
 }
 
 func (p *Build) serializeStart(packages []rpmmd.PackageSpec, containers []container.Spec, _ []ostree.CommitSpec) {
+	println("serializeStart", p.packageSpecs, p.containerSpecs)
 	if len(p.packageSpecs) > 0 || len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
@@ -131,6 +122,7 @@ func (p *Build) serializeEnd() {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.packageSpecs = nil
+	p.containerSpecs = nil
 }
 
 func (p *Build) serialize() osbuild.Pipeline {
@@ -149,8 +141,18 @@ func (p *Build) serialize() osbuild.Pipeline {
 			Labels:       p.getSELinuxLabels(),
 		},
 		))
-	case p.containerSpecs != nil:
-		stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(p.containerSpecs))
+	case p.containers != nil:
+		resolver := container.NewResolver(arch.Current().String())
+		for _, c := range p.containers {
+			resolver.Add(c)
+		}
+		containers, err := resolver.Finish()
+		if err != nil {
+			panic(err)
+		}
+		println("containers", containers)
+
+		stage, err := osbuild.NewContainerDeployStage(osbuild.NewContainersInputForSources(containers))
 		if err != nil {
 			panic(err)
 		}

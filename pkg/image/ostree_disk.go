@@ -118,9 +118,9 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 	switch {
 	case repos != nil && containers != nil:
 		return nil, fmt.Errorf("cannot use both repos and containers in a build")
-	case containers != nil:
-		buildPipeline = manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
 	case repos != nil:
+		buildPipeline = manifestNewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
+	case containers != nil:
 		buildPipeline = manifest.NewBuildFromContainersSourceSpec(m, runner, containers, &manifest.BuildOptions{ContainerBuildable: img.ContainerBuildable})
 	}
 
