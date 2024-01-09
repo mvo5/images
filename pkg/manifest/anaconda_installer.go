@@ -52,13 +52,11 @@ type AnacondaInstaller struct {
 	// Variant is the variant of the product being installed, if applicable.
 	Variant string
 
-	platform     platform.Platform
-	repos        []rpmmd.RepoConfig
-	packageSpecs []rpmmd.PackageSpec
-	kernelName   string
-	kernelVer    string
-	product      string
-	version      string
+	platform   platform.Platform
+	repos      []rpmmd.RepoConfig
+	kernelName string
+	product    string
+	version    string
 
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
@@ -167,35 +165,23 @@ func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
 }
 
 func (p *AnacondaInstaller) getPackageSpecs() []rpmmd.PackageSpec {
-	return p.packageSpecs
+	return nil
 }
 
 func (p *AnacondaInstaller) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
-	if len(p.packageSpecs) > 0 {
-		panic("double call to serializeStart()")
-	}
-	p.packageSpecs = packages
-	if p.kernelName != "" {
-		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
-	}
 }
 
 func (p *AnacondaInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
-		panic("serializeEnd() call when serialization not in progress")
-	}
-	p.kernelVer = ""
-	p.packageSpecs = nil
 }
 
-func (p *AnacondaInstaller) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
-	return osbuild.Pipeline{}, nil
+func (p *AnacondaInstaller) kernelVer(packageSpecs []rpmmd.PackageSpec) {
+	return rpmmd.GetVerStrFromPackageSpecListPanic(packageSpecs, p.kernelName)
 }
 
-func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
-	if len(p.packageSpecs) == 0 {
-		panic("serialization not started")
-	}
+func (p *AnacondaInstaller) serialize2(inputs *SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	packageSpecs := inputs.packages
+
+	kernelVer := p.kernelVer(packageSpecs)
 
 	// Let's do a bunch of sanity checks that are dependent on the installer type
 	// being serialized
@@ -214,7 +200,7 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 
 	pipeline := p.Base.serialize()
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(packageSpecs)))
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.product,
@@ -325,7 +311,7 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 		panic("invalid anaconda installer type")
 	}
 
-	dracutOptions := dracutStageOptions(p.kernelVer, p.Biosdevname, dracutModules)
+	dracutOptions := dracutStageOptions(kernelVer, p.Biosdevname, dracutModules)
 	dracutOptions.AddDrivers = p.AdditionalDrivers
 	pipeline.AddStage(osbuild.NewDracutStage(dracutOptions))
 	pipeline.AddStage(osbuild.NewSELinuxConfigStage(&osbuild.SELinuxConfigStageOptions{State: osbuild.SELinuxStatePermissive}))
@@ -347,7 +333,11 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 		}
 	}
 
-	return pipeline
+	outputs := &SerializeOutputs{
+		packages: inputs.packages,
+	}
+
+	return pipeline, outputs
 }
 
 func dracutStageOptions(kernelVer string, biosdevname bool, additionalModules []string) *osbuild.DracutStageOptions {

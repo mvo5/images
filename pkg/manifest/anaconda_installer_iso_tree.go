@@ -239,7 +239,7 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 	copyStageOptions := &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
 			{
-				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.anacondaPipeline.kernelVer),
+				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.anacondaPipeline.kernelVer(this-needs-the-input-package-specs-from-the-anacoadaPipeline-serialization),
 				To:   "tree:///images/pxeboot/vmlinuz",
 			},
 			{
