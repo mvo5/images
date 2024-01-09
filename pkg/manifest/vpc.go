@@ -36,6 +36,10 @@ func NewVPC(buildPipeline *Build, imgPipeline *RawImage) *VPC {
 	return p
 }
 
+func (p *VPC) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *VPC) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

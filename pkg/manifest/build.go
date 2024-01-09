@@ -51,6 +51,10 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 	return pipeline
 }
 
+func (p *Build) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *Build) addDependent(dep Pipeline) {
 	p.dependents = append(p.dependents, dep)
 	man := p.Manifest()

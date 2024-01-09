@@ -66,6 +66,10 @@ func NewCoreOSInstaller(buildPipeline *Build,
 	return p
 }
 
+func (p *CoreOSInstaller) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 // TODO: refactor:
 // - what is required to boot and what to build?
 // - do they all belong in this pipeline?

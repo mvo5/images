@@ -22,6 +22,10 @@ func NewOSTreeEncapsulate(buildPipeline *Build, inputPipeline Pipeline, pipeline
 	return p
 }
 
+func (p *OSTreeEncapsulate) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p OSTreeEncapsulate) Filename() string {
 	return p.filename
 }

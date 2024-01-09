@@ -35,6 +35,10 @@ func NewQCOW2(buildPipeline *Build, imgPipeline FilePipeline) *QCOW2 {
 	return p
 }
 
+func (p *QCOW2) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *QCOW2) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

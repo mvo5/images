@@ -90,6 +90,10 @@ func NewOSTreeCommitDeployment(buildPipeline *Build,
 	return p
 }
 
+func (p *OSTreeDeployment) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 // NewOSTreeDeployment creates a pipeline for an ostree deployment from a
 // container
 func NewOSTreeContainerDeployment(buildPipeline *Build,

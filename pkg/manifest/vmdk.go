@@ -35,6 +35,10 @@ func NewVMDK(buildPipeline *Build, imgPipeline FilePipeline) *VMDK {
 	return p
 }
 
+func (p *VMDK) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *VMDK) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

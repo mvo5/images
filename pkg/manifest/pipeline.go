@@ -9,6 +9,20 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
+type SerializeInputs struct {
+	packages   []rpmmd.PackageSpec
+	containers []container.Spec
+	commits    []ostree.CommitSpec
+}
+
+type SerializeOutputs struct {
+	packages   []rpmmd.PackageSpec
+	containers []container.Spec
+	commits    []ostree.CommitSpec
+
+	inline []string
+}
+
 // Pipeline serializes to a series of stages that modify a file system tree
 // when used as input to osbuild. Different Pipelines serialize to different
 // sequences of stages depending on their type and configuration.
@@ -56,6 +70,7 @@ type Pipeline interface {
 	serializeStart([]rpmmd.PackageSpec, []container.Spec, []ostree.CommitSpec)
 	serializeEnd()
 	serialize() osbuild.Pipeline
+	serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs)
 
 	// getPackageSpecs returns the list of specifications for packages that
 	// will be installed to the pipeline tree.

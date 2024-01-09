@@ -23,6 +23,10 @@ func NewOVF(buidPipeline *Build, imgPipeline *VMDK) *OVF {
 	return p
 }
 
+func (p *OVF) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *OVF) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

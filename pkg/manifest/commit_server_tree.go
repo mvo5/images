@@ -56,6 +56,10 @@ func NewOSTreeCommitServer(buildPipeline *Build,
 	return p
 }
 
+func (p *OSTreeCommitServer) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *OSTreeCommitServer) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	// FIXME: container package is defined here
 	packages := []string{"nginx"}

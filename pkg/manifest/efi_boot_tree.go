@@ -30,6 +30,10 @@ func NewEFIBootTree(buildPipeline *Build, product, version string) *EFIBootTree 
 	return p
 }
 
+func (p *EFIBootTree) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *EFIBootTree) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

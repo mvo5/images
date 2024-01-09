@@ -23,6 +23,10 @@ func NewISORootfsImg(buildPipeline *Build, installerPipeline Pipeline) *ISORootf
 	return p
 }
 
+func (p *ISORootfsImg) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *ISORootfsImg) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

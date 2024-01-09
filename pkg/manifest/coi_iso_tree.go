@@ -58,6 +58,10 @@ func NewCoreOSISOTree(
 	return p
 }
 
+func (p *CoreOSISOTree) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *CoreOSISOTree) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

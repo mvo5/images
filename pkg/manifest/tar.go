@@ -40,6 +40,10 @@ func NewTar(buildPipeline *Build, inputPipeline Pipeline, pipelinename string) *
 	return p
 }
 
+func (p *Tar) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *Tar) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

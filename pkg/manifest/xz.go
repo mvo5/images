@@ -33,6 +33,10 @@ func NewXZ(buildPipeline *Build, imgPipeline FilePipeline) *XZ {
 	return p
 }
 
+func (p *XZ) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *XZ) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 

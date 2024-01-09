@@ -36,6 +36,10 @@ func NewRawOStreeImage(buildPipeline *Build, treePipeline *OSTreeDeployment, pla
 	return p
 }
 
+func (p *RawOSTreeImage) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *RawOSTreeImage) getBuildPackages(Distro) []string {
 	packages := p.platform.GetBuildPackages()
 	packages = append(packages, p.platform.GetPackages()...)

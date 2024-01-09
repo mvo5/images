@@ -188,6 +188,10 @@ func (p *AnacondaInstaller) serializeEnd() {
 	p.packageSpecs = nil
 }
 
+func (p *AnacondaInstaller) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")

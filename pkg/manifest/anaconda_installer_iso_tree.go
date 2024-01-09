@@ -78,6 +78,10 @@ func NewAnacondaInstallerISOTree(buildPipeline *Build, anacondaPipeline *Anacond
 	return p
 }
 
+func (p *AnacondaInstallerISOTree) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *AnacondaInstallerISOTree) getOSTreeCommitSources() []ostree.SourceSpec {
 	if p.OSTreeCommitSource == nil {
 		return nil

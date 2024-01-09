@@ -39,6 +39,10 @@ func NewContentTest(m *Manifest, name string, packageSets []rpmmd.PackageSet, co
 	return pipeline
 }
 
+func (p *ContentTest) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *ContentTest) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	return p.packageSets
 }

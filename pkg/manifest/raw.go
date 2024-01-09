@@ -32,6 +32,10 @@ func NewRawImage(buildPipeline *Build, treePipeline *OS) *RawImage {
 	buildPipeline.addDependent(p)
 	p.PartTool = osbuild.PTSfdisk // default; can be changed after initialisation
 	return p
+
+}
+func (p *RawImage) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
 }
 
 func (p *RawImage) getBuildPackages(d Distro) []string {

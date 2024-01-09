@@ -26,6 +26,10 @@ func NewOSTreeCommit(buildPipeline *Build, treePipeline *OS, ref string) *OSTree
 	return p
 }
 
+func (p *OSTreeCommit) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *OSTreeCommit) getBuildPackages(Distro) []string {
 	packages := []string{
 		"rpm-ostree",

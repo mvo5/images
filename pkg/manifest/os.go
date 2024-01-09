@@ -191,6 +191,10 @@ func NewOS(buildPipeline *Build, platform platform.Platform, repos []rpmmd.RepoC
 	return p
 }
 
+func (p *OS) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	return osbuild.Pipeline{}, nil
+}
+
 func (p *OS) getPackageSetChain(Distro) []rpmmd.PackageSet {
 	packages := p.platform.GetPackages()
 
