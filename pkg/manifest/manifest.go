@@ -143,18 +143,24 @@ func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec, containe
 	commits := make([]ostree.CommitSpec, 0)
 	inline := make([]string, 0)
 	containers := make([]container.Spec, 0)
+
 	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart(packageSets[pipeline.Name()], containerSpecs[pipeline.Name()], ostreeCommits[pipeline.Name()])
-	}
-	for _, pipeline := range m.pipelines {
-		commits = append(commits, pipeline.getOSTreeCommits()...)
-		pipelines = append(pipelines, pipeline.serialize())
-		packages = append(packages, packageSets[pipeline.Name()]...)
-		inline = append(inline, pipeline.getInline()...)
-		containers = append(containers, pipeline.getContainerSpecs()...)
-	}
-	for _, pipeline := range m.pipelines {
-		pipeline.serializeEnd()
+		// TODO: remove getOSTreeCommits(), getInline(),
+		// getContainerSpecs() from Pipeline interface as it
+		// is no longer needed and also only provides data
+		// within a serialization operation
+		inputs := &SerializeInputs{
+			packages:   packageSets[pipeline.Name()],
+			containers: containerSpecs[pipeline.Name()],
+			commits:    ostreeCommits[pipeline.Name()],
+		}
+		pipeline, output := pipeline.serialize2(inputs)
+		pipelines = append(pipelines, pipeline)
+		commits = append(commits, output.commits...)
+		containers = append(containers, output.containers...)
+		inline = append(inline, output.inline...)
+		// XXX: existing code uses packages from inputs, shoud we keep that or move to outputs.packages?
+		packages = append(packages, inputs.packages...)
 	}
 
 	sources, err := osbuild.GenSources(packages, commits, inline, containers)

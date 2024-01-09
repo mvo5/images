@@ -75,10 +75,9 @@ func TestBuildContainerBuildableNo(t *testing.T) {
 			},
 		},
 	} {
-		build.packageSpecs = tc.packageSpec
 		build.containerBuildable = tc.containerBuildable
 
-		labels := build.getSELinuxLabels()
+		labels := build.getSELinuxLabels(tc.packageSpec)
 		require.Equal(t, labels, tc.expectedSELinuxLabels)
 	}
 }

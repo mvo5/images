@@ -18,10 +18,9 @@ import (
 type Build struct {
 	Base
 
-	runner       runner.Runner
-	dependents   []Pipeline
-	repos        []rpmmd.RepoConfig
-	packageSpecs []rpmmd.PackageSpec
+	runner     runner.Runner
+	dependents []Pipeline
+	repos      []rpmmd.RepoConfig
 
 	containerBuildable bool
 }
@@ -49,10 +48,6 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 	}
 	m.addPipeline(pipeline)
 	return pipeline
-}
-
-func (p *Build) serialize2(*SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
-	return osbuild.Pipeline{}, nil
 }
 
 func (p *Build) addDependent(dep Pipeline) {
@@ -88,46 +83,46 @@ func (p *Build) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	}
 }
 
-func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
-	return p.packageSpecs
-}
+func (p *Build) serialize2(inputs *SerializeInputs) (osbuild.Pipeline, *SerializeOutputs) {
+	packageSpecs := inputs.packages
 
-func (p *Build) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
-	if len(p.packageSpecs) > 0 {
-		panic("double call to serializeStart()")
-	}
-	p.packageSpecs = packages
-}
-
-func (p *Build) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
-		panic("serializeEnd() call when serialization not in progress")
-	}
-	p.packageSpecs = nil
-}
-
-func (p *Build) serialize() osbuild.Pipeline {
-	if len(p.packageSpecs) == 0 {
-		panic("serialization not started")
-	}
 	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
 
-	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(packageSpecs)))
 	pipeline.AddStage(osbuild.NewSELinuxStage(&osbuild.SELinuxStageOptions{
 		FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-		Labels:       p.getSELinuxLabels(),
+		Labels:       p.getSELinuxLabels(packageSpecs),
 	},
 	))
+	outputs := &SerializeOutputs{
+		// XXX: manifest.go always use the input packages so maybe
+		//      don't need this?
+		packages: inputs.packages,
+	}
 
-	return pipeline
+	return pipeline, outputs
+}
+
+func (p *Build) getPackageSpecs() []rpmmd.PackageSpec {
+	return nil
+}
+
+func (p *Build) serializeStart(packages []rpmmd.PackageSpec, _ []container.Spec, _ []ostree.CommitSpec) {
+}
+
+func (p *Build) serializeEnd() {
+}
+
+func (p *Build) serialize() osbuild.Pipeline {
+	return osbuild.Pipeline{}
 }
 
 // Returns a map of paths to labels for the SELinux stage based on specific
 // packages found in the pipeline.
-func (p *Build) getSELinuxLabels() map[string]string {
+func (p *Build) getSELinuxLabels(packages []rpmmd.PackageSpec) map[string]string {
 	labels := make(map[string]string)
-	for _, pkg := range p.getPackageSpecs() {
+	for _, pkg := range packages {
 		switch pkg.Name {
 		case "coreutils":
 			labels["/usr/bin/cp"] = "system_u:object_r:install_exec_t:s0"
