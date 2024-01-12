@@ -52,7 +52,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	case platform.FORMAT_QCOW2:
 		// TODO: create new build pipeline here that uses "bib" itself
 		// as the buildroot to get access to tooling like "qemu-img"
-		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, baseImage)
+		qcow2Pipeline := manifest.NewQCOW2(m, nil, baseImage)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 		qcow2Pipeline.SetFilename(img.Filename)
 		return qcow2Pipeline.Export(), nil

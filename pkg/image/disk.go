@@ -73,7 +73,7 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	case platform.FORMAT_RAW:
 		imagePipeline = rawImagePipeline
 	case platform.FORMAT_QCOW2:
-		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, rawImagePipeline)
+		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, rawImagePipeline)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 		imagePipeline = qcow2Pipeline
 	case platform.FORMAT_VHD:

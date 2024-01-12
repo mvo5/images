@@ -134,7 +134,7 @@ func (img *OSTreeDiskImage) InstantiateManifest(m *manifest.Manifest,
 		vmdkPipeline.SetFilename(img.Filename)
 		return vmdkPipeline.Export(), nil
 	case platform.FORMAT_QCOW2:
-		qcow2Pipeline := manifest.NewQCOW2(buildPipeline, baseImage)
+		qcow2Pipeline := manifest.NewQCOW2(m, buildPipeline, baseImage)
 		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 		qcow2Pipeline.SetFilename(img.Filename)
 		return qcow2Pipeline.Export(), nil

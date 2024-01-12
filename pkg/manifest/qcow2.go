@@ -25,13 +25,17 @@ func (p *QCOW2) SetFilename(filename string) {
 // NewQCOW2 createsa new QCOW2 pipeline. imgPipeline is the pipeline producing the
 // raw image. The pipeline name is the name of the new pipeline. Filename is the name
 // of the produced qcow2 image.
-func NewQCOW2(buildPipeline Build, imgPipeline FilePipeline) *QCOW2 {
+func NewQCOW2(m *Manifest, buildPipeline Build, imgPipeline FilePipeline) *QCOW2 {
 	p := &QCOW2{
 		Base:        NewBase("qcow2", buildPipeline),
 		imgPipeline: imgPipeline,
 		filename:    "image.qcow2",
 	}
-	buildPipeline.addDependent(p)
+	if buildPipeline != nil {
+		buildPipeline.addDependent(p)
+	} else {
+		m.addPipeline(p)
+	}
 	return p
 }
 
