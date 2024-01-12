@@ -47,7 +47,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
 	}
 
-	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline)
+	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline, true)
 	switch imgFormat {
 	case platform.FORMAT_QCOW2:
 		// TODO: create new build pipeline here that uses "bib" itself

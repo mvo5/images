@@ -110,7 +110,86 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		pipeline.AddStage(stage)
 	}
 
-	if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
+	if p.treePipeline.UseBootupd {
+		// we need to generate:
+		// +            "type": "org.osbuild.bootupd",
+		// +           "options": {
+		// +               "bios": {
+		// +                   "device": "disk"
+		// +               },
+		// +               "static-configs": true,
+		// +               "deployment": {
+		// +                   "osname": "default",
+		// +                   "ref": "ostree/1/1/0"
+		// +               }
+		// +            },
+		// +            "devices": {
+		// +               "disk": {
+		// +                   "type": "org.osbuild.loopback",
+		// +                   "options": {
+		// +                       "filename": "disk.img"
+		// +                   }
+		// +               },
+		// +               "root": {
+		// +                   "type": "org.osbuild.loopback",
+		// +                   "options": {
+		// +                       "filename": "disk.img",
+		// +                       "start": 3127296,
+		// +                       "size": 17844191
+		// +                   }
+		// +               },
+		// +               "boot": {
+		// +                   "type": "org.osbuild.loopback",
+		// +                   "options": {
+		// +                       "filename": "disk.img",
+		// +                       "start": 1030144,
+		// +                       "size": 2097152
+		// +                   }
+		// +               },
+		// +               "boot-efi": {
+		// +                   "type": "org.osbuild.loopback",
+		// +                   "options": {
+		// +                       "filename": "disk.img",
+		// +                       "start": 4096,
+		// +                       "size": 1026048
+		// +                   }
+		// +               }
+		// +           },
+		// +            "mounts": [
+		// +            {
+		// +              "name": "root",
+		// +              "type": "org.osbuild.ext4",
+		// +              "source": "root",
+		// +              "target": "/"
+		// +            },
+		// +            {
+		// +              "name": "boot",
+		// +              "type": "org.osbuild.ext4",
+		// +              "source": "boot",
+		// +              "target": "/boot"
+		// +            },
+		// +            {
+		// +              "name": "boot-efi",
+		// +              "type": "org.osbuild.fat",
+		// +              "source": "boot-efi",
+		// +              "target": "/boot/efi"
+		// +            }
+		// +          ]
+		//          }
+		opts := &osbuild.BootupdStageOptions{
+			Deployment: osbuild.OSTreeDeployment{
+				OSName: p.treePipeline.osName,
+				Ref:    p.treePipeline.ref,
+			},
+			StaticConfigs: true,
+			Bios: osbuild.BootupdStageOptionsBios{
+				// XXX: set conditional
+				Device: "disk",
+			},
+		}
+		bootupd := osbuild.NewBootupdStage(opts, treeCopyDevices, treeCopyMounts)
+		pipeline.AddStage(bootupd)
+	} else if grubLegacy := p.treePipeline.platform.GetBIOSPlatform(); grubLegacy != "" {
 		pipeline.AddStage(osbuild.NewGrub2InstStage(osbuild.NewGrub2InstStageOption(p.Filename(), pt, grubLegacy)))
 	}
 

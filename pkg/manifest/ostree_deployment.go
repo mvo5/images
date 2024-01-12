@@ -68,6 +68,8 @@ type OSTreeDeployment struct {
 
 	FIPS bool
 
+	UseBootupd bool
+
 	// Lock the root account in the deployment unless the user defined root
 	// user options in the build configuration.
 	LockRoot bool
@@ -404,22 +406,25 @@ func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
 		}
 	}
 
-	grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
-		strings.Join(kernelOpts, " "),
-		"",
-		p.platform.GetUEFIVendor() != "",
-		p.platform.GetBIOSPlatform(),
-		p.platform.GetUEFIVendor(), true)
-	grubOptions.Greenboot = true
-	grubOptions.Ignition = p.IgnitionPlatform != ""
-	grubOptions.Config = &osbuild.GRUB2Config{
-		Default:        "saved",
-		Timeout:        1,
-		TerminalOutput: []string{"console"},
+	if !p.UseBootupd {
+		grubOptions := osbuild.NewGrub2StageOptionsUnified(p.PartitionTable,
+			strings.Join(kernelOpts, " "),
+			"",
+			p.platform.GetUEFIVendor() != "",
+			p.platform.GetBIOSPlatform(),
+			p.platform.GetUEFIVendor(),
+			true)
+		grubOptions.Greenboot = true
+		grubOptions.Ignition = p.IgnitionPlatform != ""
+		grubOptions.Config = &osbuild.GRUB2Config{
+			Default:        "saved",
+			Timeout:        1,
+			TerminalOutput: []string{"console"},
+		}
+		bootloader := osbuild.NewGRUB2Stage(grubOptions)
+		bootloader.MountOSTree(p.osName, ref, 0)
+		pipeline.AddStage(bootloader)
 	}
-	bootloader := osbuild.NewGRUB2Stage(grubOptions)
-	bootloader.MountOSTree(p.osName, ref, 0)
-	pipeline.AddStage(bootloader)
 
 	// First create custom directories, because some of the files may depend on them
 	if len(p.Directories) > 0 {
