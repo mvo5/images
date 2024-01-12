@@ -103,6 +103,12 @@ func GenCopyFSTreeOptions(inputName, inputPipeline, filename string, pt *disk.Pa
 		}
 		return nil
 	}
+	devices["disk"] = Device{
+		Type: "org.osbuild.loopback",
+		Options: &LoopbackDeviceOptions{
+			Filename: filename,
+		},
+	}
 
 	_ = pt.ForEachMountable(genMounts)
 
