@@ -1,5 +1,10 @@
 package osbuild
 
+type Stage interface {
+	MarshalJSON() ([]byte, error)
+}
+
+/*
 // Single stage of a pipeline executing one step
 type Stage struct {
 	// Well-known name in reverse domain-name notation, uniquely identifying
@@ -25,3 +30,4 @@ func (s *Stage) MountOSTree(osName, ref string, serial int) {
 	ostreeMount := NewOSTreeDeploymentMount(name, osName, ref, serial)
 	s.Mounts = append(s.Mounts, *ostreeMount)
 }
+*/

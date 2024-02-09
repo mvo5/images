@@ -7,12 +7,19 @@ type ZiplStageOptions struct {
 	Timeout int `json:"timeout,omitempty"`
 }
 
-func (ZiplStageOptions) isStageOptions() {}
+type ZiplStage struct {
+	Type    string            `json:"type"`
+	Options *ZiplStageOptions `json:"options,omitempty"`
+}
 
 // NewZiplStage creates a new zipl Stage object.
-func NewZiplStage(options *ZiplStageOptions) *Stage {
-	return &Stage{
+func NewZiplStage(options *ZiplStageOptions) Stage {
+	return &ZiplStage{
 		Type:    "org.osbuild.zipl",
 		Options: options,
 	}
+}
+
+func (st *ZiplStage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(st)
 }
