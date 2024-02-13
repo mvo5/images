@@ -6,26 +6,32 @@ import (
 
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 type BootcDiskImage struct {
-	*OSTreeDiskImage
+	Base
+
+	Platform       platform.Platform
+	PartitionTable *disk.PartitionTable
+
+	OSName string
+
+	Filename string
+
+	ContainerSource *container.SourceSpec
+
+	Compression string
 }
 
 func NewBootcDiskImage(container container.SourceSpec) *BootcDiskImage {
-	// XXX: hardcoded for now
-	ref := "ostree/1/1/0"
-
 	return &BootcDiskImage{
-		&OSTreeDiskImage{
-			Base:            NewBase("bootc-raw-image"),
-			ContainerSource: &container,
-			Ref:             ref,
-			OSName:          "default",
-		},
+		Base:            NewBase("bootc-raw-image"),
+		ContainerSource: &container,
+		OSName:          "default",
 	}
 }
 
@@ -47,8 +53,10 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
 	}
 
-	opts := &baseRawOstreeImageOpts{useBootupd: true}
-	baseImage := baseRawOstreeImage(img.OSTreeDiskImage, buildPipeline, opts)
+	osPipeline := manifest.NewBootcDeployment(buildPipeline, img.ContainerSource, img.OSName, img.Platform)
+	osPipeline.PartitionTable = img.PartitionTable
+	baseImage := manifest.NewRawBootcImage(buildPipeline, osPipeline, img.Platform)
+
 	switch imgFormat {
 	case platform.FORMAT_QCOW2:
 		// qcow2 runs without a build pipeline directly from "bib"
