@@ -1,8 +1,11 @@
 package manifest
 
 import (
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
+	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 // A RawBootcImage represents a raw bootc image file which can be booted in a
@@ -12,6 +15,9 @@ type RawBootcImage struct {
 	treePipeline *BootcDeployment
 	filename     string
 	platform     platform.Platform
+
+	containers     []container.SourceSpec
+	containerSpecs []container.Spec
 }
 
 func (p RawBootcImage) Filename() string {
@@ -22,29 +28,39 @@ func (p *RawBootcImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewRawBootcImage(buildPipeline Build, treePipeline *BootcDeployment, platform platform.Platform) *RawBootcImage {
+func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, treePipeline *BootcDeployment, platform platform.Platform) *RawBootcImage {
 	p := &RawBootcImage{
 		Base:         NewBase("image", buildPipeline),
 		treePipeline: treePipeline,
 		filename:     "disk.img",
 		platform:     platform,
+
+		containers: containers,
 	}
 	buildPipeline.addDependent(p)
 	return p
 }
 
-func (p *RawBootcImage) getBuildPackages(Distro) []string {
-	packages := p.platform.GetBuildPackages()
-	packages = append(packages, p.platform.GetPackages()...)
-	packages = append(packages, p.treePipeline.PartitionTable.GetBuildPackages()...)
-	packages = append(packages,
-		"rpm-ostree",
+func (p *RawBootcImage) getContainerSources() []container.SourceSpec {
+	return p.containers
+}
 
-		// these should be defined on the platform
-		"dracut-config-generic",
-		"efibootmgr",
-	)
-	return packages
+func (p *RawBootcImage) getContainerSpecs() []container.Spec {
+	return p.containerSpecs
+}
+
+func (p *RawBootcImage) serializeStart(_ []rpmmd.PackageSpec, containerSpecs []container.Spec, _ []ostree.CommitSpec) {
+	if len(p.containerSpecs) > 0 {
+		panic("double call to serializeStart()")
+	}
+	p.containerSpecs = containerSpecs
+}
+
+func (p *RawBootcImage) serializeEnd() {
+	if len(p.containerSpecs) == 0 {
+		panic("serializeEnd() call when serialization not in progress")
+	}
+	p.containerSpecs = nil
 }
 
 func (p *RawBootcImage) serialize() osbuild.Pipeline {
@@ -59,8 +75,12 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		pipeline.AddStage(stage)
 	}
 
+	inputs := osbuild.ContainerDeployInputs{
+		Images: osbuild.NewContainersInputForSources(p.containerSpecs),
+	}
+
 	devices, mounts := osbuild.GenBootupdDevicesMounts(p.Filename(), p.treePipeline.PartitionTable)
-	st, err := osbuild.NewBootcInstallToFilesystemStage(devices, mounts)
+	st, err := osbuild.NewBootcInstallToFilesystemStage(inputs, devices, mounts)
 	if err != nil {
 		panic(err)
 	}

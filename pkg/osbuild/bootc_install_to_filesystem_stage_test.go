@@ -19,7 +19,7 @@ func TestBootcInstallToFilesystemStageNewHappy(t *testing.T) {
 		Devices: devices,
 		Mounts:  mounts,
 	}
-	stage, err := osbuild.NewBootcInstallToFilesystemStage(devices, mounts)
+	stage, err := osbuild.NewBootcInstallToFilesystemStage(nil, devices, mounts)
 	require.Nil(t, err)
 	assert.Equal(t, stage, expectedStage)
 }
@@ -28,7 +28,7 @@ func TestBootcInstallToFilesystemStageMissingMounts(t *testing.T) {
 	devices := makeOsbuildDevices("dev-for-/")
 	mounts := makeOsbuildMounts("/")
 
-	stage, err := osbuild.NewBootcInstallToFilesystemStage(devices, mounts)
+	stage, err := osbuild.NewBootcInstallToFilesystemStage(nil, devices, mounts)
 	// XXX: rename error
 	assert.ErrorContains(t, err, "required mounts for bootupd stage [/boot /boot/efi] missing")
 	require.Nil(t, stage)
@@ -38,7 +38,7 @@ func TestBootcInstallToFilesystemStageJsonHappy(t *testing.T) {
 	devices := makeOsbuildDevices("disk", "dev-for-/", "dev-for-/boot", "dev-for-/boot/efi")
 	mounts := makeOsbuildMounts("/", "/boot", "/boot/efi")
 
-	stage, err := osbuild.NewBootcInstallToFilesystemStage(devices, mounts)
+	stage, err := osbuild.NewBootcInstallToFilesystemStage(nil, devices, mounts)
 	require.Nil(t, err)
 	stageJson, err := json.MarshalIndent(stage, "", "  ")
 	require.Nil(t, err)

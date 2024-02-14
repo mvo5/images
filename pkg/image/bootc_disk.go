@@ -55,7 +55,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 
 	osPipeline := manifest.NewBootcDeployment(buildPipeline, img.ContainerSource, img.OSName, img.Platform)
 	osPipeline.PartitionTable = img.PartitionTable
-	baseImage := manifest.NewRawBootcImage(buildPipeline, osPipeline, img.Platform)
+	baseImage := manifest.NewRawBootcImage(buildPipeline, containers, osPipeline, img.Platform)
 
 	switch imgFormat {
 	case platform.FORMAT_QCOW2:
