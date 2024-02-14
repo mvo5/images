@@ -230,7 +230,10 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 
 	inputs := osbuild.NewContainersInputForSources(p.containerSpecs)
 	options := &osbuild.ContainerDeployOptions{
-		Exclude: []string{"/sysroot"},
+		// XXX: this cannot be used when "bootc install to-filesystem"
+		// is used. The issue is that this also contains the metadata
+		// that bootc install uses to install the filesystem
+		//Exclude: []string{"/sysroot"},
 	}
 	stage, err := osbuild.NewContainerDeployStage(inputs, options)
 	if err != nil {
