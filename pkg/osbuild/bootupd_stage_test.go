@@ -2,11 +2,13 @@ package osbuild_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
@@ -142,4 +144,79 @@ func TestBootupdStageJsonHappy(t *testing.T) {
     }
   ]
 }`)
+}
+
+/*
+func TestGenBootupdDevicesMountsMissingRoot(t *testing.T) {
+	filename := "fake-disk.img"
+	pt := &disk.PartitionTable{}
+	assert.PanicsWithError(t, "no mount found for the filesystem root", func() {
+		osbuild.GenBootupdDevicesMounts(filename, pt)
+	})
+        }
+*/
+
+const (
+	MebiByte = 1024 * 1024        // MiB
+	GibiByte = 1024 * 1024 * 1024 // GiB
+)
+
+var fakePt = &disk.PartitionTable{
+	UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+	Type: "gpt",
+	Partitions: []disk.Partition{
+		{
+			Size:     1 * MebiByte,
+			Bootable: true,
+			Type:     disk.BIOSBootPartitionGUID,
+			UUID:     disk.BIOSBootPartitionUUID,
+		},
+		{
+			Size: 501 * MebiByte,
+			Type: disk.EFISystemPartitionGUID,
+			UUID: disk.EFISystemPartitionUUID,
+			Payload: &disk.Filesystem{
+				Type:         "vfat",
+				UUID:         disk.EFIFilesystemUUID,
+				Mountpoint:   "/boot/efi",
+				Label:        "EFI-SYSTEM",
+				FSTabOptions: "umask=0077,shortname=winnt",
+				FSTabFreq:    0,
+				FSTabPassNo:  2,
+			},
+		},
+		{
+			Size: 1 * GibiByte,
+			Type: disk.FilesystemDataGUID,
+			UUID: disk.FilesystemDataUUID,
+			Payload: &disk.Filesystem{
+				Type:         "ext4",
+				Mountpoint:   "/boot",
+				Label:        "boot",
+				FSTabOptions: "defaults",
+				FSTabFreq:    1,
+				FSTabPassNo:  2,
+			},
+		},
+		{
+			Size: 2 * GibiByte,
+			Type: disk.FilesystemDataGUID,
+			UUID: disk.RootPartitionUUID,
+			Payload: &disk.Filesystem{
+				Type:         "ext4",
+				Label:        "root",
+				Mountpoint:   "/",
+				FSTabOptions: "defaults",
+				FSTabFreq:    1,
+				FSTabPassNo:  1,
+			},
+		},
+	},
+}
+
+func TestGenBootupdDevicesMountsHappy(t *testing.T) {
+	filename := "fake-disk.img"
+
+	devices, mounts := osbuild.GenBootupdDevicesMounts(filename, fakePt)
+	fmt.Println(devices, mounts)
 }

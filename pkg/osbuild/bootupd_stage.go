@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/disk"
 )
 
@@ -76,16 +77,58 @@ func NewBootupdStage(opts *BootupdStageOptions, devices map[string]Device, mount
 	}, nil
 }
 
+func genMountsForBootupd(devName string, pt *disk.PartitionTable) ([]Mount, error) {
+	mounts := make([]Mount, 0, len(pt.Partitions))
+	for idx, part := range pt.Partitions {
+		if part.Payload == nil {
+			continue
+		}
+		var mount *Mount
+		switch mnt := part.Payload.(type) {
+		case disk.Mountable:
+			name := fmt.Sprintf("part%d", idx+1)
+			t := mnt.GetFSType()
+			mountpoint := mnt.GetMountpoint()
+			switch t {
+			case "xfs":
+				mount = NewXfsMount(name, devName, mountpoint)
+			case "vfat":
+				mount = NewFATMount(name, devName, mountpoint)
+			case "ext4":
+				mount = NewExt4Mount(name, devName, mountpoint)
+			case "btrfs":
+				mount = NewBtrfsMount(name, devName, mountpoint)
+			default:
+				return nil, fmt.Errorf("unknown fs type " + t)
+			}
+			mount.Partition = common.ToPtr(idx + 1)
+			mounts = append(mounts, *mount)
+		default:
+			return nil, fmt.Errorf("type %v not supported by bootupd handling yet", mnt)
+		}
+	}
+	// this must be sorted in so that mounts do not shadow each other
+	sort.Slice(mounts, func(i, j int) bool {
+		return mounts[i].Target < mounts[j].Target
+	})
+
+	return mounts, nil
+}
+
 func GenBootupdDevicesMounts(filename string, pt *disk.PartitionTable) (map[string]Device, []Mount) {
-	_, mounts, devices, err := genMountsDevicesFromPt(filename, pt)
+	devName := "disk"
+	devices := map[string]Device{
+		devName: Device{
+			Type: "org.osbuild.loopback",
+			Options: &LoopbackDeviceOptions{
+				Filename: filename,
+				Partscan: true,
+			},
+		},
+	}
+	mounts, err := genMountsForBootupd(devName, pt)
 	if err != nil {
 		panic(err)
-	}
-	devices["disk"] = Device{
-		Type: "org.osbuild.loopback",
-		Options: &LoopbackDeviceOptions{
-			Filename: filename,
-		},
 	}
 
 	return devices, mounts

@@ -271,7 +271,8 @@ func genMountsDevicesFromPt(filename string, pt *disk.PartitionTable) (string, [
 		return "", nil, nil, err
 	}
 
-	// sort the mounts, using < should just work because:
+	// This must be sorted in so that mounts do not shadow each other
+	// when sorting the mounts, using < should just work because:
 	// - a parent directory should be always before its children:
 	//   / < /boot
 	// - the order of siblings doesn't matter

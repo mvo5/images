@@ -74,7 +74,6 @@ func TestGenDeviceCreationStages(t *testing.T) {
 	assert.Equal(parent.Type, "org.osbuild.loopback")
 
 }
-
 func TestGenDeviceFinishStages(t *testing.T) {
 	assert := assert.New(t)
 
