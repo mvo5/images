@@ -53,9 +53,12 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 		panic(fmt.Sprintf("no compression is allowed with %q format for %q", imgFormat, img.name))
 	}
 
-	osPipeline := manifest.NewBootcDeployment(buildPipeline, img.ContainerSource, img.OSName, img.Platform)
-	osPipeline.PartitionTable = img.PartitionTable
-	baseImage := manifest.NewRawBootcImage(buildPipeline, containers, osPipeline, img.Platform)
+	baseImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
+	baseImage.PartitionTable = img.PartitionTable
+	customizePipeline := manifest.NewBootcCustomize(buildPipeline, baseImage)
+	if customizePipeline == nil {
+		panic("customizePipeline is nil")
+	}
 
 	switch imgFormat {
 	case platform.FORMAT_QCOW2:

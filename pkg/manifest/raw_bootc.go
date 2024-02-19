@@ -2,6 +2,7 @@ package manifest
 
 import (
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -12,9 +13,10 @@ import (
 // hypervisor.
 type RawBootcImage struct {
 	Base
-	treePipeline *BootcDeployment
-	filename     string
-	platform     platform.Platform
+	filename string
+	platform platform.Platform
+
+	PartitionTable *disk.PartitionTable
 
 	containers     []container.SourceSpec
 	containerSpecs []container.Spec
@@ -28,12 +30,11 @@ func (p *RawBootcImage) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, treePipeline *BootcDeployment, platform platform.Platform) *RawBootcImage {
+func NewRawBootcImage(buildPipeline Build, containers []container.SourceSpec, platform platform.Platform) *RawBootcImage {
 	p := &RawBootcImage{
-		Base:         NewBase("image", buildPipeline),
-		treePipeline: treePipeline,
-		filename:     "disk.img",
-		platform:     platform,
+		Base:     NewBase("image", buildPipeline),
+		filename: "disk.img",
+		platform: platform,
 
 		containers: containers,
 	}
@@ -66,7 +67,7 @@ func (p *RawBootcImage) serializeEnd() {
 func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 
-	pt := p.treePipeline.PartitionTable
+	pt := p.PartitionTable
 	if pt == nil {
 		panic("no partition table in live image")
 	}
@@ -79,7 +80,7 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		Images: osbuild.NewContainersInputForSources(p.containerSpecs),
 	}
 
-	devices, mounts := osbuild.GenBootupdDevicesMounts(p.Filename(), p.treePipeline.PartitionTable)
+	devices, mounts := osbuild.GenBootupdDevicesMounts(p.Filename(), p.PartitionTable)
 	st, err := osbuild.NewBootcInstallToFilesystemStage(inputs, devices, mounts)
 	if err != nil {
 		panic(err)
