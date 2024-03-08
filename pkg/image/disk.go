@@ -40,33 +40,7 @@ type DiskImage struct {
 	InstallWeakDeps *bool
 }
 
-func NewDiskImage() *DiskImage {
-	return &DiskImage{
-		Base:     NewBase("disk"),
-		PartTool: osbuild.PTSfdisk,
-	}
-}
-
-func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
-	runner runner.Runner,
-	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
-	buildPipeline.Checkpoint()
-
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
-	osPipeline.PartitionTable = img.PartitionTable
-	osPipeline.OSCustomizations = img.OSCustomizations
-	osPipeline.Environment = img.Environment
-	osPipeline.Workload = img.Workload
-	osPipeline.NoBLS = img.NoBLS
-	osPipeline.OSProduct = img.OSProduct
-	osPipeline.OSVersion = img.OSVersion
-	osPipeline.OSNick = img.OSNick
-	if img.InstallWeakDeps != nil {
-		osPipeline.InstallWeakDeps = *img.InstallWeakDeps
-	}
-
+func makeImagePipeline(img *DiskImage, osPipeline *manifest.OS, buildPipeline manifest.Build) manifest.FilePipeline {
 	rawImagePipeline := manifest.NewRawImage(buildPipeline, osPipeline)
 	rawImagePipeline.PartTool = img.PartTool
 
@@ -114,6 +88,38 @@ func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
 	default:
 		panic("invalid image format for image kind")
 	}
+
+	return imagePipeline
+}
+
+func NewDiskImage() *DiskImage {
+	return &DiskImage{
+		Base:     NewBase("disk"),
+		PartTool: osbuild.PTSfdisk,
+	}
+}
+
+func (img *DiskImage) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
+	buildPipeline.Checkpoint()
+
+	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline.PartitionTable = img.PartitionTable
+	osPipeline.OSCustomizations = img.OSCustomizations
+	osPipeline.Environment = img.Environment
+	osPipeline.Workload = img.Workload
+	osPipeline.NoBLS = img.NoBLS
+	osPipeline.OSProduct = img.OSProduct
+	osPipeline.OSVersion = img.OSVersion
+	osPipeline.OSNick = img.OSNick
+	if img.InstallWeakDeps != nil {
+		osPipeline.InstallWeakDeps = *img.InstallWeakDeps
+	}
+
+	imagePipeline := makeImagePipeline(img, osPipeline, buildPipeline)
 
 	switch img.Compression {
 	case "xz":
