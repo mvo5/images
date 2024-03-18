@@ -66,6 +66,7 @@ func makeBootcDiskImageOsbuildManifest(t *testing.T, opts *bootcDiskImageTestOpt
 	require.NotNil(t, img)
 	img.Platform = makeFakePlatform(opts)
 	img.PartitionTable = testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
+	img.Filename = "disk"
 
 	m := &manifest.Manifest{}
 	runi := &runner.Fedora{}
@@ -176,6 +177,9 @@ func TestBootcDiskImageExportPipelines(t *testing.T) {
 	// qcow2 pipeline for the qcow2
 	qcowPipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "qcow2")
 	require.NotNil(qcowPipeline)
+	stage := findStageFromOsbuildPipeline(t, qcowPipeline, "org.osbuild.qemu")
+	require.NotNil(stage)
+	require.Equal("disk.qcow2", stage["options"].(map[string]interface{})["filename"])
 
 	// vmdk pipeline for the vmdk
 	vmdkPipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "vmdk")
