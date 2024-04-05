@@ -9,6 +9,8 @@ type SELinuxStageOptions struct {
 	ExcludePaths     []string          `json:"exclude_paths,omitempty"`
 	Labels           map[string]string `json:"labels,omitempty"`
 	ForceAutorelabel *bool             `json:"force_autorelabel,omitempty"`
+
+	AltRoot string `json:"alt_root,omitempty"`
 }
 
 func (SELinuxStageOptions) isStageOptions() {}

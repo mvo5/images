@@ -7,6 +7,8 @@ import (
 
 type UsersStageOptions struct {
 	Users map[string]UsersStageOptionsUser `json:"users"`
+
+	AltRoot string `json:"alt_root"`
 }
 
 func (UsersStageOptions) isStageOptions() {}

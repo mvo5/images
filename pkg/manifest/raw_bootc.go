@@ -36,6 +36,10 @@ type RawBootcImage struct {
 	// will most likely change over time.
 	// See https://github.com/containers/bootc/pull/267
 	Users []users.User
+
+	// SELinux policy, when set it enables the labeling of the tree with the
+	// selected profile
+	SElinux string
 }
 
 func (p RawBootcImage) Filename() string {
@@ -88,13 +92,6 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 		panic(fmt.Errorf("no partition table in live image"))
 	}
 
-	if len(p.Users) > 1 {
-		panic(fmt.Errorf("raw bootc image only supports a single root key for user customization, got %v", p.Users))
-	}
-	if len(p.Users) == 1 && p.Users[0].Name != "root" {
-		panic(fmt.Errorf("raw bootc image only supports the root user, got %v", p.Users))
-	}
-
 	for _, stage := range osbuild.GenImagePrepareStages(pt, p.filename, osbuild.PTSfdisk) {
 		pipeline.AddStage(stage)
 	}
@@ -121,15 +118,43 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	}
 	pipeline.AddStage(st)
 
-	// XXX: there is no way right now to support any customizations,
-	// we cannot touch the filesystem after bootc installed it or
-	// we risk messing with it's selinux labels or future fsverity
-	// magic.  Once we have a mechanism like --copy-etc from
-	// https://github.com/containers/bootc/pull/267 things should
-	// be a bit better
-
 	for _, stage := range osbuild.GenImageFinishStages(pt, p.filename) {
 		pipeline.AddStage(stage)
+	}
+
+	// customize the image
+	if len(p.Users) > 0 {
+		usersStage, err := osbuild.GenUsersStage(p.Users, false)
+		if err != nil {
+			panic(fmt.Sprintf("user stage failed %v", err))
+		}
+		devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable)
+		if err != nil {
+			panic(fmt.Sprintf("gen devices stage failed %v", err))
+		}
+		mounts = append(mounts, *osbuild.NewOSTreeDeploymentMountDefault("ostree.deployment"))
+
+		usersStage.Mounts = mounts
+		usersStage.Devices = devices
+		usersOptions := usersStage.Options.(*osbuild.UsersStageOptions)
+		// XXX: ?
+		usersOptions.AltRoot = "mount://part4/"
+		pipeline.AddStage(usersStage)
+
+		// add selinux
+		if p.SElinux != "" {
+			opts := &osbuild.SELinuxStageOptions{
+				FileContexts: fmt.Sprintf("etc/selinux/%s/contexts/files/file_contexts", p.SElinux),
+				ExcludePaths: []string{"/sysroot"},
+
+				// XXX: ?
+				AltRoot: "mount://part4/",
+			}
+			selinuxStage := osbuild.NewSELinuxStage(opts)
+			selinuxStage.Mounts = mounts
+			selinuxStage.Devices = devices
+			pipeline.AddStage(selinuxStage)
+		}
 	}
 
 	return pipeline

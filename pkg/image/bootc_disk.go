@@ -31,6 +31,10 @@ type BootcDiskImage struct {
 	// will most likely change over time.
 	// See https://github.com/containers/bootc/pull/267
 	Users []users.User
+
+	// SELinux policy, when set it enables the labeling of the tree with the
+	// selected profile
+	SElinux string
 }
 
 func NewBootcDiskImage(container container.SourceSpec) *BootcDiskImage {
@@ -58,6 +62,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 	baseImage.PartitionTable = img.PartitionTable
 	baseImage.Users = img.Users
 	baseImage.KernelOptionsAppend = img.KernelOptionsAppend
+	baseImage.SElinux = img.SElinux
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on

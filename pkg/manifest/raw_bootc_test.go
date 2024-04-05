@@ -1,13 +1,11 @@
 package manifest_test
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/internal/assertx"
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/testdisk"
 	"github.com/osbuild/images/pkg/container"
@@ -76,7 +74,7 @@ func TestRawBootcImageSerializeMountsValidated(t *testing.T) {
 	})
 }
 
-func TestRawBootcImageSerializeValidatesUsers(t *testing.T) {
+func TestRawBootcImageSerializeCreateUsers(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
 	build := manifest.NewBuildFromContainer(&mani, runner, nil, nil)
@@ -86,28 +84,24 @@ func TestRawBootcImageSerializeValidatesUsers(t *testing.T) {
 	rawBootcPipeline.SerializeStart(nil, []container.Spec{{Source: "foo"}}, nil)
 
 	for _, tc := range []struct {
-		users       []users.User
-		expectedErr string
+		users              []users.User
+		expectedUsersStage bool
 	}{
-		// good
-		{nil, ""},
-		{[]users.User{{Name: "root"}}, ""},
-		{[]users.User{{Name: "root", Key: common.ToPtr("some-key")}}, ""},
-		// bad
-		{[]users.User{{Name: "foo"}},
-			"raw bootc image only supports the root user, got.*"},
-		{[]users.User{{Name: "root"}, {Name: "foo"}},
-			"raw bootc image only supports a single root key for user customization, got.*"},
+		{nil, false},
+		{[]users.User{{Name: "root"}}, true},
+		{[]users.User{{Name: "foo"}}, true},
+		{[]users.User{{Name: "root"}, {Name: "foo"}}, true},
 	} {
 		rawBootcPipeline.Users = tc.users
 
-		if tc.expectedErr == "" {
-			rawBootcPipeline.Serialize()
+		pipeline := rawBootcPipeline.Serialize()
+		usersSt := manifest.FindStage("org.osbuild.users", pipeline.Stages)
+		if tc.expectedUsersStage {
+			require.NotNil(t, usersSt)
+			usersOpts := usersSt.Options.(*osbuild.UsersStageOptions)
+			assert.Equal(t, usersOpts.AltRoot, "mount:///")
 		} else {
-			expectedErr := regexp.MustCompile(tc.expectedErr)
-			assertx.PanicsWithErrorRegexp(t, expectedErr, func() {
-				rawBootcPipeline.Serialize()
-			})
+			require.Nil(t, usersSt)
 		}
 	}
 }
