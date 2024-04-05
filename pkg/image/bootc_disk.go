@@ -31,6 +31,10 @@ type BootcDiskImage struct {
 	// will most likely change over time.
 	// See https://github.com/containers/bootc/pull/267
 	Users []users.User
+
+	// SELinux policy, when set it enables the labeling of the tree with the
+	// selected profile
+	SElinux string
 }
 
 func NewBootcDiskImage(container container.SourceSpec) *BootcDiskImage {
@@ -54,22 +58,23 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 
 	// TODO: no support for customization right now but minimal support
 	// for root ssh keys is supported
-	baseImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
-	baseImage.PartitionTable = img.PartitionTable
-	baseImage.Users = img.Users
-	baseImage.KernelOptionsAppend = img.KernelOptionsAppend
+	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
+	rawImage.PartitionTable = img.PartitionTable
+	rawImage.Users = img.Users
+	rawImage.KernelOptionsAppend = img.KernelOptionsAppend
+	rawImage.SElinux = img.SElinux
 
 	// In BIB, we export multiple images from the same pipeline so we use the
 	// filename as the basename for each export and set the extensions based on
 	// each file format.
 	fileBasename := img.Filename
-	baseImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
+	rawImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
 
-	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, baseImage)
+	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImage)
 	qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
 
-	vmdkPipeline := manifest.NewVMDK(hostPipeline, baseImage)
+	vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImage)
 	vmdkPipeline.SetFilename(fmt.Sprintf("%s.vmdk", fileBasename))
 
 	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
