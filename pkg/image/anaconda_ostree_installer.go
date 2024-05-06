@@ -95,6 +95,12 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 			"org.fedoraproject.Anaconda.Modules.Security",
 		)
 	}
+	if len(img.Users) > 0 || len(img.Groups) > 0 {
+		img.AdditionalAnacondaModules = append(
+			img.AdditionalAnacondaModules,
+			"org.fedoraproject.Anaconda.Modules.Users",
+		)
+	}
 	anacondaPipeline.AdditionalDrivers = img.AdditionalDrivers
 
 	rootfsImagePipeline := manifest.NewISORootfsImg(buildPipeline, anacondaPipeline)

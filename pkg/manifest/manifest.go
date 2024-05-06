@@ -192,6 +192,12 @@ func (m Manifest) GetExports() []string {
 	return exports
 }
 
+// UseInTestingOnlyPipelines returns the pipelines of the manifest
+func (m Manifest) TestingOnlyPipelines() []Pipeline {
+	// TODO: panic if called outside tests
+	return m.pipelines
+}
+
 // filterRepos returns a list of repositories that specify the given pipeline
 // name in their PackageSets list in addition to any global repositories
 // (global repositories are ones that do not specify any PackageSets).
