@@ -73,11 +73,12 @@ type OtkGenPartitionInput struct {
 }
 
 type OtkPartOptions struct {
-	Uefi *OtkPartUEFI `json:"uefi"`
-	Bios bool         `json:"bios"`
+	UEFI *OtkPartUEFI `json:"uefi"`
+	BIOS bool         `json:"bios"`
 	// XXX: enum?
 	Type string `json:"type"`
 	Size string `json:"size"`
+	UUID string `json:"uuid"`
 
 	SectorSize uint64 `json:"sector_size"`
 }
@@ -123,25 +124,81 @@ type OtkGenPartConstOutput struct {
 }
 
 func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
+	// XXX: implement me
 	return nil
 }
 
-func run(r io.Reader) (*OtkGenPartitionsOutput, error) {
+func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.PartitionTable, error) {
+	pt := &disk.PartitionTable{
+		UUID:       input.Options.UUID,
+		Type:       input.Options.Type,
+		SectorSize: input.Options.SectorSize,
+	}
+	if input.Options.BIOS {
+		if len(pt.Partitions) > 0 {
+			panic("internal error: bios partition *must* go first")
+		}
+		pt.Partitions = append(pt.Partitions, disk.Partition{
+			Size:     1 * common.MebiByte,
+			Bootable: true,
+			Type:     disk.BIOSBootPartitionGUID,
+			UUID:     disk.BIOSBootPartitionUUID,
+		})
+	}
+	if input.Options.UEFI.Size != "" {
+		uintSize, err := common.DataSizeToUint64(input.Options.UEFI.Size)
+		if err != nil {
+			return nil, err
+		}
+		if uintSize > 0 {
+			pt.Partitions = append(pt.Partitions, disk.Partition{
+				Size: uintSize,
+				Type: disk.EFISystemPartitionGUID,
+				UUID: disk.EFISystemPartitionUUID,
+				Payload: &disk.Filesystem{
+					Type:         "vfat",
+					UUID:         disk.EFIFilesystemUUID,
+					Mountpoint:   "/boot/efi",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			})
+		}
+	}
+
+	for _, part := range input.Partitions {
+		uintSize, err := common.DataSizeToUint64(part.Size)
+		if err != nil {
+			return nil, err
+		}
+		pt.Partitions = append(pt.Partitions, disk.Partition{
+			Size: uintSize,
+			// XXX: support lvm,luks here
+			Payload: &disk.Filesystem{
+				Label:      part.Label,
+				Type:       part.Type,
+				Mountpoint: part.Mountpoint,
+			},
+		})
+	}
+
+	return pt, nil
+}
+
+func run(r io.Reader, rng *rand.Rand) (*OtkGenPartitionsOutput, error) {
 	var genPartInput OtkGenPartitionInput
 	if err := json.NewDecoder(r).Decode(&genPartInput); err != nil {
 		return nil, err
 	}
 
-	rngSeed, err := cmdutil.SeedArgFor(&buildconfig.BuildConfig{}, "", "", "")
+	basePt, err := makePartitionTableFromOtkInput(&genPartInput)
 	if err != nil {
 		return nil, err
 	}
-	source := rand.NewSource(rngSeed)
-	// math/rand is good enough in this case
-	/* #nosec G404 */
-	rng := rand.New(source)
 
-	pt, err := disk.NewPartitionTable(&basePt, nil, 0, disk.DefaultPartitioningMode, nil, rng)
+	pt, err := disk.NewPartitionTable(basePt, nil, 0, disk.DefaultPartitioningMode, nil, rng)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +218,17 @@ func run(r io.Reader) (*OtkGenPartitionsOutput, error) {
 }
 
 func main() {
-	output, err := run(os.Stdin)
+	rngSeed, err := cmdutil.SeedArgFor(&buildconfig.BuildConfig{}, "", "", "")
+	if err != nil {
+		// XXX: FIXME! helper
+		panic(err)
+	}
+	source := rand.NewSource(rngSeed)
+	// math/rand is good enough in this case
+	/* #nosec G404 */
+	rng := rand.New(source)
+
+	output, err := run(os.Stdin, rng)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err.Error())
 		os.Exit(1)
