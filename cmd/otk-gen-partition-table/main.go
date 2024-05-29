@@ -71,8 +71,24 @@ type OtkGenPartConstOutput struct {
 }
 
 func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
-	// XXX: implement me
-	return nil
+	pm := make(map[string]OtkPublicPartition, len(pt.Partitions))
+	for _, part := range pt.Partitions {
+		switch pl := part.Payload.(type) {
+		case *disk.Filesystem:
+			switch pl.Mountpoint {
+			case "/":
+				pm["root"] = OtkPublicPartition{
+					UUID: pl.UUID,
+				}
+			case "/boot":
+				pm["boot"] = OtkPublicPartition{
+					UUID: pl.UUID,
+				}
+			}
+		}
+	}
+
+	return pm
 }
 
 func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.PartitionTable, error) {
