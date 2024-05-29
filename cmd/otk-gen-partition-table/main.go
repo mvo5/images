@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 
@@ -66,8 +67,35 @@ var basePt = disk.PartitionTable{
 	},
 }
 
-type otkGenPartitionInput struct {
-	TotalSize uint64 `json:"total_size"`
+type OtkGenPartitionInput struct {
+	Options    *OtkPartOptions `json:"options"`
+	Partitions []*OtkPartition `json:"partitions"`
+}
+
+type OtkPartOptions struct {
+	Uefi *OtkPartUEFI `json:"uefi"`
+	Bios bool         `json:"bios"`
+	// XXX: enum?
+	Type string `json:"type"`
+	Size string `json:"size"`
+
+	SectorSize uint64 `json:"sector_size"`
+}
+
+type OtkPartUEFI struct {
+	Size string `json:"size"`
+}
+
+type OtkPartition struct {
+	Name       string `json:"name"`
+	Mountpoint string `json:"mountpoint"`
+	Label      string `json:"label"`
+	Size       string `json:"size"`
+	Type       string `json:"type"`
+
+	// TODO: add sectorlvm,luks, see https://github.com/achilleas-k/images/pull/2#issuecomment-2136025471
+	// also add "uuid", "freq", more(?) so that users can override calculcated
+	// values in a controlled way
 }
 
 type otkGenPartitionsOutput struct {
@@ -75,43 +103,40 @@ type otkGenPartitionsOutput struct {
 	KernelOptsList []string             `json:"kernel_opts_list"`
 }
 
-func run() error {
-	var genPartInput otkGenPartitionInput
-	if err := json.NewDecoder(os.Stdin).Decode(&genPartInput); err != nil {
-		return err
+func run(r io.Reader) (*otkGenPartitionsOutput, error) {
+	var genPartInput OtkGenPartitionInput
+	if err := json.NewDecoder(r).Decode(&genPartInput); err != nil {
+		return nil, err
 	}
 
 	rngSeed, err := cmdutil.SeedArgFor(&buildconfig.BuildConfig{}, "", "", "")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	source := rand.NewSource(rngSeed)
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(source)
 
-	pt, err := disk.NewPartitionTable(&basePt, nil, genPartInput.TotalSize, disk.DefaultPartitioningMode, nil, rng)
+	pt, err := disk.NewPartitionTable(&basePt, nil, 0, disk.DefaultPartitioningMode, nil, rng)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	kernelOptions := osbuild.GenImageKernelOptions(pt)
-	otkPart := otkGenPartitionsOutput{
+	otkPart := &otkGenPartitionsOutput{
 		PartitionTable: pt,
 		KernelOptsList: kernelOptions,
 	}
-	ptJson, err := json.Marshal(otkPart)
-	if err != nil {
-		return fmt.Errorf("failed to martial partition table: %w\n", err)
-	}
 
-	fmt.Printf("%s\n", ptJson)
-	return nil
+	return otkPart, nil
 }
 
 func main() {
-	if err := run(); err != nil {
+	output, err := run(os.Stdin)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v", err.Error())
 		os.Exit(1)
 	}
+	fmt.Println(output)
 }
