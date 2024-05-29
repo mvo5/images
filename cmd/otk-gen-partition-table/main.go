@@ -99,12 +99,35 @@ type OtkPartition struct {
 	// values in a controlled way
 }
 
-type otkGenPartitionsOutput struct {
-	PartitionTable *disk.PartitionTable `json:"internal-partition-table"`
-	KernelOptsList []string             `json:"kernel_opts_list"`
+// XXX: review all struct names and make them consistent (OtkOutput*?)
+type OtkGenPartitionsOutput struct {
+	Const OtkGenPartConstOutput `json:"const"`
 }
 
-func run(r io.Reader) (*otkGenPartitionsOutput, error) {
+type OtkGenPartitionsInternal struct {
+	PartitionTable *disk.PartitionTable `json:"internal-partition-table"`
+}
+
+// "exported" view of partitions, this is an API so only add things here
+// that are really needed and unlikely to change
+type OtkPublicPartition struct {
+	// not a UUID type because fat UUIDs are not compliant
+	UUID string `json:"uuid"`
+}
+
+type OtkGenPartConstOutput struct {
+	KernelOptsList []string `json:"kernel_opts_list"`
+	// we generate this for convenience for otk users, so that they
+	// can write, e.g. "filesystem.partition_map.boot.uuid"
+	PartitionMap map[string]OtkPublicPartition `json:"partition_map"`
+	Internal     OtkGenPartitionsInternal      `json:"internal"`
+}
+
+func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
+	return nil
+}
+
+func run(r io.Reader) (*OtkGenPartitionsOutput, error) {
 	var genPartInput OtkGenPartitionInput
 	if err := json.NewDecoder(r).Decode(&genPartInput); err != nil {
 		return nil, err
@@ -125,9 +148,14 @@ func run(r io.Reader) (*otkGenPartitionsOutput, error) {
 	}
 
 	kernelOptions := osbuild.GenImageKernelOptions(pt)
-	otkPart := &otkGenPartitionsOutput{
-		PartitionTable: pt,
-		KernelOptsList: kernelOptions,
+	otkPart := &OtkGenPartitionsOutput{
+		Const: OtkGenPartConstOutput{
+			Internal: OtkGenPartitionsInternal{
+				PartitionTable: pt,
+			},
+			KernelOptsList: kernelOptions,
+			PartitionMap:   makePartMap(pt),
+		},
 	}
 
 	return otkPart, nil
