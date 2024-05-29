@@ -72,6 +72,9 @@ type OtkGenPartConstOutput struct {
 
 func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
 	pm := make(map[string]OtkPublicPartition, len(pt.Partitions))
+	// TODO: think about exposing more partitions, if we do, what labels
+	// would we use? OtkPartition.Name? what about clashes with
+	// "{r,b}oot" then?
 	for _, part := range pt.Partitions {
 		switch pl := part.Payload.(type) {
 		case *disk.Filesystem:
@@ -150,6 +153,9 @@ func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.Partitio
 	return pt, nil
 }
 
+// Missing:
+// 1. customizations^Wmodifications, e.g. extra partiton tables
+// 2. refactor, make this nicer, it sucks a bit right now
 func run(r io.Reader, rng *rand.Rand) (*OtkGenPartitionsOutput, error) {
 	var genPartInput OtkGenPartitionInput
 	if err := json.NewDecoder(r).Decode(&genPartInput); err != nil {
