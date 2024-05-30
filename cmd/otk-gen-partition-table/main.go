@@ -202,5 +202,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v", err.Error())
 		os.Exit(1)
 	}
-	fmt.Println(output)
+
+	outputJson, err := json.Marshal(output)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v", err.Error())
+		os.Exit(1)
+	}
+	fmt.Print(string(outputJson))
 }
