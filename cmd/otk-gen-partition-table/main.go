@@ -22,10 +22,9 @@ type OtkGenPartitionInput struct {
 type OtkPartOptions struct {
 	UEFI *OtkPartUEFI `json:"uefi"`
 	BIOS bool         `json:"bios"`
-	// XXX: enum?
-	Type string `json:"type"`
-	Size string `json:"size"`
-	UUID string `json:"uuid"`
+	Type string       `json:"type"`
+	Size string       `json:"size"`
+	UUID string       `json:"uuid"`
 
 	SectorSize uint64 `json:"sector_size"`
 }
