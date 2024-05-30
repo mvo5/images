@@ -52,7 +52,7 @@ type OtkGenPartitionsOutput struct {
 }
 
 type OtkGenPartitionsInternal struct {
-	PartitionTable *disk.PartitionTable `json:"internal-partition-table"`
+	PartitionTable *disk.PartitionTable `json:"partition-table"`
 }
 
 // "exported" view of partitions, this is an API so only add things here
