@@ -39,10 +39,12 @@ type OtkPartition struct {
 	Label      string `json:"label"`
 	Size       string `json:"size"`
 	Type       string `json:"type"`
+	UUID       string `json:"uuid"`
+	FSMntOps   string `json:"fs_mntops"`
+	FSFreq     uint64 `json:"fs_freq"`
+	FSPassNo   uint64 `json:"fs_passno"`
 
 	// TODO: add sectorlvm,luks, see https://github.com/achilleas-k/images/pull/2#issuecomment-2136025471
-	// also add "uuid", "freq", more(?) so that users can override calculcated
-	// values in a controlled way
 }
 
 // XXX: review all struct names and make them consistent (OtkOutput*?)
@@ -142,9 +144,13 @@ func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.Partitio
 			Size: uintSize,
 			// XXX: support lvm,luks here
 			Payload: &disk.Filesystem{
-				Label:      part.Label,
-				Type:       part.Type,
-				Mountpoint: part.Mountpoint,
+				Label:        part.Label,
+				Type:         part.Type,
+				UUID:         part.UUID,
+				Mountpoint:   part.Mountpoint,
+				FSTabOptions: part.FSMntOps,
+				FSTabFreq:    part.FSFreq,
+				FSTabPassNo:  part.FSPassNo,
 			},
 		})
 	}
