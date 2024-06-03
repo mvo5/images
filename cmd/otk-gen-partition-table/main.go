@@ -14,26 +14,26 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-type OtkGenPartitionInput struct {
-	Options    *OtkPartOptions `json:"options"`
-	Partitions []*OtkPartition `json:"partitions"`
+type OtkPartInput struct {
+	Options    *OtkPartInputOptions     `json:"options"`
+	Partitions []*OtkPartInputPartition `json:"partitions"`
 }
 
-type OtkPartOptions struct {
-	UEFI *OtkPartUEFI `json:"uefi"`
-	BIOS bool         `json:"bios"`
-	Type string       `json:"type"`
-	Size string       `json:"size"`
-	UUID string       `json:"uuid"`
+type OtkPartInputOptions struct {
+	UEFI *OtkPartInputUEFI `json:"uefi"`
+	BIOS bool              `json:"bios"`
+	Type string            `json:"type"`
+	Size string            `json:"size"`
+	UUID string            `json:"uuid"`
 
 	SectorSize uint64 `json:"sector_size"`
 }
 
-type OtkPartUEFI struct {
+type OtkPartInputUEFI struct {
 	Size string `json:"size"`
 }
 
-type OtkPartition struct {
+type OtkPartInputPartition struct {
 	Name       string `json:"name"`
 	Mountpoint string `json:"mountpoint"`
 	Label      string `json:"label"`
@@ -47,32 +47,31 @@ type OtkPartition struct {
 	// TODO: add sectorlvm,luks, see https://github.com/achilleas-k/images/pull/2#issuecomment-2136025471
 }
 
-// XXX: review all struct names and make them consistent (OtkOutput*?)
-type OtkGenPartitionsOutput struct {
-	Const OtkGenPartConstOutput `json:"const"`
+type OtkPartOutput struct {
+	Const OtkPartOutputConst `json:"const"`
 }
 
-type OtkGenPartitionsInternal struct {
-	PartitionTable *disk.PartitionTable `json:"partition-table"`
+type OtkPartOutputConst struct {
+	KernelOptsList []string `json:"kernel_opts_list"`
+	// we generate this for convenience for otk users, so that they
+	// can write, e.g. "filesystem.partition_map.boot.uuid"
+	PartitionMap map[string]OtkPartOutputPartition `json:"partition_map"`
+	Internal     OtkPartOutputInternal             `json:"internal"`
 }
 
 // "exported" view of partitions, this is an API so only add things here
 // that are really needed and unlikely to change
-type OtkPublicPartition struct {
+type OtkPartOutputPartition struct {
 	// not a UUID type because fat UUIDs are not compliant
 	UUID string `json:"uuid"`
 }
 
-type OtkGenPartConstOutput struct {
-	KernelOptsList []string `json:"kernel_opts_list"`
-	// we generate this for convenience for otk users, so that they
-	// can write, e.g. "filesystem.partition_map.boot.uuid"
-	PartitionMap map[string]OtkPublicPartition `json:"partition_map"`
-	Internal     OtkGenPartitionsInternal      `json:"internal"`
+type OtkPartOutputInternal struct {
+	PartitionTable *disk.PartitionTable `json:"partition-table"`
 }
 
-func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
-	pm := make(map[string]OtkPublicPartition, len(pt.Partitions))
+func makePartMap(pt *disk.PartitionTable) map[string]OtkPartOutputPartition {
+	pm := make(map[string]OtkPartOutputPartition, len(pt.Partitions))
 	// TODO: think about exposing more partitions, if we do, what labels
 	// would we use? OtkPartition.Name? what about clashes with
 	// "{r,b}oot" then?
@@ -81,11 +80,11 @@ func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
 		case *disk.Filesystem:
 			switch pl.Mountpoint {
 			case "/":
-				pm["root"] = OtkPublicPartition{
+				pm["root"] = OtkPartOutputPartition{
 					UUID: pl.UUID,
 				}
 			case "/boot":
-				pm["boot"] = OtkPublicPartition{
+				pm["boot"] = OtkPartOutputPartition{
 					UUID: pl.UUID,
 				}
 			}
@@ -95,7 +94,7 @@ func makePartMap(pt *disk.PartitionTable) map[string]OtkPublicPartition {
 	return pm
 }
 
-func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.PartitionTable, error) {
+func makePartitionTableFromOtkInput(input *OtkPartInput) (*disk.PartitionTable, error) {
 	pt := &disk.PartitionTable{
 		UUID:       input.Options.UUID,
 		Type:       input.Options.Type,
@@ -161,7 +160,7 @@ func makePartitionTableFromOtkInput(input *OtkGenPartitionInput) (*disk.Partitio
 // Missing:
 // 1. customizations^Wmodifications, e.g. extra partiton tables
 // 2. refactor, make this nicer, it sucks a bit right now
-func genPartitionTable(genPartInput *OtkGenPartitionInput, rng *rand.Rand) (*OtkGenPartitionsOutput, error) {
+func genPartitionTable(genPartInput *OtkPartInput, rng *rand.Rand) (*OtkPartOutput, error) {
 	basePt, err := makePartitionTableFromOtkInput(genPartInput)
 	if err != nil {
 		return nil, err
@@ -173,9 +172,9 @@ func genPartitionTable(genPartInput *OtkGenPartitionInput, rng *rand.Rand) (*Otk
 	}
 
 	kernelOptions := osbuild.GenImageKernelOptions(pt)
-	otkPart := &OtkGenPartitionsOutput{
-		Const: OtkGenPartConstOutput{
-			Internal: OtkGenPartitionsInternal{
+	otkPart := &OtkPartOutput{
+		Const: OtkPartOutputConst{
+			Internal: OtkPartOutputInternal{
 				PartitionTable: pt,
 			},
 			KernelOptsList: kernelOptions,
@@ -195,7 +194,7 @@ func run(r io.Reader, w io.Writer) error {
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(rngSeed))
 
-	var genPartInput OtkGenPartitionInput
+	var genPartInput OtkPartInput
 	if err := json.NewDecoder(r).Decode(&genPartInput); err != nil {
 		return err
 	}
