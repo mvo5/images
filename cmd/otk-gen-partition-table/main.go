@@ -23,11 +23,11 @@ type Input struct {
 }
 
 type InputProperties struct {
-	UEFI InputUEFI `json:"uefi"`
-	BIOS bool      `json:"bios"`
-	Type string    `json:"type"`
-	Size string    `json:"size"`
-	UUID string    `json:"uuid"`
+	UEFI        InputUEFI `json:"uefi"`
+	BIOS        bool      `json:"bios"`
+	Type        string    `json:"type"`
+	DefaultSize string    `json:"default_size"`
+	UUID        string    `json:"uuid"`
 
 	SectorSize uint64 `json:"sector_size"`
 }
