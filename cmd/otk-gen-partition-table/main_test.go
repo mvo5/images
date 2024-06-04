@@ -11,16 +11,16 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 )
 
-var expectedInput = &genpart.OtkPartInput{
-	Options: &genpart.OtkPartInputOptions{
-		UEFI: &genpart.OtkPartInputUEFI{
+var expectedInput = &genpart.Input{
+	Options: &genpart.InputOptions{
+		UEFI: &genpart.InputUEFI{
 			Size: "1 GiB",
 		},
 		BIOS: true,
 		Type: "gpt",
 		Size: "10 GiB",
 	},
-	Partitions: []*genpart.OtkPartInputPartition{
+	Partitions: []*genpart.InputPartition{
 		{
 			Name:       "root",
 			Mountpoint: "/",
@@ -38,22 +38,22 @@ var expectedInput = &genpart.OtkPartInput{
 }
 
 func TestUnmarshalInput(t *testing.T) {
-	var otkInput genpart.OtkPartInput
+	var otkInput genpart.Input
 	err := json.Unmarshal([]byte(simplePartOptions), &otkInput)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedInput, &otkInput)
 }
 
 func TestUnmarshalOutput(t *testing.T) {
-	fakeOtkOutput := &genpart.OtkPartOutput{
-		Const: genpart.OtkPartOutputConst{
+	fakeOtkOutput := &genpart.Output{
+		Const: genpart.OutputConst{
 			KernelOptsList: []string{"root=UUID=1234"},
-			PartitionMap: map[string]genpart.OtkPartOutputPartition{
+			PartitionMap: map[string]genpart.OutputPartition{
 				"root": {
 					UUID: "12345",
 				},
 			},
-			Internal: genpart.OtkPartOutputInternal{
+			Internal: genpart.OutputInternal{
 				PartitionTable: &disk.PartitionTable{
 					Size: 911,
 					Partitions: []disk.Partition{
