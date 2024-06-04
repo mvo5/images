@@ -23,7 +23,7 @@ var partInputsComplete = `
     },
     "bios": true,
     "type": "gpt",
-    "size": "10 GiB"
+    "default_size": "10 GiB"
   },
   "partitions": [
     {
@@ -54,9 +54,9 @@ var expectedInput = &genpart.Input{
 		UEFI: genpart.InputUEFI{
 			Size: "1 GiB",
 		},
-		BIOS: true,
-		Type: "gpt",
-		Size: "10 GiB",
+		BIOS:        true,
+		Type:        "gpt",
+		DefaultSize: "10 GiB",
 	},
 	Partitions: []*genpart.InputPartition{
 		{
@@ -170,7 +170,7 @@ var partInputsSimple = `
     },
     "bios": true,
     "type": "gpt",
-    "size": "10 GiB"
+    "default_size": "10 GiB"
   },
   "partitions": [
     {
