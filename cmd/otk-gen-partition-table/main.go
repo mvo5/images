@@ -16,13 +16,13 @@ import (
 )
 
 type Input struct {
-	Options    InputOptions      `json:"options"`
+	Properties InputProperties   `json:"properties"`
 	Partitions []*InputPartition `json:"partitions"`
 
 	Modifications InputModifications `json:"modifications"`
 }
 
-type InputOptions struct {
+type InputProperties struct {
 	UEFI InputUEFI `json:"uefi"`
 	BIOS bool      `json:"bios"`
 	Type string    `json:"type"`
@@ -104,11 +104,11 @@ func makePartMap(pt *disk.PartitionTable) map[string]OutputPartition {
 
 func makePartitionTableFromOtkInput(input *Input) (*disk.PartitionTable, error) {
 	pt := &disk.PartitionTable{
-		UUID:       input.Options.UUID,
-		Type:       input.Options.Type,
-		SectorSize: input.Options.SectorSize,
+		UUID:       input.Properties.UUID,
+		Type:       input.Properties.Type,
+		SectorSize: input.Properties.SectorSize,
 	}
-	if input.Options.BIOS {
+	if input.Properties.BIOS {
 		if len(pt.Partitions) > 0 {
 			panic("internal error: bios partition *must* go first")
 		}
@@ -119,8 +119,8 @@ func makePartitionTableFromOtkInput(input *Input) (*disk.PartitionTable, error) 
 			UUID:     disk.BIOSBootPartitionUUID,
 		})
 	}
-	if input.Options.UEFI.Size != "" {
-		uintSize, err := common.DataSizeToUint64(input.Options.UEFI.Size)
+	if input.Properties.UEFI.Size != "" {
+		uintSize, err := common.DataSizeToUint64(input.Properties.UEFI.Size)
 		if err != nil {
 			return nil, err
 		}
