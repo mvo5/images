@@ -17,7 +17,7 @@ import (
 // see https://github.com/achilleas-k/images/pull/2#issuecomment-2136025471
 var partInputsComplete = `
 {
-  "options": {
+  "properties": {
     "uefi": {
       "size": "1 GiB"
     },
@@ -50,7 +50,7 @@ var partInputsComplete = `
 }`
 
 var expectedInput = &genpart.Input{
-	Options: genpart.InputOptions{
+	Properties: genpart.InputProperties{
 		UEFI: genpart.InputUEFI{
 			Size: "1 GiB",
 		},
@@ -164,7 +164,7 @@ func TestUnmarshalOutput(t *testing.T) {
 
 var partInputsSimple = `
 {
-  "options": {
+  "properties": {
     "uefi": {
       "size": "1 GiB"
     },
@@ -287,7 +287,7 @@ func TestGenPartitionTableMinimal(t *testing.T) {
 	// that it's complete and/or provide defaults (e.g. for "type" for
 	// partition and filesystem type)
 	inp := &genpart.Input{
-		Options: genpart.InputOptions{
+		Properties: genpart.InputProperties{
 			Type: "dos",
 		},
 		Partitions: []*genpart.InputPartition{
@@ -333,7 +333,7 @@ func TestGenPartitionTableMinimal(t *testing.T) {
 
 func TestGenPartitionTableCustomizationExtraMp(t *testing.T) {
 	inp := &genpart.Input{
-		Options: genpart.InputOptions{
+		Properties: genpart.InputProperties{
 			Type: "dos",
 		},
 		Partitions: []*genpart.InputPartition{
@@ -424,7 +424,7 @@ func TestGenPartitionTableCustomizationExtraMp(t *testing.T) {
 
 func TestGenPartitionTableCustomizationExtraMpPlusModificationPartitionMode(t *testing.T) {
 	inp := &genpart.Input{
-		Options: genpart.InputOptions{
+		Properties: genpart.InputProperties{
 			Type: "dos",
 		},
 		Partitions: []*genpart.InputPartition{
