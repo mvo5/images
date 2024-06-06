@@ -14,6 +14,9 @@ type Const struct {
 	// can write, e.g. "filesystem.partition_map.boot.uuid"
 	PartitionMap map[string]Partition `json:"partition_map"`
 	Internal     Internal             `json:"internal"`
+
+	// XXX: or diskname?
+	Filename string `json:"filename"`
 }
 
 // "exported" view of partitions, this is an API so only add things here

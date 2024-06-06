@@ -62,12 +62,10 @@ const expectedOutput = `{
 func TestIntegration(t *testing.T) {
 	pt := testdisk.MakeFakePartitionTable("/", "/boot", "/boot/efi")
 	input := mkdevmnt.Input{
-		Filename: "test.disk",
-		PartitionTable: otkpart.PartitionTable{
-			Const: otkpart.Const{
-				Internal: otkpart.Internal{
-					PartitionTable: pt,
-				},
+		Const: otkpart.Const{
+			Filename: "test.disk",
+			Internal: otkpart.Internal{
+				PartitionTable: pt,
 			},
 		},
 	}
