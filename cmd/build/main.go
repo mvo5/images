@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -181,24 +182,27 @@ func filterRepos(repos []rpmmd.RepoConfig, typeName string) []rpmmd.RepoConfig {
 	return filtered
 }
 
-func run() error {
+func run(stdout, stderr io.Writer, args []string) error {
+	flagset := flag.NewFlagSet(os.Args[0], 0)
+	flagset.SetOutput(stderr)
 	// common args
 	var outputDir, osbuildStore, rpmCacheRoot string
-	flag.StringVar(&outputDir, "output", ".", "artifact output directory")
-	flag.StringVar(&osbuildStore, "store", ".osbuild", "osbuild store for intermediate pipeline trees")
-	flag.StringVar(&rpmCacheRoot, "rpmmd", "/tmp/rpmmd", "rpm metadata cache directory")
+	flagset.StringVar(&outputDir, "output", ".", "artifact output directory")
+	flagset.StringVar(&osbuildStore, "store", ".osbuild", "osbuild store for intermediate pipeline trees")
+	flagset.StringVar(&rpmCacheRoot, "rpmmd", "/tmp/rpmmd", "rpm metadata cache directory")
 
 	// image selection args
 	var distroName, imgTypeName, configFile string
-	flag.StringVar(&distroName, "distro", "", "distribution (required)")
-	flag.StringVar(&imgTypeName, "image", "", "image type name (required)")
-	flag.StringVar(&configFile, "config", "", "build config file (required)")
-
-	flag.Parse()
+	flagset.StringVar(&distroName, "distro", "", "distribution (required)")
+	flagset.StringVar(&imgTypeName, "image", "", "image type name (required)")
+	flagset.StringVar(&configFile, "config", "", "build config file (required)")
+	if err := flagset.Parse(args); err != nil {
+		return err
+	}
 
 	if distroName == "" || imgTypeName == "" || configFile == "" {
-		flag.Usage()
-		os.Exit(1)
+		flagset.Usage()
+		return fmt.Errorf("need distro/image/config command line arguments")
 	}
 
 	testedRepoRegistry, err := reporegistry.NewTestedDefault()
@@ -273,7 +277,7 @@ func run() error {
 }
 
 func main() {
-	if err := run(); err != nil {
+	if err := run(os.Stdout, os.Stderr, os.Args[1:]); err != nil {
 		fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		os.Exit(1)
 	}
