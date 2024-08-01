@@ -42,14 +42,14 @@ func (o LUKS2CreateStageOptions) validate() error {
 	return nil
 }
 
-func NewLUKS2CreateStage(options *LUKS2CreateStageOptions, devices map[string]Device) *Stage {
+func NewLUKS2CreateStage(options *LUKS2CreateStageOptions, devices map[string]Device) (*Stage, error) {
 	if err := options.validate(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &Stage{
 		Type:    "org.osbuild.luks2.format",
 		Options: options,
 		Devices: devices,
-	}
+	}, nil
 }

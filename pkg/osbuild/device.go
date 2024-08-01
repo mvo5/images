@@ -19,7 +19,7 @@ type DeviceOptions interface {
 	isDeviceOptions()
 }
 
-func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage {
+func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) ([]*Stage, error) {
 	stages := make([]*Stage, 0)
 
 	genStages := func(e disk.Entity, path []disk.Entity) error {
@@ -27,7 +27,10 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 		switch ent := e.(type) {
 		case *disk.LUKSContainer:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
+			stageDevices, lastName, err := getDevices(path[:len(path)-1], filename, true)
+			if err != nil {
+				return err
+			}
 
 			// "org.osbuild.luks2.format" expects a "device" to create the VG on,
 			// thus rename the last device to "device"
@@ -35,7 +38,7 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 			delete(stageDevices, lastName)
 			stageDevices["device"] = lastDevice
 
-			stage := NewLUKS2CreateStage(
+			stage, err := NewLUKS2CreateStage(
 				&LUKS2CreateStageOptions{
 					UUID:       ent.UUID,
 					Passphrase: ent.Passphrase,
@@ -51,6 +54,9 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 					},
 				},
 				stageDevices)
+			if err != nil {
+				return err
+			}
 
 			stages = append(stages, stage)
 
@@ -64,7 +70,10 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
+			stageDevices, lastName, err := getDevices(path[:len(path)-1], filename, true)
+			if err != nil {
+				return err
+			}
 
 			// "org.osbuild.lvm2.create" expects a "device" to create the VG on,
 			// thus rename the last device to "device"
@@ -80,19 +89,21 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 				volumes[idx].Size = fmt.Sprintf("%dB", lv.Size)
 			}
 
-			stage := NewLVM2CreateStage(
+			stage, err := NewLVM2CreateStage(
 				&LVM2CreateStageOptions{
 					Volumes: volumes,
 				}, stageDevices)
-
+			if err != nil {
+				return err
+			}
 			stages = append(stages, stage)
 		}
 
 		return nil
 	}
 
-	_ = pt.ForEachEntity(genStages)
-	return stages
+	err := pt.ForEachEntity(genStages)
+	return stages, err
 }
 
 func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
@@ -104,7 +115,10 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 		switch ent := e.(type) {
 		case *disk.LUKSContainer:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
+			stageDevices, lastName, err := getDevices(path[:len(path)-1], filename, true)
+			if err != nil {
+				return err
+			}
 
 			lastDevice := stageDevices[lastName]
 			delete(stageDevices, lastName)
@@ -119,7 +133,10 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 			}
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
+			stageDevices, lastName, err := getDevices(path[:len(path)-1], filename, true)
+			if err != nil {
+				return err
+			}
 
 			// "org.osbuild.lvm2.metadata" expects a "device" to rename the VG,
 			// thus rename the last device to "device"
@@ -178,7 +195,7 @@ func deviceName(p disk.Entity) string {
 // The first returned value is a map of devices for the given path.
 // The second returned value is the name of the last device in the path. This is the device that should be used as the
 // source for the mount.
-func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string) {
+func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string, error) {
 	var pt *disk.PartitionTable
 
 	do := make(map[string]Device)
@@ -189,7 +206,7 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			pt = e
 		case *disk.Partition:
 			if pt == nil {
-				panic("path does not contain partition table; this is a programming error")
+				return nil, "", fmt.Errorf("internal error: path does not contain partition table")
 			}
 			lbopt := LoopbackDeviceOptions{
 				Filename:   filename,
@@ -217,7 +234,7 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			parent = name
 		}
 	}
-	return do, parent
+	return do, parent, nil
 }
 
 // pathEscape implements similar path escaping as used by systemd-escape
@@ -279,7 +296,10 @@ func GenMountsDevicesFromPT(filename string, pt *disk.PartitionTable) (string, [
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	var fsRootMntName string
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
-		stageDevices, leafDeviceName := getDevices(path, filename, false)
+		stageDevices, leafDeviceName, err := getDevices(path, filename, false)
+		if err != nil {
+			return err
+		}
 		mount, err := genOsbuildMount(leafDeviceName, mnt)
 		if err != nil {
 			return err

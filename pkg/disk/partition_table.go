@@ -297,7 +297,7 @@ func (pt *PartitionTable) findDirectoryEntityPath(dir string) []Entity {
 // and resizes the appropriate partitions such that they are at least the size
 // of the sum of their subdirectories plus their own sizes.
 // The function will panic if any of the directory paths are invalid.
-func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
+func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) error {
 
 	type mntSize struct {
 		entPath []Entity
@@ -309,7 +309,7 @@ func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
 	for dir, size := range dirSizeMap {
 		entPath := pt.findDirectoryEntityPath(dir)
 		if entPath == nil {
-			panic(fmt.Sprintf("EnsureDirectorySizes: invalid dir path %q", dir))
+			return fmt.Errorf("EnsureDirectorySizes: invalid dir path %q", dir)
 		}
 		mnt := entPath[0].(Mountable)
 		mountpoint := mnt.GetMountpoint()
@@ -324,6 +324,7 @@ func (pt *PartitionTable) EnsureDirectorySizes(dirSizeMap map[string]uint64) {
 	for _, es := range mntSizeMap {
 		resizeEntityBranch(es.entPath, es.newSize)
 	}
+	return nil
 }
 
 func (pt *PartitionTable) CreateMountpoint(mountpoint string, size uint64) (Entity, error) {
@@ -452,7 +453,7 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 // partitions. Adjusts the overall size of image to either the supplied value
 // in `size` or to the sum of all partitions if that is larger. Will grow the
 // root partition if there is any empty space. Returns the updated start point.
-func (pt *PartitionTable) relayout(size uint64) uint64 {
+func (pt *PartitionTable) relayout(size uint64) (uint64, error) {
 	// always reserve one extra sector for the GPT header
 	header := pt.HeaderSize()
 	footer := uint64(0)
@@ -482,7 +483,7 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	}
 
 	if rootIdx < 0 {
-		panic("no root filesystem found; this is a programming error")
+		return 0, fmt.Errorf("no root filesystem found; this is a programming error")
 	}
 
 	root := &pt.Partitions[rootIdx]
@@ -510,13 +511,13 @@ func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// to leave space for the footer, e.g. the secondary GPT header.
 	root.Size -= footer
 
-	return start
+	return start, nil
 }
 
 func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error {
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
-		panic("no root mountpoint for PartitionTable")
+		return fmt.Errorf("no root mountpoint for PartitionTable")
 	}
 
 	var vc MountpointCreator
@@ -530,7 +531,7 @@ func (pt *PartitionTable) createFilesystem(mountpoint string, size uint64) error
 	}
 
 	if vc == nil {
-		panic("could not find root volume container")
+		return fmt.Errorf("could not find root volume container")
 	}
 
 	newVol, err := vc.CreateMountpoint(mountpoint, 0)
@@ -690,7 +691,7 @@ func (pt *PartitionTable) ensureLVM() error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
-		panic("no root mountpoint for PartitionTable")
+		return fmt.Errorf("no root mountpoint for PartitionTable")
 	}
 
 	// we need a /boot partition to boot LVM, ensure one exists
@@ -721,7 +722,7 @@ func (pt *PartitionTable) ensureLVM() error {
 		// size and filesystem as the previous root partition
 		_, err := vg.CreateLogicalVolume("root", part.Size, filesystem)
 		if err != nil {
-			panic(fmt.Sprintf("Could not create LV: %v", err))
+			return fmt.Errorf("Could not create LV: %w", err)
 		}
 
 		// replace the top-level partition payload with the new volume group

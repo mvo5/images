@@ -298,7 +298,11 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		Size:     fmt.Sprintf("%d", p.PartitionTable.Size),
 	}))
 
-	for _, stage := range osbuild.GenMkfsStages(p.PartitionTable, filename) {
+	stages, err := osbuild.GenMkfsStages(p.PartitionTable, filename)
+	if err != nil {
+		panic(err)
+	}
+	for _, stage := range stages {
 		pipeline.AddStage(stage)
 	}
 

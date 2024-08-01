@@ -10,7 +10,7 @@ import (
 // GenMkfsStages generates a list of org.mkfs.* stages based on a
 // partition table description for a single device node
 // filename is the path to the underlying image file (to be used as a source for the loopback device)
-func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
+func GenMkfsStages(pt *disk.PartitionTable, filename string) ([]*Stage, error) {
 	stages := make([]*Stage, 0, len(pt.Partitions))
 
 	processedBtrfsPartitions := make(map[string]bool)
@@ -18,7 +18,10 @@ func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 		t := mnt.GetFSType()
 		var stage *Stage
 
-		stageDevices, lastName := getDevices(path, filename, true)
+		stageDevices, lastName, err := getDevices(path, filename, true)
+		if err != nil {
+			return err
+		}
 
 		// The last device in the chain must be named "device", because that's the device that mkfs stages run on.
 		// See their schema for reference.
@@ -44,7 +47,7 @@ func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 			// and mkfs it
 			btrfsPart := findBtrfsPartition(path)
 			if btrfsPart == nil {
-				panic(fmt.Sprintf("found btrfs subvolume without btrfs partition: %s", mnt.GetMountpoint()))
+				return fmt.Errorf("found btrfs subvolume without btrfs partition: %s", mnt.GetMountpoint())
 			}
 
 			// btrfs partitions can be shared between multiple subvolumes, so we need to make sure we only create
@@ -66,15 +69,15 @@ func GenMkfsStages(pt *disk.PartitionTable, filename string) []*Stage {
 			}
 			stage = NewMkfsExt4Stage(options, stageDevices)
 		default:
-			panic("unknown fs type " + t)
+			return fmt.Errorf("unknown fs type: %q", t)
 		}
 		stages = append(stages, stage)
 
 		return nil
 	}
 
-	_ = pt.ForEachMountable(genStage) // genStage always returns nil
-	return stages
+	err := pt.ForEachMountable(genStage) // genStage always returns nil
+	return stages, err
 }
 
 func findBtrfsPartition(path []disk.Entity) *disk.Btrfs {

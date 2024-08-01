@@ -13,27 +13,16 @@ import (
 
 type Input = otkdisk.Data
 
-func makeImagePrepareStages(inp Input, filename string) (stages []*osbuild.Stage, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("cannot generate image prepare stages: %v", r)
-		}
-	}()
-
-	// rhel7 uses PTSgdisk, if we ever need to support this, make this
-	// configurable
-	partTool := osbuild.PTSfdisk
-	stages = osbuild.GenImagePrepareStages(inp.Const.Internal.PartitionTable, inp.Const.Filename, partTool)
-	return stages, nil
-}
-
 func run(r io.Reader, w io.Writer) error {
 	var inp Input
 	if err := json.NewDecoder(r).Decode(&inp); err != nil {
 		return err
 	}
 
-	stages, err := makeImagePrepareStages(inp, inp.Const.Filename)
+	// rhel7 uses PTSgdisk, if we ever need to support this, make this
+	// configurable
+	partTool := osbuild.PTSfdisk
+	stages, err := osbuild.GenImagePrepareStages(inp.Const.Internal.PartitionTable, inp.Const.Filename, partTool)
 	if err != nil {
 		return fmt.Errorf("cannot make partition stages: %w", err)
 	}

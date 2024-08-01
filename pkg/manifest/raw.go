@@ -52,7 +52,11 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 		panic("no partition table in live image")
 	}
 
-	for _, stage := range osbuild.GenImagePrepareStages(pt, p.Filename(), p.PartTool) {
+	stages, err := osbuild.GenImagePrepareStages(pt, p.Filename(), p.PartTool)
+	if err != nil {
+		panic(err)
+	}
+	for _, stage := range stages {
 		pipeline.AddStage(stage)
 	}
 

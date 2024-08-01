@@ -35,14 +35,14 @@ type LogicalVolume struct {
 	Size string `json:"size"`
 }
 
-func NewLVM2CreateStage(options *LVM2CreateStageOptions, devices map[string]Device) *Stage {
+func NewLVM2CreateStage(options *LVM2CreateStageOptions, devices map[string]Device) (*Stage, error) {
 	if err := options.validate(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &Stage{
 		Type:    "org.osbuild.lvm2.create",
 		Options: options,
 		Devices: devices,
-	}
+	}, nil
 }

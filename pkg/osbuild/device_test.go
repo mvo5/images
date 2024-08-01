@@ -25,7 +25,8 @@ func TestGenDeviceCreationStages(t *testing.T) {
 	pt, err := disk.NewPartitionTable(&luks_lvm, []blueprint.FilesystemCustomization{}, 0, disk.AutoLVMPartitioningMode, make(map[string]uint64), rng)
 	assert.NoError(err)
 
-	stages := GenDeviceCreationStages(pt, "image.raw")
+	stages, err := GenDeviceCreationStages(pt, "image.raw")
+	assert.NoError(err)
 
 	// we should have two stages
 	assert.Equal(len(stages), 2)

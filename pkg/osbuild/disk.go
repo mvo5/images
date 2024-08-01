@@ -63,7 +63,7 @@ const (
 	PTSgdisk PartTool = "sgdisk"
 )
 
-func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool PartTool) []*Stage {
+func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool PartTool) ([]*Stage, error) {
 	stages := make([]*Stage, 0)
 
 	// create an empty file of the given size via `org.osbuild.truncate`
@@ -83,32 +83,42 @@ func GenImagePrepareStages(pt *disk.PartitionTable, filename string, partTool Pa
 		},
 	)
 
-	if partTool == PTSfdisk {
+	switch partTool {
+	case PTSfdisk:
 		sfOptions := sfdiskStageOptions(pt)
 		sfdisk := NewSfdiskStage(sfOptions, loopback)
 		stages = append(stages, sfdisk)
-	} else if partTool == PTSgdisk {
+	case PTSgdisk:
 		sgOptions := sgdiskStageOptions(pt)
 		sgdisk := NewSgdiskStage(sgOptions, loopback)
 		stages = append(stages, sgdisk)
-	} else {
-		panic("programming error: unknown PartTool: " + partTool)
+	default:
+		return nil, fmt.Errorf("programming error: unknown PartTool: %s", partTool)
 	}
 
 	// Generate all the needed "devices", like LUKS2 and LVM2
-	s := GenDeviceCreationStages(pt, filename)
+	s, err := GenDeviceCreationStages(pt, filename)
+	if err != nil {
+		return nil, err
+	}
 	stages = append(stages, s...)
 
 	// Generate all the filesystems on partitons and devices
-	s = GenMkfsStages(pt, filename)
+	s, err = GenMkfsStages(pt, filename)
+	if err != nil {
+		return nil, err
+	}
 	stages = append(stages, s...)
 
-	subvolStage := GenBtrfsSubVolStage(filename, pt)
+	subvolStage, err := GenBtrfsSubVolStage(filename, pt)
+	if err != nil {
+		return nil, err
+	}
 	if subvolStage != nil {
 		stages = append(stages, subvolStage)
 	}
 
-	return stages
+	return stages, nil
 }
 
 func GenImageFinishStages(pt *disk.PartitionTable, filename string) []*Stage {

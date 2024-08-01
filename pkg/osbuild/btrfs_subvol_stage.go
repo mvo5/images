@@ -23,7 +23,7 @@ func NewBtrfsSubVol(options *BtrfsSubVolOptions, devices *map[string]Device, mou
 	}
 }
 
-func GenBtrfsSubVolStage(filename string, pt *disk.PartitionTable) *Stage {
+func GenBtrfsSubVolStage(filename string, pt *disk.PartitionTable) (*Stage, error) {
 	var subvolumes []BtrfsSubVol
 
 	genStage := func(mnt disk.Mountable, path []disk.Entity) error {
@@ -40,15 +40,18 @@ func GenBtrfsSubVolStage(filename string, pt *disk.PartitionTable) *Stage {
 	_ = pt.ForEachMountable(genStage)
 
 	if len(subvolumes) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	devices, mounts := genBtrfsMountDevices(filename, pt)
+	devices, mounts, err := genBtrfsMountDevices(filename, pt)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewBtrfsSubVol(&BtrfsSubVolOptions{subvolumes}, devices, mounts)
+	return NewBtrfsSubVol(&BtrfsSubVolOptions{subvolumes}, devices, mounts), nil
 }
 
-func genBtrfsMountDevices(filename string, pt *disk.PartitionTable) (*map[string]Device, *[]Mount) {
+func genBtrfsMountDevices(filename string, pt *disk.PartitionTable) (*map[string]Device, *[]Mount, error) {
 	devices := make(map[string]Device, len(pt.Partitions))
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	genMounts := func(ent disk.Entity, path []disk.Entity) error {
@@ -56,7 +59,10 @@ func genBtrfsMountDevices(filename string, pt *disk.PartitionTable) (*map[string
 			return nil
 		}
 
-		stageDevices, name := getDevices(path, filename, false)
+		stageDevices, name, err := getDevices(path, filename, false)
+		if err != nil {
+			return err
+		}
 
 		mounts = append(mounts, *NewBtrfsMount(name, name, "/", "", ""))
 
@@ -67,7 +73,6 @@ func genBtrfsMountDevices(filename string, pt *disk.PartitionTable) (*map[string
 		return nil
 	}
 
-	_ = pt.ForEachEntity(genMounts)
-
-	return &devices, &mounts
+	err := pt.ForEachEntity(genMounts)
+	return &devices, &mounts, err
 }
