@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/BurntSushi/toml"
+	"github.com/moznion/go-optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -38,6 +39,8 @@ size = "20 GB"
 	assert.Equal(t, uint64(2147483648), bp.Customizations.Filesystem[0].MinSize)
 	assert.Equal(t, "/opt", bp.Customizations.Filesystem[1].Mountpoint)
 	assert.Equal(t, uint64(20*common.GB), bp.Customizations.Filesystem[1].MinSize)
+	assert.Equal(t, optional.None[string](), bp.Customizations.Hostname)
+	assert.Equal(t, optional.None[bool](), bp.Customizations.FIPS)
 
 	blueprint = `{
 		"name": "test",
