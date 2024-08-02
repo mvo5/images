@@ -23,6 +23,8 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/go-version v1.7.0
 	github.com/kolo/xmlrpc v0.0.0-20201022064351-38db28db192b
+	github.com/mvo5/go-optional v0.12.0
+	github.com/mvo5/go-optional v0.0.0-20240802155241-913bdbcf36ca
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0
 	github.com/oracle/oci-go-sdk/v54 v54.0.0
@@ -124,7 +126,6 @@ require (
 	github.com/moby/sys/user v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mvo5/go-optional v0.0.0-20240802155241-913bdbcf36ca // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/selinux v1.11.0 // indirect

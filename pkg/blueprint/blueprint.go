@@ -2,7 +2,7 @@
 package blueprint
 
 import (
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 )
 
 // A Blueprint is a high-level description of an image.

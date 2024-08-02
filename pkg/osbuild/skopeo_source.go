@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 )
 
 var skopeoDigestPattern = regexp.MustCompile(`sha256:[0-9a-f]{64}`)

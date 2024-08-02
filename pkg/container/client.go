@@ -26,7 +26,7 @@ import (
 	"github.com/containers/image/v5/transports"
 	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/image/v5/types"
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 	"github.com/opencontainers/go-digest"
 
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"

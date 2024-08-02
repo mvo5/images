@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 )
 
 type resolveResult struct {

@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 )

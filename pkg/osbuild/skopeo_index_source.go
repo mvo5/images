@@ -3,7 +3,7 @@ package osbuild
 import (
 	"fmt"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 )
 
 type SkopeoIndexSource struct {

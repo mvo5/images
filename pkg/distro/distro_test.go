@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"

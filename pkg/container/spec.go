@@ -2,7 +2,7 @@ package container
 
 import (
 	"github.com/containers/image/v5/docker/reference"
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/osbuild/images/pkg/arch"

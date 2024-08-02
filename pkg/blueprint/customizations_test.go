@@ -3,7 +3,7 @@ package blueprint
 import (
 	"testing"
 
-	"github.com/moznion/go-optional"
+	"github.com/mvo5/go-optional"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/pkg/customizations/anaconda"
