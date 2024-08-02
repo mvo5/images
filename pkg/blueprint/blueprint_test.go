@@ -148,3 +148,18 @@ func TestKernelNameCustomization(t *testing.T) {
 		}
 	}
 }
+
+func TestBlueprintParseOptional(t *testing.T) {
+	blueprint := `
+name = "test"
+
+[customizations]
+hostname = "my-hostname"
+`
+
+	var bp Blueprint
+	err := toml.Unmarshal([]byte(blueprint), &bp)
+	require.Nil(t, err)
+	assert.Equal(t, bp.Name, "test")
+	assert.Equal(t, optional.Some("my-hostname"), bp.Customizations.Hostname)
+}
