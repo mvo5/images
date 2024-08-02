@@ -6,11 +6,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/osbuild/images/internal/types"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 )
 
 type Customizations struct {
-	Hostname           *string                        `json:"hostname,omitempty" toml:"hostname,omitempty"`
+	Hostname           types.Option[string]           `json:"hostname,omitempty" toml:"hostname,omitempty"`
 	Kernel             *KernelCustomization           `json:"kernel,omitempty" toml:"kernel,omitempty"`
 	SSHKey             []SSHKeyCustomization          `json:"sshkey,omitempty" toml:"sshkey,omitempty"`
 	User               []UserCustomization            `json:"user,omitempty" toml:"user,omitempty"`
@@ -27,7 +28,7 @@ type Customizations struct {
 	Directories        []DirectoryCustomization       `json:"directories,omitempty" toml:"directories,omitempty"`
 	Files              []FileCustomization            `json:"files,omitempty" toml:"files,omitempty"`
 	Repositories       []RepositoryCustomization      `json:"repositories,omitempty" toml:"repositories,omitempty"`
-	FIPS               *bool                          `json:"fips,omitempty" toml:"fips,omitempty"`
+	FIPS               types.Option[bool]             `json:"fips,omitempty" toml:"fips,omitempty"`
 	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
 	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
 	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
@@ -197,7 +198,7 @@ func (c *Customizations) CheckAllowed(allowed ...string) error {
 	return nil
 }
 
-func (c *Customizations) GetHostname() *string {
+func (c *Customizations) GetHostname() types.Option[string] {
 	if c == nil {
 		return nil
 	}
@@ -383,10 +384,10 @@ func (c *Customizations) GetRepositories() ([]RepositoryCustomization, error) {
 }
 
 func (c *Customizations) GetFIPS() bool {
-	if c == nil || c.FIPS == nil {
+	if c == nil {
 		return false
 	}
-	return *c.FIPS
+	return c.FIPS.Unwrap()
 }
 
 func (c *Customizations) GetContainerStorage() *ContainerStorageCustomization {
