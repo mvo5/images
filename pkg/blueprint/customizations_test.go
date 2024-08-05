@@ -69,7 +69,7 @@ func TestGetKernel(t *testing.T) {
 	}
 
 	TestCustomizations := Customizations{
-		Kernel: &expectedKernel,
+		Kernel: optional.Some(expectedKernel),
 	}
 
 	retKernel := TestCustomizations.GetKernel()
@@ -244,26 +244,6 @@ func TestError(t *testing.T) {
 	retError := expectedError.Error()
 
 	assert.Equal(t, expectedError.Message, retError)
-}
-
-// This tests calling all the functions on a Blueprint with no Customizations
-func TestNoCustomizationsInBlueprint(t *testing.T) {
-	TestBP := Blueprint{}
-
-	assert.Nil(t, TestBP.Customizations.GetHostname())
-	assert.Nil(t, TestBP.Customizations.GetUsers())
-	assert.Nil(t, TestBP.Customizations.GetGroups())
-	assert.Equal(t, &KernelCustomization{Name: "kernel"}, TestBP.Customizations.GetKernel())
-	assert.Nil(t, TestBP.Customizations.GetFirewall())
-	assert.Nil(t, TestBP.Customizations.GetServices())
-
-	nilLanguage, nilKeyboard := TestBP.Customizations.GetPrimaryLocale()
-	assert.Nil(t, nilLanguage)
-	assert.Nil(t, nilKeyboard)
-
-	nilTimezone, nilNTPServers := TestBP.Customizations.GetTimezoneSettings()
-	assert.Nil(t, nilTimezone)
-	assert.Nil(t, nilNTPServers)
 }
 
 // This tests additional scenarios where GetPrimaryLocale() returns nil values

@@ -35,12 +35,12 @@ size = "20 GB"
 	err := toml.Unmarshal([]byte(blueprint), &bp)
 	require.Nil(t, err)
 	assert.Equal(t, bp.Name, "test")
-	assert.Equal(t, "/var", bp.Customizations.Filesystem[0].Mountpoint)
-	assert.Equal(t, uint64(2147483648), bp.Customizations.Filesystem[0].MinSize)
-	assert.Equal(t, "/opt", bp.Customizations.Filesystem[1].Mountpoint)
-	assert.Equal(t, uint64(20*common.GB), bp.Customizations.Filesystem[1].MinSize)
-	assert.Equal(t, optional.None[string](), bp.Customizations.Hostname)
-	assert.Equal(t, optional.None[bool](), bp.Customizations.FIPS)
+	assert.Equal(t, "/var", bp.Customizations.Unwrap().Filesystem[0].Mountpoint)
+	assert.Equal(t, uint64(2147483648), bp.Customizations.Unwrap().Filesystem[0].MinSize)
+	assert.Equal(t, "/opt", bp.Customizations.Unwrap().Filesystem[1].Mountpoint)
+	assert.Equal(t, uint64(20*common.GB), bp.Customizations.Unwrap().Filesystem[1].MinSize)
+	assert.Equal(t, optional.None[string](), bp.Customizations.Unwrap().Hostname)
+	assert.Equal(t, optional.None[bool](), bp.Customizations.Unwrap().FIPS)
 
 	blueprint = `{
 		"name": "test",
@@ -54,8 +54,8 @@ size = "20 GB"
 	err = json.Unmarshal([]byte(blueprint), &bp)
 	require.Nil(t, err)
 	assert.Equal(t, bp.Name, "test")
-	assert.Equal(t, "/opt", bp.Customizations.Filesystem[0].Mountpoint)
-	assert.Equal(t, uint64(20*common.GiB), bp.Customizations.Filesystem[0].MinSize)
+	assert.Equal(t, "/opt", bp.Customizations.Unwrap().Filesystem[0].Mountpoint)
+	assert.Equal(t, uint64(20*common.GiB), bp.Customizations.Unwrap().Filesystem[0].MinSize)
 }
 
 func TestGetPackages(t *testing.T) {
@@ -90,11 +90,11 @@ func TestKernelNameCustomization(t *testing.T) {
 				{Name: "openssh-server", Version: "*"}},
 			Groups: []Group{
 				{Name: "anaconda-tools"}},
-			Customizations: &Customizations{
-				Kernel: &KernelCustomization{
+			Customizations: optional.Some(Customizations{
+				Kernel: optional.Some(KernelCustomization{
 					Name: k,
-				},
-			},
+				}),
+			}),
 		}
 		Received_packages := bp.GetPackages()
 		assert.ElementsMatch(t, []string{"tmux-1.2", "openssh-server", "@anaconda-tools", k}, Received_packages)
@@ -136,11 +136,11 @@ func TestKernelNameCustomization(t *testing.T) {
 					{Name: "openssh-server", Version: "*"}},
 				Groups: []Group{
 					{Name: "anaconda-tools"}},
-				Customizations: &Customizations{
-					Kernel: &KernelCustomization{
+				Customizations: optional.Some(Customizations{
+					Kernel: optional.Some(KernelCustomization{
 						Name: ck,
-					},
-				},
+					}),
+				}),
 			}
 			Received_packages := bp.GetPackages()
 			// both kernels are included, even if they're the same
@@ -161,5 +161,5 @@ hostname = "my-hostname"
 	err := toml.Unmarshal([]byte(blueprint), &bp)
 	require.Nil(t, err)
 	assert.Equal(t, bp.Name, "test")
-	assert.Equal(t, optional.Some("my-hostname"), bp.Customizations.Hostname)
+	assert.Equal(t, optional.Some("my-hostname"), bp.Customizations.Unwrap().Hostname)
 }

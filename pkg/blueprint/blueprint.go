@@ -7,15 +7,15 @@ import (
 
 // A Blueprint is a high-level description of an image.
 type Blueprint struct {
-	Name           string          `json:"name" toml:"name"`
-	Description    string          `json:"description" toml:"description"`
-	Version        string          `json:"version,omitempty" toml:"version,omitempty"`
-	Packages       []Package       `json:"packages" toml:"packages"`
-	Modules        []Package       `json:"modules" toml:"modules"`
-	Groups         []Group         `json:"groups" toml:"groups"`
-	Containers     []Container     `json:"containers,omitempty" toml:"containers,omitempty"`
-	Customizations *Customizations `json:"customizations,omitempty" toml:"customizations"`
-	Distro         string          `json:"distro" toml:"distro"`
+	Name           string                          `json:"name" toml:"name"`
+	Description    string                          `json:"description" toml:"description"`
+	Version        string                          `json:"version,omitempty" toml:"version,omitempty"`
+	Packages       []Package                       `json:"packages" toml:"packages"`
+	Modules        []Package                       `json:"modules" toml:"modules"`
+	Groups         []Group                         `json:"groups" toml:"groups"`
+	Containers     []Container                     `json:"containers,omitempty" toml:"containers,omitempty"`
+	Customizations optional.Option[Customizations] `json:"customizations,omitempty" toml:"customizations"`
+	Distro         string                          `json:"distro" toml:"distro"`
 
 	// EXPERIMENTAL
 	Minimal bool `json:"minimal" toml:"minimal"`
@@ -59,8 +59,8 @@ func (b *Blueprint) GetPackagesEx(bootable bool) []string {
 	}
 
 	if bootable {
-		kc := b.Customizations.GetKernel()
-		kpkg := Package{Name: kc.Name}
+		kc := b.Customizations.Unwrap().Kernel
+		kpkg := Package{Name: kc.Unwrap().Name}
 		packages = append(packages, kpkg.ToNameVersion())
 	}
 

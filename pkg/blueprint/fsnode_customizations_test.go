@@ -344,8 +344,8 @@ group = -1
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, blueprint.Customizations)
-				assert.Len(t, blueprint.Customizations.Directories, len(tc.Want))
-				assert.EqualValues(t, tc.Want, blueprint.Customizations.GetDirectories())
+				assert.Len(t, blueprint.Customizations.Unwrap().Directories, len(tc.Want))
+				assert.EqualValues(t, tc.Want, blueprint.Customizations.Unwrap().Directories)
 			}
 		})
 	}
@@ -477,8 +477,8 @@ func TestDirectoryCustomizationUnmarshalJSON(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, blueprint.Customizations)
-				assert.Len(t, blueprint.Customizations.Directories, len(tc.Want))
-				assert.EqualValues(t, tc.Want, blueprint.Customizations.GetDirectories())
+				assert.Len(t, blueprint.Customizations.Unwrap().Directories, len(tc.Want))
+				assert.EqualValues(t, tc.Want, blueprint.Customizations.Unwrap().Directories)
 			}
 		})
 	}
@@ -836,8 +836,8 @@ group = -1
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, blueprint.Customizations)
-				assert.Len(t, blueprint.Customizations.Files, len(tc.Want))
-				assert.EqualValues(t, tc.Want, blueprint.Customizations.Files)
+				assert.Len(t, blueprint.Customizations.Unwrap().Files, len(tc.Want))
+				assert.EqualValues(t, tc.Want, blueprint.Customizations.Unwrap().Files)
 			}
 		})
 	}
@@ -970,8 +970,8 @@ func TestFileCustomizationUnmarshalJSON(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, blueprint.Customizations)
-				assert.Len(t, blueprint.Customizations.Files, len(tc.Want))
-				assert.EqualValues(t, tc.Want, blueprint.Customizations.Files)
+				assert.Len(t, blueprint.Customizations.Unwrap().Files, len(tc.Want))
+				assert.EqualValues(t, tc.Want, blueprint.Customizations.Unwrap().Files)
 			}
 		})
 	}
