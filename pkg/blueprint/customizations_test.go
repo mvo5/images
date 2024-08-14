@@ -154,13 +154,13 @@ func TestGetGroups(t *testing.T) {
 }
 
 func TestGetTimezoneSettings(t *testing.T) {
-	expectedTimezone := "testZONE"
+	expectedTimezone := types.Some("testZONE")
 	expectedNTPServers := []string{
 		"server",
 	}
 
 	expectedTimezoneCustomization := TimezoneCustomization{
-		Timezone:   &expectedTimezone,
+		Timezone:   expectedTimezone,
 		NTPServers: expectedNTPServers,
 	}
 
@@ -170,7 +170,7 @@ func TestGetTimezoneSettings(t *testing.T) {
 
 	retTimezone, retNTPServers := TestCustomizations.GetTimezoneSettings()
 
-	assert.Equal(t, expectedTimezone, *retTimezone)
+	assert.Equal(t, expectedTimezone, retTimezone)
 	assert.Equal(t, expectedNTPServers, retNTPServers)
 }
 
