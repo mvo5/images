@@ -25,14 +25,14 @@ func TestCheckAllowed(t *testing.T) {
 	expectedUsers := []UserCustomization{
 		{
 			Name:        "John",
-			Description: &Desc,
-			Password:    &Pass,
-			Key:         &Key,
-			Home:        &Home,
-			Shell:       &Shell,
+			Description: types.Some(Desc),
+			Password:    types.Some(Pass),
+			Key:         types.Some(Key),
+			Home:        types.Some(Home),
+			Shell:       types.Some(Shell),
 			Groups:      Groups,
-			UID:         &UID,
-			GID:         &GID,
+			UID:         types.Some(UID),
+			GID:         types.Some(GID),
 		},
 	}
 
@@ -90,7 +90,7 @@ func TestSSHKey(t *testing.T) {
 	}
 
 	retUser := TestCustomizations.GetUsers()[0].Name
-	retKey := *TestCustomizations.GetUsers()[0].Key
+	retKey := TestCustomizations.GetUsers()[0].Key.Unwrap()
 
 	assert.Equal(t, expectedSSHKeys[0].User, retUser)
 	assert.Equal(t, expectedSSHKeys[0].Key, retKey)
@@ -113,16 +113,16 @@ func TestGetUsers(t *testing.T) {
 	expectedUsers := []UserCustomization{
 		{
 			Name:               "John",
-			Description:        &Desc,
-			Password:           &Pass,
-			Key:                &Key,
-			Home:               &Home,
-			Shell:              &Shell,
+			Description:        types.Some(Desc),
+			Password:           types.Some(Pass),
+			Key:                types.Some(Key),
+			Home:               types.Some(Home),
+			Shell:              types.Some(Shell),
 			Groups:             Groups,
-			UID:                &UID,
-			GID:                &GID,
-			ExpireDate:         &ExpireDate,
-			ForcePasswordReset: &ForcePasswordReset,
+			UID:                types.Some(UID),
+			GID:                types.Some(GID),
+			ExpireDate:         types.Some(ExpireDate),
+			ForcePasswordReset: types.Some(ForcePasswordReset),
 		},
 	}
 
