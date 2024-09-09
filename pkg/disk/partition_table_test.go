@@ -125,17 +125,20 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			customizations: nil,
 			defaultType:    disk.FS_XFS,
 			expected: &disk.PartitionTable{
+				Size: 202 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
-						Size:     1 * common.MebiByte,
+						Start:    1 * common.MebiByte, // header
 						Bootable: true,
+						Size:     1 * common.MebiByte,
 						Type:     disk.BIOSBootPartitionGUID,
 						UUID:     disk.BIOSBootPartitionUUID,
 					},
 					{
-						Size: 200 * common.MebiByte,
-						Type: disk.EFISystemPartitionGUID,
-						UUID: disk.EFISystemPartitionUUID,
+						Start: 2 * common.MebiByte,
+						Size:  200 * common.MebiByte,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
 							UUID:         disk.EFIFilesystemUUID,
@@ -147,6 +150,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
+						Start:    202 * common.MebiByte,
 						Size:     0,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
@@ -166,7 +170,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					Filesystems: []blueprint.FilesystemCustomization{
 						{
 							Mountpoint: "/data",
-							MinSize:    20,
+							MinSize:    20 * common.MebiByte,
 							Label:      "data",
 							Type:       "ext4",
 						},
@@ -175,17 +179,20 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			defaultType: disk.FS_XFS,
 			expected: &disk.PartitionTable{
+				Size: 222 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
+						Start:    1 * common.MebiByte, // header
 						Size:     1 * common.MebiByte,
 						Bootable: true,
 						Type:     disk.BIOSBootPartitionGUID,
 						UUID:     disk.BIOSBootPartitionUUID,
 					},
 					{
-						Size: 200 * common.MebiByte,
-						Type: disk.EFISystemPartitionGUID,
-						UUID: disk.EFISystemPartitionUUID,
+						Start: 2 * common.MebiByte,
+						Size:  200 * common.MebiByte,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
 							UUID:         disk.EFIFilesystemUUID,
@@ -197,8 +204,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
-						Size:     20,
+						Start:    202 * common.MebiByte,
+						Size:     20 * common.MebiByte,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
@@ -211,7 +218,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
+						Start:    222 * common.MebiByte,
 						Size:     0,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
@@ -233,13 +240,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					Filesystems: []blueprint.FilesystemCustomization{
 						{
 							Mountpoint: "/",
-							MinSize:    50,
+							MinSize:    50 * common.MebiByte,
 							Label:      "root",
 							Type:       "xfs",
 						},
 						{
 							Mountpoint: "/home",
-							MinSize:    20,
+							MinSize:    20 * common.MebiByte,
 							Label:      "home",
 							Type:       "ext4",
 						},
@@ -248,17 +255,20 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			defaultType: disk.FS_EXT4,
 			expected: &disk.PartitionTable{
+				Size: 272 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
+						Start:    1 * common.MebiByte, // header
 						Size:     1 * common.MebiByte,
 						Bootable: true,
 						Type:     disk.BIOSBootPartitionGUID,
 						UUID:     disk.BIOSBootPartitionUUID,
 					},
 					{
-						Size: 200 * common.MebiByte,
-						Type: disk.EFISystemPartitionGUID,
-						UUID: disk.EFISystemPartitionUUID,
+						Start: 2 * common.MebiByte,
+						Size:  200 * common.MebiByte,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
 							UUID:         disk.EFIFilesystemUUID,
@@ -269,9 +279,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 							FSTabPassNo:  2,
 						},
 					},
+					// root is aligned to the end but not reindexed
 					{
-						Start:    0,
-						Size:     50,
+						Start:    222 * common.MebiByte,
+						Size:     50 * common.MebiByte,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
@@ -284,8 +295,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
-						Size:     20,
+						Start:    202 * common.MebiByte,
+						Size:     20 * common.MebiByte,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
@@ -306,13 +317,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					VolumeGroups: []blueprint.VGCustomization{
 						{
 							Name:    "testvg",
-							MinSize: 100,
+							MinSize: 100 * common.MebiByte,
 							LogicalVolumes: []blueprint.LVCustomization{
 								{
 									Name: "varloglv",
 									FilesystemCustomization: blueprint.FilesystemCustomization{
 										Mountpoint: "/var/log",
-										MinSize:    10,
+										MinSize:    10 * common.MebiByte,
 										Label:      "var-log",
 										Type:       "xfs",
 									},
@@ -321,7 +332,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 									Name: "rootlv",
 									FilesystemCustomization: blueprint.FilesystemCustomization{
 										Mountpoint: "/",
-										MinSize:    50,
+										MinSize:    50 * common.MebiByte,
 										Label:      "root",
 										Type:       "xfs",
 									},
@@ -330,7 +341,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 									Name: "datalv", // untyped logical volume
 									FilesystemCustomization: blueprint.FilesystemCustomization{
 										Mountpoint: "/data",
-										MinSize:    100,
+										MinSize:    100 * common.MebiByte,
 										Label:      "data",
 									},
 								},
@@ -341,17 +352,20 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			defaultType: disk.FS_EXT4,
 			expected: &disk.PartitionTable{
+				Size: 878 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
+						Start:    1 * common.MebiByte, // header
 						Size:     1 * common.MebiByte,
 						Bootable: true,
 						Type:     disk.BIOSBootPartitionGUID,
 						UUID:     disk.BIOSBootPartitionUUID,
 					},
 					{
-						Size: 200 * common.MebiByte,
-						Type: disk.EFISystemPartitionGUID,
-						UUID: disk.EFISystemPartitionUUID,
+						Start: 2 * common.MebiByte,
+						Size:  200 * common.MebiByte,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
 							UUID:         disk.EFIFilesystemUUID,
@@ -363,7 +377,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
+						Start:    202 * common.MebiByte,
 						Size:     512 * common.MiB,
 						Type:     disk.XBootLDRPartitionGUID,
 						Bootable: false,
@@ -377,8 +391,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
-						Size:     100,
+						Start:    714 * common.MebiByte,
+						Size:     164 * common.MebiByte, // 4 MiB LVM header, rounded to next extent
 						Type:     disk.LVMPartitionGUID,
 						Bootable: false,
 						Payload: &disk.LVMVolumeGroup{
@@ -387,7 +401,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
 									Name: "varloglv",
-									Size: 10,
+									Size: 10 * common.MebiByte,
 									Payload: &disk.Filesystem{
 										Label:        "var-log",
 										Type:         "xfs",
@@ -397,7 +411,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 								},
 								{
 									Name: "rootlv",
-									Size: 50,
+									Size: 50 * common.MebiByte,
 									Payload: &disk.Filesystem{
 										Label:        "root",
 										Type:         "xfs",
@@ -407,7 +421,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 								},
 								{
 									Name: "datalv",
-									Size: 100,
+									Size: 100 * common.MebiByte,
 									Payload: &disk.Filesystem{
 										Label:        "data",
 										Type:         "ext4", // the defaultType
@@ -426,7 +440,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				Btrfs: &blueprint.BtrfsCustomization{
 					Volumes: []blueprint.BtrfsVolumeCustomization{
 						{
-							MinSize: 230,
+							MinSize: 230 * common.MebiByte,
 							Subvolumes: []blueprint.BtrfsSubvolumeCustomization{
 								{
 									Name:       "subvol/root",
@@ -447,17 +461,20 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			defaultType: disk.FS_EXT4,
 			expected: &disk.PartitionTable{
+				Size: 944 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
+						Start:    1 * common.MebiByte, // header
 						Size:     1 * common.MebiByte,
 						Bootable: true,
 						Type:     disk.BIOSBootPartitionGUID,
 						UUID:     disk.BIOSBootPartitionUUID,
 					},
 					{
-						Size: 200 * common.MebiByte,
-						Type: disk.EFISystemPartitionGUID,
-						UUID: disk.EFISystemPartitionUUID,
+						Start: 2 * common.MebiByte, // header
+						Size:  200 * common.MebiByte,
+						Type:  disk.EFISystemPartitionGUID,
+						UUID:  disk.EFISystemPartitionUUID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
 							UUID:         disk.EFIFilesystemUUID,
@@ -469,7 +486,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
+						Start:    202 * common.MebiByte,
 						Size:     512 * common.MiB,
 						Type:     disk.XBootLDRPartitionGUID,
 						Bootable: false,
@@ -483,8 +500,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						},
 					},
 					{
-						Start:    0,
-						Size:     230,
+						Start:    714 * common.MebiByte,
+						Size:     230 * common.MebiByte,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Btrfs{

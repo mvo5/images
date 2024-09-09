@@ -344,7 +344,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 			case *LVMVolumeGroup:
 				rootlv := LVMLogicalVolume{
 					Name: "rootlv",
-					Size: 0, // TODO: grow to fill space
+					Size: 0,
 					Payload: &Filesystem{
 						Type:         defaultType.String(),
 						Label:        "root",
@@ -369,7 +369,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 			rootpart := Partition{
 				Type:     FilesystemDataGUID,
 				Bootable: false,
-				Size:     0, // TODO: grow to fill space
+				Size:     0,
 				Payload: &Filesystem{
 					Type:         defaultType.String(),
 					Label:        "root",
@@ -380,6 +380,8 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 			pt.Partitions = append(pt.Partitions, rootpart)
 		}
 	}
+
+	pt.relayout(customizations.MinSize)
 
 	return pt, nil
 }
