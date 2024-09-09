@@ -490,7 +490,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, platform.BOOT_HYBRID, 0, nil, rnd)
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, platform.BOOT_HYBRID, nil, rnd)
 
 			require.NoError(err)
 			require.Equal(tc.expected, pt)
