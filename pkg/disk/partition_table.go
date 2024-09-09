@@ -187,12 +187,29 @@ func mkESP(size uint64) Partition {
 	}
 }
 
+type CustomPartitionTableOptions struct {
+	// BootMode determines the types of boot-related partitions that are
+	// automatically added, BIOS boot (legacy), ESP (UEFI), or both (hybrid).
+	// If none, no boot-related partitions are created.
+	BootMode platform.BootMode
+
+	// DefaultFSType determines the filesystem type for automatically created
+	// filesystems and custom mountpoints that don't specify a type.
+	// None is only valid if no partitions are created and all mountpoints
+	// partitions specify a type.
+	DefaultFSType FSType
+}
+
 // NewCustomPartitionTable creates a partition table based almost entirely on the partitioning customizations from a blueprint.
-func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization, bootmode platform.BootMode, defaultType FSType, rng *rand.Rand) (*PartitionTable, error) {
+func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization, options *CustomPartitionTableOptions, rng *rand.Rand) (*PartitionTable, error) {
+	if options == nil {
+		// init options with empty struct to use defaults
+		options = &CustomPartitionTableOptions{}
+	}
 	// TODO: handle dos pt type
 
 	pt := &PartitionTable{}
-	switch bootmode {
+	switch options.BootMode {
 	case platform.BOOT_LEGACY:
 		// add BIOS boot partition
 		pt.Partitions = append(pt.Partitions, mkBIOSBoot())
@@ -205,15 +222,15 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 		pt.Partitions = append(pt.Partitions, mkESP(200*common.MebiByte))
 	case platform.BOOT_NONE:
 	default:
-		return nil, fmt.Errorf("invalid boot mode specified when generating partition table: %s", bootmode)
+		return nil, fmt.Errorf("invalid boot mode specified when generating partition table: %s", options.BootMode)
 	}
 
 	// The boot type will be the default only if it's a supported filesystem
 	// type for /boot (ext4 or xfs). Otherwise, we default to xfs.
 	var bootType FSType
-	switch defaultType {
+	switch options.DefaultFSType {
 	case FS_EXT4, FS_XFS:
-		bootType = defaultType
+		bootType = options.DefaultFSType
 	case FS_NONE:
 		return nil, fmt.Errorf("NewCustomPartitionTable requires a valid default filesystem type")
 	default:
@@ -224,7 +241,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 	// returns the arg value as is.
 	fsType := func(t string) string {
 		if t == "" {
-			return defaultType.String()
+			return options.DefaultFSType.String()
 		}
 		return t
 	}
@@ -346,7 +363,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 					Name: "rootlv",
 					Size: 0,
 					Payload: &Filesystem{
-						Type:         defaultType.String(),
+						Type:         options.DefaultFSType.String(),
 						Label:        "root",
 						Mountpoint:   "/",
 						FSTabOptions: "defaults",
@@ -371,7 +388,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 				Bootable: false,
 				Size:     0,
 				Payload: &Filesystem{
-					Type:         defaultType.String(),
+					Type:         options.DefaultFSType.String(),
 					Label:        "root",
 					Mountpoint:   "/",
 					FSTabOptions: "defaults",

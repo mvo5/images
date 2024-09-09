@@ -116,14 +116,14 @@ func TestNewCustomPartitionTable(t *testing.T) {
 
 	type testCase struct {
 		customizations *blueprint.PartitioningCustomization
-		defaultType    disk.FSType
+		options        *disk.CustomPartitionTableOptions
 		expected       *disk.PartitionTable
 	}
 
 	testCases := map[string]testCase{
 		"null": {
 			customizations: nil,
-			defaultType:    disk.FS_XFS,
+			options:        &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_XFS},
 			expected: &disk.PartitionTable{
 				Size: 202 * common.MebiByte,
 				Partitions: []disk.Partition{
@@ -177,7 +177,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			defaultType: disk.FS_XFS,
+			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_XFS},
 			expected: &disk.PartitionTable{
 				Size: 222 * common.MebiByte,
 				Partitions: []disk.Partition{
@@ -253,7 +253,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			defaultType: disk.FS_EXT4,
+			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
 			expected: &disk.PartitionTable{
 				Size: 272 * common.MebiByte,
 				Partitions: []disk.Partition{
@@ -350,7 +350,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			defaultType: disk.FS_EXT4,
+			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
 			expected: &disk.PartitionTable{
 				Size: 878 * common.MebiByte,
 				Partitions: []disk.Partition{
@@ -459,7 +459,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			defaultType: disk.FS_EXT4,
+			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
 			expected: &disk.PartitionTable{
 				Size: 944 * common.MebiByte,
 				Partitions: []disk.Partition{
@@ -531,7 +531,9 @@ func TestNewCustomPartitionTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, platform.BOOT_HYBRID, tc.defaultType, rnd)
+			options := tc.options
+			options.BootMode = platform.BOOT_HYBRID
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, options, rnd)
 
 			require.NoError(err)
 			require.Equal(tc.expected, pt)
