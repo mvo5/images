@@ -116,12 +116,14 @@ func TestNewCustomPartitionTable(t *testing.T) {
 
 	type testCase struct {
 		customizations *blueprint.PartitioningCustomization
+		defaultType    string
 		expected       *disk.PartitionTable
 	}
 
 	testCases := map[string]testCase{
 		"null": {
 			customizations: nil,
+			defaultType:    "xfs",
 			expected: &disk.PartitionTable{
 				Partitions: []disk.Partition{
 					{
@@ -149,7 +151,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
-							Type:         "ext4",
+							Type:         "xfs",
 							Label:        "root",
 							Mountpoint:   "/",
 							FSTabOptions: "defaults",
@@ -171,6 +173,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
+			defaultType: "xfs",
 			expected: &disk.PartitionTable{
 				Partitions: []disk.Partition{
 					{
@@ -213,7 +216,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
-							Type:         "ext4",
+							Type:         "xfs",
 							Label:        "root",
 							Mountpoint:   "/",
 							FSTabOptions: "defaults",
@@ -243,6 +246,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
+			defaultType: "ext4",
 			expected: &disk.PartitionTable{
 				Partitions: []disk.Partition{
 					{
@@ -327,6 +331,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
+			defaultType: "ext4",
 			expected: &disk.PartitionTable{
 				Partitions: []disk.Partition{
 					{
@@ -355,7 +360,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Type:     disk.XBootLDRPartitionGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
-							Type:         "xfs",
+							Type:         "ext4",
 							Label:        "boot",
 							Mountpoint:   "/boot",
 							FSTabOptions: "defaults",
@@ -422,6 +427,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
+			defaultType: "ext4",
 			expected: &disk.PartitionTable{
 				Partitions: []disk.Partition{
 					{
@@ -450,7 +456,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Type:     disk.XBootLDRPartitionGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
-							Type:         "xfs",
+							Type:         "ext4",
 							Label:        "boot",
 							Mountpoint:   "/boot",
 							FSTabOptions: "defaults",
@@ -490,7 +496,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, platform.BOOT_HYBRID, nil, rnd)
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, platform.BOOT_HYBRID, tc.defaultType, rnd)
 
 			require.NoError(err)
 			require.Equal(tc.expected, pt)
