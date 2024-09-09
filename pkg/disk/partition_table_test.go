@@ -326,6 +326,14 @@ func TestNewCustomPartitionTable(t *testing.T) {
 										Type:       "xfs",
 									},
 								},
+								{
+									Name: "datalv", // untyped logical volume
+									FilesystemCustomization: blueprint.FilesystemCustomization{
+										Mountpoint: "/data",
+										MinSize:    100,
+										Label:      "data",
+									},
+								},
 							},
 						},
 					},
@@ -394,6 +402,16 @@ func TestNewCustomPartitionTable(t *testing.T) {
 										Label:        "root",
 										Type:         "xfs",
 										Mountpoint:   "/",
+										FSTabOptions: "defaults",
+									},
+								},
+								{
+									Name: "datalv",
+									Size: 100,
+									Payload: &disk.Filesystem{
+										Label:        "data",
+										Type:         "ext4", // the defaultType
+										Mountpoint:   "/data",
 										FSTabOptions: "defaults",
 									},
 								},
