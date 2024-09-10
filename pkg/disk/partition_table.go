@@ -414,6 +414,7 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 	}
 
 	pt.relayout(customizations.MinSize)
+	pt.GenerateUUIDs(rng)
 
 	return pt, nil
 }
