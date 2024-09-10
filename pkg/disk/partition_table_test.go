@@ -123,8 +123,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 	testCases := map[string]testCase{
 		"null": {
 			customizations: nil,
-			options:        &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_XFS},
+			options: &disk.CustomPartitionTableOptions{
+				DefaultFSType:      disk.FS_XFS,
+				BootMode:           platform.BOOT_HYBRID,
+				PartitionTableType: "dos",
+			},
 			expected: &disk.PartitionTable{
+				Type: "dos",
 				Size: 202 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
@@ -177,8 +182,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_XFS},
+			options: &disk.CustomPartitionTableOptions{
+				DefaultFSType:      disk.FS_XFS,
+				BootMode:           platform.BOOT_HYBRID,
+				PartitionTableType: "dos",
+			},
 			expected: &disk.PartitionTable{
+				Type: "dos",
 				Size: 222 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
@@ -253,8 +263,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
+			options: &disk.CustomPartitionTableOptions{
+				DefaultFSType:      disk.FS_EXT4,
+				BootMode:           platform.BOOT_HYBRID,
+				PartitionTableType: "dos",
+			},
 			expected: &disk.PartitionTable{
+				Type: "dos",
 				Size: 272 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
@@ -350,8 +365,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
+			options: &disk.CustomPartitionTableOptions{
+				DefaultFSType:      disk.FS_EXT4,
+				BootMode:           platform.BOOT_HYBRID,
+				PartitionTableType: "dos",
+			},
 			expected: &disk.PartitionTable{
+				Type: "dos",
 				Size: 878 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
@@ -459,8 +479,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 				},
 			},
-			options: &disk.CustomPartitionTableOptions{DefaultFSType: disk.FS_EXT4},
+			options: &disk.CustomPartitionTableOptions{
+				DefaultFSType:      disk.FS_EXT4,
+				BootMode:           platform.BOOT_HYBRID,
+				PartitionTableType: "dos",
+			},
 			expected: &disk.PartitionTable{
+				Type: "dos",
 				Size: 944 * common.MebiByte,
 				Partitions: []disk.Partition{
 					{
@@ -531,9 +556,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			require := require.New(t)
 
-			options := tc.options
-			options.BootMode = platform.BOOT_HYBRID
-			pt, err := disk.NewCustomPartitionTable(tc.customizations, options, rnd)
+			pt, err := disk.NewCustomPartitionTable(tc.customizations, tc.options, rnd)
 
 			require.NoError(err)
 			require.Equal(tc.expected, pt)

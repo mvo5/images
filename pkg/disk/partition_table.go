@@ -188,6 +188,9 @@ func mkESP(size uint64) Partition {
 }
 
 type CustomPartitionTableOptions struct {
+	// PartitionTableType must be either "dos" or "gpt". Defaults to "gpt".
+	PartitionTableType string
+
 	// BootMode determines the types of boot-related partitions that are
 	// automatically added, BIOS boot (legacy), ESP (UEFI), or both (hybrid).
 	// If none, no boot-related partitions are created.
@@ -202,13 +205,25 @@ type CustomPartitionTableOptions struct {
 
 // NewCustomPartitionTable creates a partition table based almost entirely on the partitioning customizations from a blueprint.
 func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization, options *CustomPartitionTableOptions, rng *rand.Rand) (*PartitionTable, error) {
+	pt := &PartitionTable{}
+
 	if options == nil {
 		// init options with empty struct to use defaults
-		options = &CustomPartitionTableOptions{}
+		options = &CustomPartitionTableOptions{
+			PartitionTableType: "gpt",
+		}
 	}
-	// TODO: handle dos pt type
 
-	pt := &PartitionTable{}
+	switch options.PartitionTableType {
+	case "gpt", "dos":
+		pt.Type = options.PartitionTableType
+	case "":
+		// default to "gpt"
+		pt.Type = "gpt"
+	default:
+		return nil, fmt.Errorf("invalid partition table type specified when generating partition table: %s", options.PartitionTableType)
+	}
+
 	switch options.BootMode {
 	case platform.BOOT_LEGACY:
 		// add BIOS boot partition
