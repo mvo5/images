@@ -361,8 +361,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 										Type:       "xfs",
 									},
 								},
-								{
-									Name: "datalv", // untyped logical volume
+								{ // unnamed + untyped logical volume
 									FilesystemCustomization: blueprint.FilesystemCustomization{
 										Mountpoint: "/data",
 										MinSize:    100 * common.MebiByte,
@@ -381,7 +380,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			expected: &disk.PartitionTable{
 				Type: "gpt", // default when unspecified
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-				Size: 714*common.MebiByte + 112*common.MebiByte + 3*common.GibiByte + common.MebiByte, // start + size of last partition (VG) + footer
+				Size: 714*common.MebiByte + 116*common.MebiByte + 3*common.GibiByte + common.MebiByte, // start + size of last partition (VG) + footer
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * common.MebiByte, // header
@@ -423,7 +422,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    714 * common.MebiByte,
-						Size:     3*common.GibiByte + 112*common.MebiByte + common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     3*common.GibiByte + 116*common.MebiByte + common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
 						Type:     disk.LVMPartitionGUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -433,7 +432,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 							LogicalVolumes: []disk.LVMLogicalVolume{
 								{
 									Name: "varloglv",
-									Size: 10 * common.MebiByte,
+									Size: 12 * common.MebiByte, // rounded up to next extent (4 MiB)
 									Payload: &disk.Filesystem{
 										Label:        "var-log",
 										Type:         "xfs",
@@ -573,6 +572,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 		},
+
+		// MORE TEST COMBOS: PT TYPE, DEFAULT FS, ETC
 	}
 
 	for name := range testCases {
