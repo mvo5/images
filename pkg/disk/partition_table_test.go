@@ -126,7 +126,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			expected: &disk.PartitionTable{
 				Type: "dos",
-				Size: 202 * common.MebiByte,
+				Size: 202*common.MebiByte + 3*common.GibiByte,
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
 				Partitions: []disk.Partition{
 					{
@@ -153,7 +153,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    202 * common.MebiByte,
-						Size:     0,
+						Size:     3 * common.GibiByte,
 						Type:     disk.FilesystemDataGUID,
 						Bootable: false,
 						Payload: &disk.Filesystem{
@@ -187,7 +187,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			expected: &disk.PartitionTable{
 				Type: "dos",
-				Size: 222 * common.MebiByte,
+				Size: 222*common.MebiByte + 3*common.GibiByte,
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
 				Partitions: []disk.Partition{
 					{
@@ -230,7 +230,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    222 * common.MebiByte,
-						Size:     0,
+						Size:     3 * common.GibiByte,
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "", // partitions on dos PTs don't have UUIDs
 						Bootable: false,
@@ -273,7 +273,8 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			expected: &disk.PartitionTable{
 				Type: "gpt",
-				Size: 273 * common.MebiByte,
+				Size: 222*common.MebiByte + 3*common.GibiByte + common.MebiByte, // start + size of last partition + footer
+
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
 				Partitions: []disk.Partition{
 					{
@@ -301,7 +302,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					// root is aligned to the end but not reindexed
 					{
 						Start:    222 * common.MebiByte,
-						Size:     51*common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     3*common.GibiByte + common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "a178892e-e285-4ce1-9114-55780875d64e",
 						Bootable: false,
@@ -380,7 +381,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			expected: &disk.PartitionTable{
 				Type: "gpt", // default when unspecified
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
-				Size: 879 * common.MebiByte,
+				Size: 714*common.MebiByte + 112*common.MebiByte + 3*common.GibiByte + common.MebiByte, // start + size of last partition (VG) + footer
 				Partitions: []disk.Partition{
 					{
 						Start:    1 * common.MebiByte, // header
@@ -422,7 +423,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    714 * common.MebiByte,
-						Size:     165*common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // includes 4 MiB LVM header (after rounding to the next extent) - gpt footer the same size as the header (unaligned)
+						Size:     3*common.GibiByte + 112*common.MebiByte + common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // the sum of the LVs (rounded to the next 4 MiB extent) grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
 						Type:     disk.LVMPartitionGUID,
 						UUID:     "32f3a8ae-b79e-4856-b659-c18f0dcecc77",
 						Bootable: false,
@@ -443,7 +444,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 								},
 								{
 									Name: "rootlv",
-									Size: 50 * common.MebiByte,
+									Size: 3 * common.GibiByte,
 									Payload: &disk.Filesystem{
 										Label:        "root",
 										Type:         "xfs",
@@ -500,7 +501,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			expected: &disk.PartitionTable{
 				Type: "gpt",
-				Size: 945 * common.MebiByte,
+				Size: 714*common.MebiByte + 3*common.GibiByte + common.MebiByte, // start + size of last partition + footer
 				UUID: "0194fdc2-fa2f-4cc0-81d3-ff12045b73c8",
 				Partitions: []disk.Partition{
 					{
@@ -543,7 +544,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 					},
 					{
 						Start:    714 * common.MebiByte,
-						Size:     231*common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
+						Size:     3*common.GibiByte + common.MebiByte - (disk.DefaultSectorSize + (128 * 128)), // grows by 1 grain size (1 MiB) minus the unaligned size of the header to fit the gpt footer
 						Type:     disk.FilesystemDataGUID,
 						UUID:     "e2d3d0d0-de6b-48f9-b44c-e85ff044c6b1",
 						Bootable: false,
@@ -554,6 +555,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 									Name:       "subvol/root",
 									Mountpoint: "/",
 									UUID:       "fb180daf-48a7-4ee0-b10d-394651850fd4", // same as volume UUID
+									Size:       3 * common.GibiByte,
 								},
 								{
 									Name:       "subvol/home",

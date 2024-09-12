@@ -201,6 +201,18 @@ type CustomPartitionTableOptions struct {
 	// None is only valid if no partitions are created and all mountpoints
 	// partitions specify a type.
 	DefaultFSType FSType
+
+	// RequiredSizes defines a map of minimum sizes for specific directories.
+	// These indirectly control the minimum sizes of partitions. A directory
+	// with a required size will set the minimum size of the partition with the
+	// mountpoint that contains the directory. Additional directory
+	// requirements are additive, meaning the minimum size for a mountpoint's
+	// partition is the sum of all the required directory sizes it will
+	// contain. By default, if no requiredSizes are provided, the new partition
+	// table will require at least 1 GiB for '/' and 2 GiB for '/usr'. In most
+	// cases, this translates to a requirement of 3 GiB for the root partition,
+	// Logical Volume, or Btrfs subvolume.
+	RequiredSizes map[string]uint64
 }
 
 // NewCustomPartitionTable creates a partition table based almost entirely on the partitioning customizations from a blueprint.
@@ -411,6 +423,19 @@ func NewCustomPartitionTable(customizations *blueprint.PartitioningCustomization
 			}
 			pt.Partitions = append(pt.Partitions, rootpart)
 		}
+	}
+
+	requiredSizes := options.RequiredSizes
+	// If no separate requiredSizes are given then we use our defaults
+	if requiredSizes == nil {
+		requiredSizes = map[string]uint64{
+			"/":    1073741824,
+			"/usr": 2147483648,
+		}
+	}
+
+	if len(requiredSizes) != 0 {
+		pt.EnsureDirectorySizes(requiredSizes)
 	}
 
 	pt.relayout(customizations.MinSize)
