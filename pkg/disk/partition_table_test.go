@@ -120,7 +120,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 		"null": {
 			customizations: nil,
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType:      disk.FS_XFS,
+				DefaultFSType:      disk.DefaultFSType{disk.FS_XFS},
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: "dos",
 			},
@@ -181,7 +181,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType:      disk.FS_XFS,
+				DefaultFSType:      disk.DefaultFSType{disk.FS_XFS},
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: "dos",
 			},
@@ -267,7 +267,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType:      disk.FS_EXT4,
+				DefaultFSType:      disk.DefaultFSType{disk.FS_EXT4},
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: "gpt",
 			},
@@ -374,7 +374,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType: disk.FS_EXT4,
+				DefaultFSType: disk.DefaultFSType{disk.FS_EXT4},
 				BootMode:      platform.BOOT_HYBRID,
 			},
 			expected: &disk.PartitionTable{
@@ -505,7 +505,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType: disk.FS_EXT4,
+				DefaultFSType: disk.DefaultFSType{disk.FS_EXT4},
 				BootMode:      platform.BOOT_HYBRID,
 			},
 			expected: &disk.PartitionTable{
@@ -638,7 +638,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				},
 			},
 			options: &disk.CustomPartitionTableOptions{
-				DefaultFSType:      disk.FS_EXT4,
+				DefaultFSType:      disk.DefaultFSType{disk.FS_EXT4},
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: "gpt",
 			},
