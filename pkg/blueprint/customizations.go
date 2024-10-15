@@ -10,27 +10,30 @@ import (
 )
 
 type Customizations struct {
-	Hostname           *string                        `json:"hostname,omitempty" toml:"hostname,omitempty"`
-	Kernel             *KernelCustomization           `json:"kernel,omitempty" toml:"kernel,omitempty"`
-	User               []UserCustomization            `json:"user,omitempty" toml:"user,omitempty"`
-	Group              []GroupCustomization           `json:"group,omitempty" toml:"group,omitempty"`
-	Timezone           *TimezoneCustomization         `json:"timezone,omitempty" toml:"timezone,omitempty"`
-	Locale             *LocaleCustomization           `json:"locale,omitempty" toml:"locale,omitempty"`
-	Firewall           *FirewallCustomization         `json:"firewall,omitempty" toml:"firewall,omitempty"`
-	Services           *ServicesCustomization         `json:"services,omitempty" toml:"services,omitempty"`
-	Filesystem         []FilesystemCustomization      `json:"filesystem,omitempty" toml:"filesystem,omitempty"`
-	InstallationDevice string                         `json:"installation_device,omitempty" toml:"installation_device,omitempty"`
-	FDO                *FDOCustomization              `json:"fdo,omitempty" toml:"fdo,omitempty"`
-	OpenSCAP           *OpenSCAPCustomization         `json:"openscap,omitempty" toml:"openscap,omitempty"`
-	Ignition           *IgnitionCustomization         `json:"ignition,omitempty" toml:"ignition,omitempty"`
-	Directories        []DirectoryCustomization       `json:"directories,omitempty" toml:"directories,omitempty"`
-	Files              []FileCustomization            `json:"files,omitempty" toml:"files,omitempty"`
-	Repositories       []RepositoryCustomization      `json:"repositories,omitempty" toml:"repositories,omitempty"`
-	FIPS               *bool                          `json:"fips,omitempty" toml:"fips,omitempty"`
-	ContainersStorage  *ContainerStorageCustomization `json:"containers-storage,omitempty" toml:"containers-storage,omitempty"`
-	Installer          *InstallerCustomization        `json:"installer,omitempty" toml:"installer,omitempty"`
-	RPM                *RPMCustomization              `json:"rpm,omitempty" toml:"rpm,omitempty"`
-	RHSM               *RHSMCustomization             `json:"rhsm,omitempty" toml:"rhsm,omitempty"`
+	Hostname *string
+	Kernel   *KernelCustomization
+
+	// XXX: make plural
+	User  []UserCustomization
+	Group []GroupCustomization
+
+	Timezone           *TimezoneCustomization
+	Locale             *LocaleCustomization
+	Firewall           *FirewallCustomization
+	Services           *ServicesCustomization
+	Filesystem         []FilesystemCustomization
+	InstallationDevice string
+	FDO                *FDOCustomization
+	OpenSCAP           *OpenSCAPCustomization
+	Ignition           *IgnitionCustomization
+	Directories        []DirectoryCustomization
+	Files              []FileCustomization
+	Repositories       []RepositoryCustomization
+	FIPS               *bool
+	ContainersStorage  *ContainerStorageCustomization
+	Installer          *InstallerCustomization
+	RPM                *RPMCustomization
+	RHSM               *RHSMCustomization
 }
 
 type IgnitionCustomization struct {
