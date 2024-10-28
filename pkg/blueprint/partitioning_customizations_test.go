@@ -660,7 +660,7 @@ func TestPartitioningValidation(t *testing.T) {
 	for name := range testCases {
 		tc := testCases[name]
 		t.Run(name, func(t *testing.T) {
-			err := tc.partitioning.Validate()
+			err := tc.partitioning.ValidateSimple()
 			if tc.expectedMsg != "" {
 				assert.EqualError(t, err, tc.expectedMsg)
 			} else {

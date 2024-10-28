@@ -92,10 +92,11 @@ func validateFilesystemType(path, fstype string) error {
 	return nil
 }
 
-// Validate checks for customization combinations that are generally not
-// supported or can create conflicts, regardless of specific distro or image
-// type policies.
-func (p *PartitioningCustomization) Validate() error {
+// ValidateSimple checks that at most one LVM Volume Group or btrfs volume is
+// defined. Returns an error if both LVM and btrfs are set and if either has
+// more than one element.
+// This function also calls [PartitioningCustomization.Validate].
+func (p *PartitioningCustomization) ValidateSimple() error {
 	if p == nil {
 		return nil
 	}
@@ -110,6 +111,17 @@ func (p *PartitioningCustomization) Validate() error {
 
 	if p.LVM != nil && len(p.LVM.VolumeGroups) > 1 {
 		return fmt.Errorf("multiple LVM volume groups are not yet supported")
+	}
+
+	return p.Validate()
+}
+
+// Validate checks for customization combinations that are generally not
+// supported or can create conflicts, regardless of specific distro or image
+// type policies.
+func (p *PartitioningCustomization) Validate() error {
+	if p == nil {
+		return nil
 	}
 
 	// iterate through everything and look for:
