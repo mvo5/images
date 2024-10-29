@@ -350,7 +350,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid plain filesystem customization: mountpoint is empty`,
+			expectedMsg: `invalid customization: mountpoint is empty`,
 		},
 		"unhappy-noabsmp": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -360,7 +360,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid plain filesystem customization: mountpoint "i-am-not-absolute" is not an absolute path`,
+			expectedMsg: `invalid customization: mountpoint "i-am-not-absolute" is not an absolute path`,
 		},
 		"unhappy-badmp": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -370,7 +370,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid plain filesystem customization: mountpoint "/home/../root" is not a canonical path (did you mean "/root"?)`,
+			expectedMsg: `invalid customization: mountpoint "/home/../root" is not a canonical path (did you mean "/root"?)`,
 		},
 		"unhappy-emptymp-btrfs": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -391,7 +391,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid btrfs subvolume customization: mountpoint is empty`,
+			expectedMsg: `invalid customization: mountpoint is empty`,
 		},
 		"unhappy-noabsmp-btrfs": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -408,7 +408,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid btrfs subvolume customization: mountpoint "blorpsmp" is not an absolute path`,
+			expectedMsg: `invalid customization: mountpoint "blorpsmp" is not an absolute path`,
 		},
 		"unhappy-badmp-btrfs": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -425,7 +425,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid btrfs subvolume customization: mountpoint "/home//bork" is not a canonical path (did you mean "/home/bork"?)`,
+			expectedMsg: `invalid customization: mountpoint "/home//bork" is not a canonical path (did you mean "/home/bork"?)`,
 		},
 		"unhappy-emptymp-lvm": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -450,7 +450,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid logical volume customization: mountpoint is empty`,
+			expectedMsg: `invalid customization: mountpoint is empty`,
 		},
 		"unhappy-noabsmp-lvm": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -475,7 +475,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid logical volume customization: mountpoint "i/like/relative/paths" is not an absolute path`,
+			expectedMsg: `invalid customization: mountpoint "i/like/relative/paths" is not an absolute path`,
 		},
 		"unhappy-badmp-lvm": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -500,7 +500,7 @@ func TestPartitioningValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedMsg: `invalid logical volume customization: mountpoint "/../../../what/" is not a canonical path (did you mean "/what"?)`,
+			expectedMsg: `invalid customization: mountpoint "/../../../what/" is not a canonical path (did you mean "/what"?)`,
 		},
 		"unhappy-dupesubvolname": {
 			partitioning: &blueprint.PartitioningCustomization{
@@ -662,7 +662,7 @@ func TestPartitioningValidation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			err := tc.partitioning.ValidateSimple()
 			if tc.expectedMsg != "" {
-				assert.EqualError(t, err, tc.expectedMsg)
+				assert.EqualError(t, err, tc.expectedMsg, tc.expectedMsg)
 			} else {
 				assert.NoError(t, err)
 			}

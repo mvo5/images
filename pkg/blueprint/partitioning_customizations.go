@@ -116,12 +116,60 @@ func (p *PartitioningCustomization) ValidateSimple() error {
 	return p.Validate()
 }
 
+// AllMountpoints returns all mount points from all plain/lvm/btrfs
+// partitions
+func (p *PartitioningCustomization) AllMountpoints() []string {
+	var mps []string
+
+	if p.Plain != nil {
+		for _, fs := range p.Plain.Filesystems {
+			mps = append(mps, fs.Mountpoint)
+		}
+	}
+	if p.LVM != nil {
+		for _, vg := range p.LVM.VolumeGroups {
+			for _, lv := range vg.LogicalVolumes {
+				mps = append(mps, lv.Mountpoint)
+			}
+		}
+	}
+	if p.Btrfs != nil {
+		for _, vol := range p.Btrfs.Volumes {
+			for _, subvol := range vol.Subvolumes {
+				mps = append(mps, subvol.Mountpoint)
+			}
+		}
+	}
+	return mps
+}
+
+func (p *PartitioningCustomization) validateMountpoints() error {
+	mountpoints := make(map[string]bool)
+
+	for _, mp := range p.AllMountpoints() {
+		if mountpoints[mp] {
+			return fmt.Errorf("duplicate mountpoint %q in partitioning customizations", mp)
+		}
+		mountpoints[mp] = true
+
+		if err := validateMountpoint(mp); err != nil {
+			return fmt.Errorf("invalid customization: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // Validate checks for customization combinations that are generally not
 // supported or can create conflicts, regardless of specific distro or image
 // type policies.
 func (p *PartitioningCustomization) Validate() error {
 	if p == nil {
 		return nil
+	}
+
+	if err := p.validateMountpoints(); err != nil {
+		return err
 	}
 
 	// iterate through everything and look for:
@@ -139,24 +187,16 @@ func (p *PartitioningCustomization) Validate() error {
 		"/boot/efi", // not allowed by our global policies, but that might change
 	}
 
-	mountpoints := make(map[string]bool)
 	if p.Plain != nil {
 		for _, fs := range p.Plain.Filesystems {
-			if err := validateMountpoint(fs.Mountpoint); err != nil {
-				return fmt.Errorf("invalid plain filesystem customization: %w", err)
-			}
-			if mountpoints[fs.Mountpoint] {
-				return fmt.Errorf("duplicate mountpoint %q in partitioning customizations", fs.Mountpoint)
-			}
 			if err := validateFilesystemType(fs.Mountpoint, fs.Type); err != nil {
 				return fmt.Errorf("invalid plain filesystem customization: %w", err)
 			}
 			if fs.Type == "btrfs" {
 				return fmt.Errorf("btrfs filesystem defined under plain partitioning customization: please use the \"btrfs\" customization to define btrfs volumes and subvolumes")
 			}
-
-			mountpoints[fs.Mountpoint] = true
 		}
+		return nil
 	}
 
 	if p.LVM != nil {
@@ -172,14 +212,6 @@ func (p *PartitioningCustomization) Validate() error {
 					return fmt.Errorf("duplicate lvm logical volume name %q in volume group %q in partitioning customizations", lv.Name, vg.Name)
 				}
 				lvnames[lv.Name] = true
-
-				if err := validateMountpoint(lv.Mountpoint); err != nil {
-					return fmt.Errorf("invalid logical volume customization: %w", err)
-				}
-				if mountpoints[lv.Mountpoint] {
-					return fmt.Errorf("duplicate mountpoint %q in partitioning customizations", lv.Mountpoint)
-				}
-				mountpoints[lv.Mountpoint] = true
 
 				if slices.Contains(plainOnlyMountpoints, lv.Mountpoint) {
 					return fmt.Errorf("invalid mountpoint %q for logical volume", lv.Mountpoint)
@@ -201,16 +233,9 @@ func (p *PartitioningCustomization) Validate() error {
 				}
 				subvolnames[subvol.Name] = true
 
-				if err := validateMountpoint(subvol.Mountpoint); err != nil {
-					return fmt.Errorf("invalid btrfs subvolume customization: %w", err)
-				}
-				if mountpoints[subvol.Mountpoint] {
-					return fmt.Errorf("duplicate mountpoint %q in partitioning customizations", subvol.Mountpoint)
-				}
 				if slices.Contains(plainOnlyMountpoints, subvol.Mountpoint) {
 					return fmt.Errorf("invalid mountpoint %q for btrfs subvolume", subvol.Mountpoint)
 				}
-				mountpoints[subvol.Mountpoint] = true
 			}
 		}
 	}
@@ -224,30 +249,8 @@ func CheckPartitioningPolicy(partitioning *PartitioningCustomization, mountpoint
 		return nil
 	}
 
-	// collect all mountpoints
-	var mountpoints []string
-	if partitioning.Plain != nil {
-		for _, part := range partitioning.Plain.Filesystems {
-			mountpoints = append(mountpoints, part.Mountpoint)
-		}
-	}
-	if partitioning.LVM != nil {
-		for _, vg := range partitioning.LVM.VolumeGroups {
-			for _, lv := range vg.LogicalVolumes {
-				mountpoints = append(mountpoints, lv.Mountpoint)
-			}
-		}
-	}
-	if partitioning.Btrfs != nil {
-		for _, vol := range partitioning.Btrfs.Volumes {
-			for _, subvol := range vol.Subvolumes {
-				mountpoints = append(mountpoints, subvol.Mountpoint)
-			}
-		}
-	}
-
 	var errs []error
-	for _, mp := range mountpoints {
+	for _, mp := range partitioning.AllMountpoints() {
 		if err := mountpointAllowList.Check(mp); err != nil {
 			errs = append(errs, err)
 		}
