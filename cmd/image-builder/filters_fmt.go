@@ -29,7 +29,7 @@ type textFilteredResultFormatter struct{}
 func (*textFilteredResultFormatter) Output(w io.Writer, all []imagefilter.Result) error {
 	var errs []error
 	for _, res := range all {
-		if _, err := fmt.Fprintf(w, "%s --arch %s --type %s\n", res.Distro.Name(), res.Arch.Name(), res.ImgType.Name()); err != nil {
+		if _, err := fmt.Fprintf(w, "%s arch:%s type:%s\n", res.Distro.Name(), res.Arch.Name(), res.ImgType.Name()); err != nil {
 			errs = append(errs, err)
 		}
 	}

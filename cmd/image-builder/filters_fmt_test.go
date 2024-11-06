@@ -20,8 +20,8 @@ func TestFitleredResultFormatter(t *testing.T) {
 		distro, arch, imgType string
 		expectsOutput         string
 	}{
-		{"", "test-distro-1", "test_arch3", "qcow2", `test-distro-1 --arch test_arch3 --type qcow2` + "\n"},
-		{"text", "test-distro-1", "test_arch3", "qcow2", `test-distro-1 --arch test_arch3 --type qcow2` + "\n"},
+		{"", "test-distro-1", "test_arch3", "qcow2", `test-distro-1 arch:test_arch3 type:qcow2` + "\n"},
+		{"text", "test-distro-1", "test_arch3", "qcow2", `test-distro-1 arch:test_arch3 type:qcow2` + "\n"},
 		{"json", "test-distro-1", "test_arch3", "qcow2", `[{"distro":{"name":"test-distro-1"},"arch":{"name":"test_arch3"},"image_type":{"name":"qcow2"}}]` + "\n"},
 	} {
 		// XXX: it would be nice if TestDistro would support constructing
