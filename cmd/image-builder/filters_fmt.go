@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/osbuild/images/pkg/imagefilter"
 )
 
 type FilteredResultFormatter interface {
-	Output(io.Writer, []FilterResult) error
+	Output(io.Writer, []imagefilter.Result) error
 }
 
 func NewFilteredResultFormatter(format string) (FilteredResultFormatter, error) {
@@ -24,7 +26,7 @@ func NewFilteredResultFormatter(format string) (FilteredResultFormatter, error) 
 
 type textFilteredResultFormatter struct{}
 
-func (*textFilteredResultFormatter) Output(w io.Writer, all []FilterResult) error {
+func (*textFilteredResultFormatter) Output(w io.Writer, all []imagefilter.Result) error {
 	var errs []error
 	for _, res := range all {
 		if _, err := fmt.Fprintf(w, "%s --arch %s --type %s\n", res.Distro.Name(), res.Arch.Name(), res.ImgType.Name()); err != nil {
@@ -53,7 +55,7 @@ type filteredResultJSON struct {
 	} `json:"image_type"`
 }
 
-func (*jsonFilteredResultFormatter) Output(w io.Writer, all []FilterResult) error {
+func (*jsonFilteredResultFormatter) Output(w io.Writer, all []imagefilter.Result) error {
 	var out []filteredResultJSON
 
 	for _, res := range all {

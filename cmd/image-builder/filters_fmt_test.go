@@ -9,6 +9,7 @@ import (
 
 	"github.com/osbuild/images/cmd/image-builder"
 	"github.com/osbuild/images/pkg/distrofactory"
+	"github.com/osbuild/images/pkg/imagefilter"
 )
 
 func TestFitleredResultFormatter(t *testing.T) {
@@ -34,7 +35,9 @@ func TestFitleredResultFormatter(t *testing.T) {
 		require.NoError(t, err)
 
 		var buf bytes.Buffer
-		res := []main.FilterResult{{di, ar, im}}
+		res := []imagefilter.Result{
+			{Distro: di, Arch: ar, ImgType: im},
+		}
 		fmter, err := main.NewFilteredResultFormatter(tc.formatter)
 		require.NoError(t, err)
 		err = fmter.Output(&buf, res)
