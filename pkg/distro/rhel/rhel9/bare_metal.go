@@ -215,7 +215,6 @@ func anacondaPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 			"dejavu-sans-fonts",
 			"dejavu-sans-mono-fonts",
 			"device-mapper-persistent-data",
-			"dmidecode",
 			"dnf",
 			"dracut-config-generic",
 			"dracut-network",
