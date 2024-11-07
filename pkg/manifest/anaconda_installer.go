@@ -117,7 +117,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 // TODO: refactor - what is required to boot and what to build, and
 // do they all belong in this pipeline?
 func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
-	packages := []string{
+	grubPackages := []string{
 		"grub2-tools",
 		"grub2-tools-extra",
 		"grub2-tools-minimal",
@@ -126,7 +126,7 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
 
 	switch p.platform.GetArch() {
 	case arch.ARCH_X86_64:
-		packages = append(packages,
+		return append(grubPackages,
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
 			"grub2-pc",
@@ -136,16 +136,29 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
 			"syslinux-nonlinux",
 		)
 	case arch.ARCH_AARCH64:
-		packages = append(packages,
+		return append(grubPackages,
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",
 			"shim-aa64",
 		)
+	case arch.ARCH_PPC64LE:
+		// from platform/ppc64le.go
+		return append(grubPackages,
+			"dracut-config-generic",
+			"powerpc-utils",
+			"grub2-ppc64le",
+			"grub2-ppc64le-modules",
+		)
+	case arch.ARCH_S390X:
+		// from platform/ppc64le.go
+		return []string{
+			"dracut-config-generic",
+			"s390utils-base",
+			"s390utils-core",
+		}
 	default:
 		panic(fmt.Sprintf("unsupported arch: %s", p.platform.GetArch()))
 	}
-
-	return packages
 }
 
 func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
