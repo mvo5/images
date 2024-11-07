@@ -55,6 +55,13 @@ type jsonResultsFormatter struct{}
 
 type distroResultJSON struct {
 	Name string `json:"name"`
+
+	Codename         string
+	Releasever       string
+	OsVersion        string
+	ModulePlatformID string
+	Product          string
+	OSTreeRef        string
 }
 
 type archResultJSON struct {
@@ -63,6 +70,18 @@ type archResultJSON struct {
 
 type imgTypeResultJSON struct {
 	Name string `json:"name"`
+
+	Bootmode           string `json:"bootmode"`
+	Filename           string `json:"filename"`
+	MIMEType           string
+	OSTreeRef          string
+	ISOLabel           string
+	Size               uint64
+	PartitionType      string
+	BuildPipelines     []string
+	PayloadPipelines   []string
+	PayloadPackageSets []string
+	Exports            []string
 }
 
 type filteredResultJSON struct {
@@ -75,15 +94,36 @@ func (*jsonResultsFormatter) Output(w io.Writer, all []Result) error {
 	var out []filteredResultJSON
 
 	for _, res := range all {
+		label, _ := res.ImgType.ISOLabel()
+
 		out = append(out, filteredResultJSON{
 			Distro: distroResultJSON{
 				Name: res.Distro.Name(),
+
+				Codename:         res.Distro.Codename(),
+				Releasever:       res.Distro.Releasever(),
+				OsVersion:        res.Distro.OsVersion(),
+				ModulePlatformID: res.Distro.ModulePlatformID(),
+				Product:          res.Distro.Product(),
+				OSTreeRef:        res.Distro.OSTreeRef(),
 			},
 			Arch: archResultJSON{
 				Name: res.Arch.Name(),
 			},
 			ImgType: imgTypeResultJSON{
-				Name: res.ImgType.Name(),
+				Name:     res.ImgType.Name(),
+				Bootmode: res.ImgType.BootMode().String(),
+				Filename: res.ImgType.Filename(),
+
+				MIMEType:           res.ImgType.MIMEType(),
+				OSTreeRef:          res.ImgType.OSTreeRef(),
+				ISOLabel:           label,
+				Size:               res.ImgType.Size(1),
+				PartitionType:      res.ImgType.PartitionType(),
+				BuildPipelines:     res.ImgType.BuildPipelines(),
+				PayloadPipelines:   res.ImgType.PayloadPipelines(),
+				PayloadPackageSets: res.ImgType.PayloadPackageSets(),
+				Exports:            res.ImgType.Exports(),
 			},
 		})
 	}
