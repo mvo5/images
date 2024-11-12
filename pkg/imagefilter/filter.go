@@ -7,6 +7,7 @@ import (
 
 	"github.com/gobwas/glob"
 
+	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 )
 
@@ -55,7 +56,7 @@ func newFilter(sl ...string) (*filter, error) {
 }
 
 var supportedFilters = []string{
-	"distro", "arch", "type", "bootmode",
+	"distro", "arch", "type", "bootmode", "pkg",
 }
 
 type term struct {
@@ -71,19 +72,20 @@ type filter struct {
 
 // Matches returns true if the given (distro,arch,imgType) tuple matches
 // the filter expressions
-func (fl filter) Matches(distro distro.Distro, arch distro.Arch, imgType distro.ImageType) bool {
+func (fl filter) Matches(dist distro.Distro, arch distro.Arch, imgType distro.ImageType) bool {
 	m := true
+
 	for _, term := range fl.terms {
 		switch term.prefix {
 		case "":
 			// no prefix, do a "fuzzy" search accross the common
 			// things users may want
-			m1 := term.pattern.Match(distro.Name())
+			m1 := term.pattern.Match(dist.Name())
 			m2 := term.pattern.Match(arch.Name())
 			m3 := term.pattern.Match(imgType.Name())
 			m = m && (m1 || m2 || m3)
 		case "distro":
-			m = m && term.pattern.Match(distro.Name())
+			m = m && term.pattern.Match(dist.Name())
 		case "arch":
 			m = m && term.pattern.Match(arch.Name())
 		case "type":
@@ -91,7 +93,35 @@ func (fl filter) Matches(distro distro.Distro, arch distro.Arch, imgType distro.
 			// mostly here to show how flexible this is
 		case "bootmode":
 			m = m && term.pattern.Match(imgType.BootMode().String())
+		case "pkg":
+			m = m && containsPackages(imgType, term.pattern)
 		}
 	}
 	return m
+}
+
+func containsPackages(imgType distro.ImageType, pattern glob.Glob) bool {
+	var bp blueprint.Blueprint
+	manifest, _, err := imgType.Manifest(&bp, distro.ImageOptions{}, nil, nil)
+	if err != nil {
+		// XXX: some imgTypes like "iot-*", "edge-*" require a ostree
+		// url to get instanciated so we miss a bunch of types here
+		return false
+	}
+
+	payloadPipelines := imgType.PayloadPipelines()
+	for pipelineName, pkgSets := range manifest.GetPackageSetChains() {
+		if !slices.Contains(payloadPipelines, pipelineName) {
+			continue
+		}
+
+		for _, pkgSet := range pkgSets {
+			for _, pkg := range pkgSet.Include {
+				if pattern.Match(pkg) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
