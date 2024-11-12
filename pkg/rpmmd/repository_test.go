@@ -2,9 +2,12 @@ package rpmmd
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPackageSpecGetEVRA(t *testing.T) {
@@ -55,4 +58,29 @@ func TestRepoConfigMarshalEmpty(t *testing.T) {
 	repoCfg := &RepoConfig{}
 	js, _ := json.Marshal(repoCfg)
 	assert.Equal(t, string(js), `{}`)
+}
+
+func TestLoadRepositoryFromFileSmoke(t *testing.T) {
+	repos, err := LoadRepositoriesFromFile("../../test/data/repositories/centos-10.json")
+	assert.NoError(t, err)
+	assert.True(t, len(repos) > 1)
+}
+
+func TestLoadRepositoryFromFileRedirect(t *testing.T) {
+	reposOrig, err := LoadRepositoriesFromFile("../../test/data/repositories/centos-10.json")
+	assert.NoError(t, err)
+
+	// centos-stream-10.json just contains "alias": "centos-10"
+	reposAlias, err := LoadRepositoriesFromFile("../../test/data/repositories/centos-stream-10.json")
+	assert.NoError(t, err)
+	assert.Equal(t, reposOrig, reposAlias)
+}
+
+func TestLoadRepositoryFromFileBad(t *testing.T) {
+	badAliasPath := filepath.Join(t.TempDir(), "bad-alias.json")
+	err := os.WriteFile(badAliasPath, []byte(`{"alias":"foo","unrelated":"stuff"}`), 0644)
+	require.NoError(t, err)
+
+	_, err = LoadRepositoriesFromFile(badAliasPath)
+	assert.EqualError(t, err, "alias must be the only entry in a repo file")
 }

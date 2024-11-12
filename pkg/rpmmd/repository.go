@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"time"
@@ -232,10 +234,47 @@ func LoadRepositoriesFromFile(filename string) (map[string][]RepoConfig, error) 
 	}
 	defer f.Close()
 
+	// Traditionally we used symlinks to alias distro names (like
+	// centos-10 and centos-stream-10 being the same). But we
+	// cannot use symlinks when using golangs embedd feature so we
+	// implement this now via an "alias" in the json itself.
+	f, err = resolveAlias(filepath.Dir(filename), f)
+	if err != nil {
+		return nil, err
+	}
+	return loadRepositoriesFromReader(f)
+}
+
+func resolveAlias(dirname string, f *os.File) (*os.File, error) {
+	// XXX: this is a all a bit sad, it would be nicer if the json
+	// would have a toplevel key like "repos" then we could easily
+	// add more keys but we can't break backwards compat so we
+	// need this not-nice workaround
+	jsonMap := make(map[string]interface{})
+	dec := json.NewDecoder(f)
+	if err := dec.Decode(&jsonMap); err != nil {
+		return nil, err
+	}
+	if _, ok := jsonMap["alias"]; !ok {
+		f.Seek(0, 0)
+		return f, nil
+	}
+	alias, ok := jsonMap["alias"].(string)
+	if !ok {
+		return nil, fmt.Errorf("alias keyword must be string not %T", jsonMap["alias"])
+	}
+	if len(jsonMap) != 1 {
+		return nil, fmt.Errorf("alias must be the only entry in a repo file")
+	}
+	newFile := filepath.Join(dirname, alias+".json")
+	return os.Open(newFile)
+}
+
+func loadRepositoriesFromReader(r io.Reader) (map[string][]RepoConfig, error) {
 	var reposMap map[string][]repository
 	repoConfigs := make(map[string][]RepoConfig)
 
-	err = json.NewDecoder(f).Decode(&reposMap)
+	err := json.NewDecoder(r).Decode(&reposMap)
 	if err != nil {
 		return nil, err
 	}
