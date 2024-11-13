@@ -45,6 +45,7 @@ type TestArch struct {
 type TestImageType struct {
 	architecture *TestArch
 	name         string
+	filename     string
 }
 
 const (
@@ -183,7 +184,15 @@ func (t *TestImageType) Arch() distro.Arch {
 }
 
 func (t *TestImageType) Filename() string {
-	return "test.img"
+	if t.filename == "" {
+		return "test.img"
+	}
+	return t.filename
+}
+
+func (t *TestImageType) SetFilename(new string) error {
+	t.filename = new
+	return nil
 }
 
 func (t *TestImageType) MIMEType() string {

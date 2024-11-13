@@ -348,7 +348,7 @@ func ostreeDeploymentCustomizations(
 	return deploymentConf, nil
 }
 
-func DiskImage(workload workload.Workload,
+func xxDiskImage(workload workload.Workload,
 	t *ImageType,
 	customizations *blueprint.Customizations,
 	options distro.ImageOptions,

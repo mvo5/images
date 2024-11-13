@@ -82,6 +82,9 @@ type ImageType interface {
 	// Returns the canonical filename for the image type.
 	Filename() string
 
+	// Set the output filename for the image type.
+	SetFilename(string) error
+
 	// Retrns the MIME-type for the image type.
 	MIMEType() string
 

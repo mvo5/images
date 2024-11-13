@@ -72,6 +72,14 @@ func (t *imageType) Filename() string {
 	return t.filename
 }
 
+func (t *imageType) SetFilename(new string) error {
+	if err := distro.ValidateImageTypeFilename(new); err != nil {
+		return err
+	}
+	t.filename = new
+	return nil
+}
+
 func (t *imageType) MIMEType() string {
 	return t.mimeType
 }
