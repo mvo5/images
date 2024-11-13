@@ -95,8 +95,9 @@ operating sytsems like centos and RHEL with easy customizations support.`,
 		// XXX: show error with available types if only one arg given
 		Args: cobra.ExactArgs(2),
 	}
-	rootCmd.AddCommand(buildCmd)
+	buildCmd.Flags().String("filename", "", "Output as a specific filename")
 	// XXX: add --output=text,json and streaming
+	rootCmd.AddCommand(buildCmd)
 
 	return rootCmd.Execute()
 }
