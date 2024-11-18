@@ -428,7 +428,7 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 	newMountpoints := []blueprint.FilesystemCustomization{}
 
 	for _, mnt := range mountpoints {
-		size := clampFSSize(mnt.Mountpoint, mnt.MinSize)
+		size := clampFSSize(mnt.Mountpoint, mnt.MinSize.Uint64())
 		if path := entityPath(pt, mnt.Mountpoint); len(path) != 0 {
 			size = alignEntityBranch(path, size)
 			resizeEntityBranch(path, size)
