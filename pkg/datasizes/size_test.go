@@ -19,12 +19,12 @@ func TestSizeUnmarshalTOMLUnhappy(t *testing.T) {
 		{
 			name:  "wrong datatype",
 			input: `size = true`,
-			err:   `toml: line 1 (last key "size"): TOML unmarshal: error decoding size: failed to convert value "true" to number`,
+			err:   `toml: line 1 (last key "size"): error decoding TOML size: failed to convert value "true" to number`,
 		},
 		{
 			name:  "wrong unit",
 			input: `size = "20 KG"`,
-			err:   `toml: line 1 (last key "size"): TOML unmarshal: error decoding size: unknown data size units in string: 20 KG`,
+			err:   `toml: line 1 (last key "size"): error decoding TOML size: unknown data size units in string: 20 KG`,
 		},
 	}
 
@@ -48,12 +48,12 @@ func TestSizeUnmarshalJSONUnhappy(t *testing.T) {
 		{
 			name:  "misize nor string nor int",
 			input: `{"size": true}`,
-			err:   `JSON unmarshal: error decoding size: failed to convert value "true" to number`,
+			err:   `error decoding JSON size: failed to convert value "true" to number`,
 		},
 		{
 			name:  "misize not parseable",
 			input: `{"size": "20 KG"}`,
-			err:   `JSON unmarshal: error decoding size: unknown data size units in string: 20 KG`,
+			err:   `error decoding JSON size: unknown data size units in string: 20 KG`,
 		},
 	}
 

@@ -20,7 +20,7 @@ func (si Size) Uint64() uint64 {
 func (si *Size) UnmarshalTOML(data interface{}) error {
 	i, err := decodeSize(data)
 	if err != nil {
-		return fmt.Errorf("TOML unmarshal: error decoding size: %w", err)
+		return fmt.Errorf("error decoding TOML size: %w", err)
 	}
 	*si = Size(i)
 	return nil
@@ -36,7 +36,7 @@ func (si *Size) UnmarshalJSON(data []byte) error {
 	}
 	i, err := decodeSize(v)
 	if err != nil {
-		return fmt.Errorf("JSON unmarshal: error decoding size: %w", err)
+		return fmt.Errorf("error decoding JSON size: %w", err)
 	}
 	*si = Size(i)
 	return nil
