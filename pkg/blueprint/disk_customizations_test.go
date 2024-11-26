@@ -1192,14 +1192,14 @@ func TestPartitionCustomizationUnmarshalJSON(t *testing.T) {
 			input: `{
 				"type": "lvm",
 				"name": "myvg",
-				"minsize": 106300440576,
+				"minsize": "99 GiB",
 				"logical_volumes": [
 					{
 						"name": "homelv",
 						"mountpoint": "/home",
 						"label": "home",
 						"fs_type": "ext4",
-						"minsize": 2147483648
+						"minsize": "2 GiB"
 					},
 					{
 						"name": "loglv",
@@ -1227,7 +1227,7 @@ func TestPartitionCustomizationUnmarshalJSON(t *testing.T) {
 						},
 						{
 							Name:    "loglv",
-							MinSize: 3 * datasizes.GiB,
+							MinSize: 3221225472,
 							FilesystemTypedCustomization: blueprint.FilesystemTypedCustomization{
 								Mountpoint: "/var/log",
 								Label:      "log",
@@ -1238,11 +1238,11 @@ func TestPartitionCustomizationUnmarshalJSON(t *testing.T) {
 				},
 			},
 		},
-		"bad-type": {
+		"bad-type/unknown": {
 			input:    `{"type":"not-a-partition-type"}`,
 			errorMsg: "JSON unmarshal: unknown partition type: not-a-partition-type",
 		},
-		"number": {
+		"bad-type/number": {
 			input:    `{"type":5}`,
 			errorMsg: "JSON unmarshal: json: cannot unmarshal number into Go struct field .type of type string",
 		},
