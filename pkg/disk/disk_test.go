@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/testdisk"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
@@ -121,7 +122,7 @@ func TestForEachEntity(t *testing.T) {
 
 	count := 0
 
-	plain := disk.TestPartitionTables["plain"]
+	plain := testdisk.TestPartitionTables["plain"]
 	err := plain.ForEachEntity(func(e disk.Entity, path []disk.Entity) error {
 		assert.NotNil(t, e)
 		assert.NotNil(t, path)
@@ -186,8 +187,8 @@ func TestCreatePartitionTable(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	for ptName := range disk.TestPartitionTables {
-		pt := disk.TestPartitionTables[ptName]
+	for ptName := range testdisk.TestPartitionTables {
+		pt := testdisk.TestPartitionTables[ptName]
 		for bpName, bp := range testBlueprints {
 			ptMode := disk.RawPartitioningMode
 			if ptName == "luks+lvm" {
@@ -215,8 +216,8 @@ func TestCreatePartitionTableLVMify(t *testing.T) {
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
 	for bpName, tbp := range testBlueprints {
-		for ptName := range disk.TestPartitionTables {
-			pt := disk.TestPartitionTables[ptName]
+		for ptName := range testdisk.TestPartitionTables {
+			pt := testdisk.TestPartitionTables[ptName]
 
 			if tbp != nil && (ptName == "btrfs" || ptName == "luks") {
 				_, err := disk.NewPartitionTable(&pt, tbp, uint64(13*MiB), disk.AutoLVMPartitioningMode, nil, rng)
@@ -253,8 +254,8 @@ func TestCreatePartitionTableBtrfsify(t *testing.T) {
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
 	for bpName, tbp := range testBlueprints {
-		for ptName := range disk.TestPartitionTables {
-			pt := disk.TestPartitionTables[ptName]
+		for ptName := range testdisk.TestPartitionTables {
+			pt := testdisk.TestPartitionTables[ptName]
 
 			if ptName == "auto-lvm" || ptName == "luks" || ptName == "luks+lvm" {
 				_, err := disk.NewPartitionTable(&pt, tbp, uint64(13*MiB), disk.BtrfsPartitioningMode, nil, rng)
@@ -291,8 +292,8 @@ func TestCreatePartitionTableLVMOnly(t *testing.T) {
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
 	for bpName, tbp := range testBlueprints {
-		for ptName := range disk.TestPartitionTables {
-			pt := disk.TestPartitionTables[ptName]
+		for ptName := range testdisk.TestPartitionTables {
+			pt := testdisk.TestPartitionTables[ptName]
 
 			if ptName == "btrfs" || ptName == "luks" {
 				_, err := disk.NewPartitionTable(&pt, tbp, uint64(13*MiB), disk.LVMPartitioningMode, nil, rng)
@@ -372,7 +373,7 @@ func TestMinimumSizes(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	pt := disk.TestPartitionTables["plain"]
+	pt := testdisk.TestPartitionTables["plain"]
 
 	type testCase struct {
 		Blueprint        []blueprint.FilesystemCustomization
@@ -487,7 +488,7 @@ func TestLVMExtentAlignment(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	pt := disk.TestPartitionTables["plain"]
+	pt := testdisk.TestPartitionTables["plain"]
 
 	type testCase struct {
 		Blueprint     []blueprint.FilesystemCustomization
@@ -568,7 +569,7 @@ func TestLVMExtentAlignment(t *testing.T) {
 }
 
 func TestNewBootWithSizeLVMify(t *testing.T) {
-	pt := disk.TestPartitionTables["plain-noboot"]
+	pt := testdisk.TestPartitionTables["plain-noboot"]
 	assert := assert.New(t)
 
 	// math/rand is good enough in this case
@@ -608,8 +609,8 @@ func collectEntities(pt *disk.PartitionTable) []disk.Entity {
 }
 
 func TestClone(t *testing.T) {
-	for name := range disk.TestPartitionTables {
-		basePT := disk.TestPartitionTables[name]
+	for name := range testdisk.TestPartitionTables {
+		basePT := testdisk.TestPartitionTables[name]
 		baseEntities := collectEntities(&basePT)
 
 		clonePT := basePT.Clone().(*disk.PartitionTable)
@@ -641,7 +642,7 @@ func TestFindDirectoryPartition(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["plain"]
+		pt := testdisk.TestPartitionTables["plain"]
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/opt")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot/efi", disk.FindDirectoryEntityPath(&pt, "/boot/efi/Linux")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot/loader")[0].(disk.Mountable).GetMountpoint())
@@ -658,7 +659,7 @@ func TestFindDirectoryPartition(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["plain-noboot"]
+		pt := testdisk.TestPartitionTables["plain-noboot"]
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/opt")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/boot")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/boot/loader")[0].(disk.Mountable).GetMountpoint())
@@ -674,7 +675,7 @@ func TestFindDirectoryPartition(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["luks"]
+		pt := testdisk.TestPartitionTables["luks"]
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/opt")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot/loader")[0].(disk.Mountable).GetMountpoint())
@@ -690,7 +691,7 @@ func TestFindDirectoryPartition(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["luks+lvm"]
+		pt := testdisk.TestPartitionTables["luks+lvm"]
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/opt")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot/loader")[0].(disk.Mountable).GetMountpoint())
@@ -706,7 +707,7 @@ func TestFindDirectoryPartition(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["btrfs"]
+		pt := testdisk.TestPartitionTables["btrfs"]
 		assert.Equal("/", disk.FindDirectoryEntityPath(&pt, "/opt")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot")[0].(disk.Mountable).GetMountpoint())
 		assert.Equal("/boot", disk.FindDirectoryEntityPath(&pt, "/boot/loader")[0].(disk.Mountable).GetMountpoint())
@@ -744,7 +745,7 @@ func TestEnsureDirectorySizes(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["plain"]
+		pt := testdisk.TestPartitionTables["plain"]
 		pt = *pt.Clone().(*disk.PartitionTable) // don't modify the original test data
 
 		{
@@ -769,7 +770,7 @@ func TestEnsureDirectorySizes(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["luks+lvm"]
+		pt := testdisk.TestPartitionTables["luks+lvm"]
 		pt = *pt.Clone().(*disk.PartitionTable) // don't modify the original test data
 
 		{
@@ -808,7 +809,7 @@ func TestEnsureDirectorySizes(t *testing.T) {
 	}
 
 	{
-		pt := disk.TestPartitionTables["btrfs"]
+		pt := testdisk.TestPartitionTables["btrfs"]
 		pt = *pt.Clone().(*disk.PartitionTable) // don't modify the original test data
 
 		{
@@ -842,7 +843,7 @@ func TestMinimumSizesWithRequiredSizes(t *testing.T) {
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(rand.NewSource(13))
-	pt := disk.TestPartitionTables["plain"]
+	pt := testdisk.TestPartitionTables["plain"]
 
 	type testCase struct {
 		Blueprint        []blueprint.FilesystemCustomization
