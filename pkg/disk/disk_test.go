@@ -164,6 +164,7 @@ func TestCreatePartitionTable(t *testing.T) {
 			// /boot and subdirectories is exempt from this rule
 			return nil
 		}
+
 		// go up the path and check every sizeable
 		for idx, ent := range path {
 			if sz, ok := ent.(disk.Sizeable); ok {
