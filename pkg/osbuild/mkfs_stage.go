@@ -18,15 +18,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 	genStage := func(ent disk.Entity, path []disk.Entity) error {
 		switch e := ent.(type) {
 		case *disk.Filesystem:
-			// TODO: extract last device renaming into helper
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that mkfs stages run on. See the stage schemas for
-			// reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path, filename, true)
 
 			switch e.GetFSType() {
 			case "xfs":
@@ -50,14 +42,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 				panic(fmt.Sprintf("unknown fs type: %s", e.GetFSType()))
 			}
 		case *disk.Btrfs:
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that mkfs stages run on. See the stage schemas for
-			// reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path, filename, true)
 
 			options := &MkfsBtrfsStageOptions{
 				UUID:  e.UUID,
@@ -78,14 +63,7 @@ func GenFsStages(pt *disk.PartitionTable, filename string) []*Stage {
 			stages = append(stages, NewBtrfsSubVol(&BtrfsSubVolOptions{subvolumes}, &stageDevices, &[]Mount{mount}))
 		case *disk.Swap:
 			// TODO: extract last device renaming into helper
-			stageDevices, lastName := getDevices(path, filename, true)
-
-			// The last device in the chain must be named "device", because that's
-			// the device that the mkswap stage runs on. See the stage schema
-			// for reference.
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path, filename, true)
 
 			options := &MkswapStageOptions{
 				UUID:  e.UUID,

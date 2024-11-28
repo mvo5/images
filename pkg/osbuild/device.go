@@ -27,13 +27,7 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 		switch ent := e.(type) {
 		case *disk.LUKSContainer:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
-
-			// "org.osbuild.luks2.format" expects a "device" to create the VG on,
-			// thus rename the last device to "device"
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path[:len(path)-1], filename, true)
 
 			stage := NewLUKS2CreateStage(
 				&LUKS2CreateStageOptions{
@@ -64,13 +58,7 @@ func GenDeviceCreationStages(pt *disk.PartitionTable, filename string) []*Stage 
 
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
-
-			// "org.osbuild.lvm2.create" expects a "device" to create the VG on,
-			// thus rename the last device to "device"
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path[:len(path)-1], filename, true)
 
 			volumes := make([]LogicalVolume, len(ent.LogicalVolumes))
 			for idx, lv := range ent.LogicalVolumes {
@@ -104,11 +92,7 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 		switch ent := e.(type) {
 		case *disk.LUKSContainer:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
-
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path[:len(path)-1], filename, true)
 
 			if ent.Clevis != nil {
 				if ent.Clevis.RemovePassphrase {
@@ -119,13 +103,7 @@ func GenDeviceFinishStages(pt *disk.PartitionTable, filename string) []*Stage {
 			}
 		case *disk.LVMVolumeGroup:
 			// do not include us when getting the devices
-			stageDevices, lastName := getDevices(path[:len(path)-1], filename, true)
-
-			// "org.osbuild.lvm2.metadata" expects a "device" to rename the VG,
-			// thus rename the last device to "device"
-			lastDevice := stageDevices[lastName]
-			delete(stageDevices, lastName)
-			stageDevices["device"] = lastDevice
+			stageDevices := getDevices(path[:len(path)-1], filename, true)
 
 			stage := NewLVM2MetadataStage(
 				&LVM2MetadataStageOptions{
@@ -180,7 +158,7 @@ func deviceName(p disk.Entity) string {
 // The first returned value is a map of devices for the given path.
 // The second returned value is the name of the last device in the path. This is the device that should be used as the
 // source for the mount.
-func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string) {
+func getDevicesNoRename(path []disk.Entity, filename string, lockLoopback bool) (map[string]Device, string) {
 	var pt *disk.PartitionTable
 
 	do := make(map[string]Device)
@@ -219,7 +197,20 @@ func getDevices(path []disk.Entity, filename string, lockLoopback bool) (map[str
 			parent = name
 		}
 	}
+
 	return do, parent
+}
+
+func getDevices(path []disk.Entity, filename string, lockLoopback bool) map[string]Device {
+	do, parent := getDevicesNoRename(path, filename, lockLoopback)
+
+	// The last device in the chain must be named "device", because that's the device that mkfs stages run on.
+	// See their schema for reference.
+	lastDevice := do[parent]
+	delete(do, parent)
+	do["device"] = lastDevice
+
+	return do
 }
 
 // pathEscape implements similar path escaping as used by systemd-escape
@@ -281,8 +272,8 @@ func GenMountsDevicesFromPT(filename string, pt *disk.PartitionTable) (string, [
 	mounts := make([]Mount, 0, len(pt.Partitions))
 	var fsRootMntName string
 	genMounts := func(mnt disk.Mountable, path []disk.Entity) error {
-		stageDevices, leafDeviceName := getDevices(path, filename, false)
-		mount, err := genOsbuildMount(leafDeviceName, mnt)
+		stageDevices, leafDevice := getDevicesNoRename(path, filename, false)
+		mount, err := genOsbuildMount(leafDevice, mnt)
 		if err != nil {
 			return err
 		}
