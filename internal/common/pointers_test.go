@@ -22,5 +22,20 @@ func TestToPtr(t *testing.T) {
 	var valueStr string = "the-greatest-test-value"
 	gotStr := ToPtr(valueStr)
 	assert.Equal(t, valueStr, *gotStr)
+}
 
+func TestUnrefOrDefault(t *testing.T) {
+	for _, tc := range []any{
+		7, "foo", true, false, 3.14, &struct{ e float32 }{2.718},
+	} {
+		assert.Equal(t, tc, UnrefOrDefault(&tc))
+	}
+}
+
+func TestUnrefOr(t *testing.T) {
+	var intP *int
+	i := 2
+
+	assert.Equal(t, 1, UnrefOr(intP, 1))
+	assert.Equal(t, 2, UnrefOr(&i, 1))
 }
