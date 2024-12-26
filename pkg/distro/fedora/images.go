@@ -104,11 +104,7 @@ func osCustomizations(
 		osc.Keyboard = &imageConfig.Keyboard.Keymap
 	}
 
-	if hostname := c.GetHostname(); hostname != nil {
-		osc.Hostname = *hostname
-	} else {
-		osc.Hostname = "localhost.localdomain"
-	}
+	osc.Hostname = common.UnrefOr(c.GetHostname(), "localhost.localdomain")
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {

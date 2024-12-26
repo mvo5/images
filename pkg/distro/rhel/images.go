@@ -118,9 +118,7 @@ func osCustomizations(
 		}
 	}
 
-	if hostname := c.GetHostname(); hostname != nil {
-		osc.Hostname = *hostname
-	}
+	osc.Hostname = common.UnrefOrDefault(c.GetHostname())
 
 	timezone, ntpServers := c.GetTimezoneSettings()
 	if timezone != nil {
