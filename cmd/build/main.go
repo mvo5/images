@@ -33,6 +33,8 @@ func makeManifest(
 	archName string,
 	cacheRoot string,
 ) (manifest.OSBuildManifest, error) {
+	var im manifest.InputsMap
+
 	cacheDir := filepath.Join(cacheRoot, archName+distribution.Name())
 
 	options := config.Options
@@ -66,6 +68,7 @@ func makeManifest(
 	if packageSpecs == nil {
 		return nil, fmt.Errorf("[ERROR] depsolve did not return any packages")
 	}
+	im.AddPackages(packageSpecs)
 	_ = repoConfigs
 
 	if config.Blueprint != nil {
@@ -76,13 +79,15 @@ func makeManifest(
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] container resolution failed: %w", err)
 	}
+	im.AddContainers(containerSpecs)
 
 	commitSpecs, err := resolvePipelineCommits(manifest.GetOSTreeSourceSpecs())
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] ostree commit resolution failed: %w", err)
 	}
+	im.AddCommits(commitSpecs)
 
-	mf, err := manifest.Serialize(packageSpecs, containerSpecs, commitSpecs, nil)
+	mf, err := manifest.Serialize(im)
 	if err != nil {
 		return nil, fmt.Errorf("[ERROR] manifest serialization failed: %w", err)
 	}

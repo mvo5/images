@@ -48,6 +48,44 @@ type Inputs struct {
 	RpmRepos   []rpmmd.RepoConfig
 }
 
+type InputsMap map[string]Inputs
+
+func (im InputsMap) AddPackages(pkgMap map[string][]rpmmd.PackageSpec) InputsMap {
+	for pipelineName, packages := range pkgMap {
+		inputs := im[pipelineName]
+		inputs.Packages = append(inputs.Packages, packages...)
+		im[pipelineName] = inputs
+	}
+	return im
+}
+
+func (im InputsMap) AddContainers(containerMap map[string][]container.Spec) InputsMap {
+	for pipelineName, containers := range containerMap {
+		inputs := im[pipelineName]
+		inputs.Containers = append(inputs.Containers, containers...)
+		im[pipelineName] = inputs
+	}
+	return im
+}
+
+func (im InputsMap) AddCommits(commitsMap map[string][]ostree.CommitSpec) InputsMap {
+	for pipelineName, commits := range commitsMap {
+		inputs := im[pipelineName]
+		inputs.Commits = append(inputs.Commits, commits...)
+		im[pipelineName] = inputs
+	}
+	return im
+}
+
+func (im InputsMap) AddRpmRepos(repoMap map[string][]rpmmd.RepoConfig) InputsMap {
+	for pipelineName, repos := range repoMap {
+		inputs := im[pipelineName]
+		inputs.RpmRepos = append(inputs.RpmRepos, repos...)
+		im[pipelineName] = inputs
+	}
+	return im
+}
+
 // An OSBuildManifest is an opaque JSON object, which is a valid input to osbuild
 type OSBuildManifest []byte
 
@@ -145,25 +183,22 @@ func (m Manifest) GetOSTreeSourceSpecs() map[string][]ostree.SourceSpec {
 	return ostreeSpecs
 }
 
-// TODO: change signature to map[string]Inputs
-func (m Manifest) Serialize(packageSets map[string][]rpmmd.PackageSpec, containerSpecs map[string][]container.Spec, ostreeCommits map[string][]ostree.CommitSpec, rpmRepos map[string][]rpmmd.RepoConfig) (OSBuildManifest, error) {
-	pipelines := make([]osbuild.Pipeline, 0)
-	packages := make([]rpmmd.PackageSpec, 0)
-	commits := make([]ostree.CommitSpec, 0)
-	inline := make([]string, 0)
-	containers := make([]container.Spec, 0)
+func (m Manifest) Serialize(inputs map[string]Inputs) (OSBuildManifest, error) {
+	var (
+		pipelines  []osbuild.Pipeline
+		packages   []rpmmd.PackageSpec
+		commits    []ostree.CommitSpec
+		inline     []string
+		containers []container.Spec
+	)
 	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart(Inputs{
-			Packages:   packageSets[pipeline.Name()],
-			Containers: containerSpecs[pipeline.Name()],
-			Commits:    ostreeCommits[pipeline.Name()],
-			RpmRepos:   rpmRepos[pipeline.Name()],
-		})
+		pipeline.serializeStart(inputs[pipeline.Name()])
 	}
 	for _, pipeline := range m.pipelines {
+		packages = append(packages, inputs[pipeline.Name()].Packages...)
+
 		commits = append(commits, pipeline.getOSTreeCommits()...)
 		pipelines = append(pipelines, pipeline.serialize())
-		packages = append(packages, packageSets[pipeline.Name()]...)
 		inline = append(inline, pipeline.getInline()...)
 		containers = append(containers, pipeline.getContainerSpecs()...)
 	}
