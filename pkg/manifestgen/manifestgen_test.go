@@ -145,10 +145,11 @@ func fakeDepsolve(cacheDir string, packageSets map[string][]rpmmd.PackageSet, d 
 		for _, pkgSet := range pkgSets {
 			for _, pkgName := range pkgSet.Include {
 				resolvedSet.Packages = append(resolvedSet.Packages, rpmmd.PackageSpec{
-					Name:     pkgName,
-					Checksum: sha256For(pkgName),
-					Path:     fmt.Sprintf("path/%s.rpm", pkgName),
-					RepoID:   repoId,
+					Name:           pkgName,
+					Checksum:       sha256For(pkgName),
+					Path:           fmt.Sprintf("path/%s.rpm", pkgName),
+					RepoID:         repoId,
+					RemoteLocation: fmt.Sprintf("%s/%s.rpm", pkgSet.Repositories[0].BaseURLs[0], pkgName),
 				})
 				resolvedSet.Repos = append(resolvedSet.Repos, rpmmd.RepoConfig{
 					Id:       repoId,
@@ -326,5 +327,47 @@ func TestManifestGeneratorSeed(t *testing.T) {
 		} else {
 			assert.NotContains(t, osbuildManifest.String(), needle)
 		}
+	}
+}
+
+func TestManifestGeneratorCustomRepos(t *testing.T) {
+	repos, err := testrepos.New()
+	assert.NoError(t, err)
+	fac := distrofactory.NewDefault()
+
+	filter, err := imagefilter.New(fac, repos)
+	assert.NoError(t, err)
+	res, err := filter.Filter("distro:centos-9", "type:qcow2", "arch:x86_64")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(res))
+
+	for _, withCustomRepos := range []bool{false, true} {
+		t.Run(fmt.Sprintf("withCustomRepos: %v", withCustomRepos), func(t *testing.T) {
+			var osbuildManifest bytes.Buffer
+			opts := &manifestgen.Options{
+				Output:    &osbuildManifest,
+				Depsolver: fakeDepsolve,
+			}
+			if withCustomRepos {
+				opts.CustomRepos = []rpmmd.RepoConfig{
+					{
+						Name:     "custom_repo",
+						BaseURLs: []string{"http://example.com/custom-repo"},
+					},
+				}
+			}
+
+			mg, err := manifestgen.New(repos, opts)
+			assert.NoError(t, err)
+
+			var bp blueprint.Blueprint
+			err = mg.Generate(&bp, res[0].Distro, res[0].ImgType, res[0].Arch, nil)
+			assert.NoError(t, err)
+			if withCustomRepos {
+				assert.Contains(t, osbuildManifest.String(), "http://example.com/custom-repo/kernel.rpm")
+			} else {
+				assert.NotContains(t, osbuildManifest.String(), "http://example.com/custom-repo/kernel.rpm")
+			}
+		})
 	}
 }

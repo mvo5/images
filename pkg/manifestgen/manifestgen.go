@@ -40,6 +40,10 @@ type Options struct {
 	// useful for testing
 	CustomSeed *int64
 
+	// CustomRepos overrides the default repository selection.
+	// This is mostly useful for testing
+	CustomRepos []rpmmd.RepoConfig
+
 	// Custom "solver" functions, if unset the defaults will be
 	// used. Only needed for specialized use-cases.
 	Depsolver         DepsolveFunc
@@ -62,7 +66,8 @@ type Generator struct {
 
 	rpmDownloader osbuild.RpmDownloader
 
-	customSeed *int64
+	customSeed  *int64
+	customRepos []rpmmd.RepoConfig
 }
 
 // New will create a new manifest generator
@@ -81,6 +86,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		rpmDownloader:     opts.RpmDownloader,
 		sbomWriter:        opts.SBOMWriter,
 		customSeed:        opts.CustomSeed,
+		customRepos:       opts.CustomRepos,
 	}
 	if mg.out == nil {
 		mg.out = os.Stdout
@@ -100,14 +106,19 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 
 // Generate will generate a new manifest for the given distro/imageType/arch
 // combination.
-func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgType distro.ImageType, a distro.Arch, imgOpts *distro.ImageOptions) error {
+func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgType distro.ImageType, a distro.Arch, imgOpts *distro.ImageOptions) (err error) {
 	if imgOpts == nil {
 		imgOpts = &distro.ImageOptions{}
 	}
 
-	repos, err := mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
-	if err != nil {
-		return err
+	var repos []rpmmd.RepoConfig
+	if mg.customRepos != nil {
+		repos = mg.customRepos
+	} else {
+		repos, err = mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
+		if err != nil {
+			return err
+		}
 	}
 	preManifest, warnings, err := imgType.Manifest(bp, *imgOpts, repos, mg.customSeed)
 	if err != nil {
