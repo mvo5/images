@@ -110,6 +110,7 @@ func run() error {
 		}
 		customRepos = repoConfig[archName]
 	} else {
+		// XXX: reporegistry prepends "repositories/" to the path
 		reporeg, err = reporegistry.New([]string{repositories})
 		if err != nil {
 			return fmt.Errorf("failed to load repositories from %q: %w", repositories, err)
