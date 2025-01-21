@@ -119,9 +119,10 @@ func run() error {
 	fmt.Printf("Generating manifest for %s: ", config.Name)
 	var mf bytes.Buffer
 	manifestOpts := manifestgen.Options{
-		Output:      &mf,
-		Cachedir:    filepath.Join(rpmCacheRoot, archName+distribution.Name()),
-		CustomRepos: customRepos,
+		Output:         &mf,
+		Cachedir:       filepath.Join(rpmCacheRoot, archName+distribution.Name()),
+		WarningsOutput: os.Stderr,
+		CustomRepos:    customRepos,
 	}
 	// add RHSM fact to detect changes
 	config.Options.Facts = &facts.ImageOptions{
@@ -132,7 +133,6 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	// allow WARNINGS here
 	if err := mg.Generate(config.Blueprint, distribution, imgType, arch, &config.Options); err != nil {
 		return err
 	}
