@@ -36,6 +36,11 @@ type Options struct {
 	// content can be read
 	SBOMWriter SBOMWriterFunc
 
+	// WarningsOutput will recieve any warnings that are part
+	// of the manifest generation. If that options is empty
+	// any warnings will generate an error.
+	WarningsOutput io.Writer
+
 	// CustomSeed overrides the default rng seed, this is mostly
 	// useful for testing
 	CustomSeed *int64
@@ -61,6 +66,7 @@ type Generator struct {
 	containerResolver ContainerResolverFunc
 	commitResolver    CommitResolverFunc
 	sbomWriter        SBOMWriterFunc
+	warningsOutput    io.Writer
 
 	reporegistry *reporegistry.RepoRegistry
 
@@ -85,6 +91,7 @@ func New(reporegistry *reporegistry.RepoRegistry, opts *Options) (*Generator, er
 		commitResolver:    opts.CommitResolver,
 		rpmDownloader:     opts.RpmDownloader,
 		sbomWriter:        opts.SBOMWriter,
+		warningsOutput:    opts.WarningsOutput,
 		customSeed:        opts.CustomSeed,
 		customRepos:       opts.CustomRepos,
 	}
@@ -125,9 +132,12 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 		return err
 	}
 	if len(warnings) > 0 {
-		// XXX: what can we do here? for things like json output?
-		// what are these warnings?
-		return fmt.Errorf("warnings during manifest creation: %v", strings.Join(warnings, "\n"))
+		warn := strings.Join(warnings, "\n")
+		if mg.warningsOutput != nil {
+			fmt.Fprintf(mg.warningsOutput, warn)
+		} else {
+			return fmt.Errorf("warnings during manifest creation: %v", warn)
+		}
 	}
 	depsolved, err := mg.depsolver(mg.cacheDir, preManifest.GetPackageSetChains(), dist, a.Name())
 	if err != nil {
