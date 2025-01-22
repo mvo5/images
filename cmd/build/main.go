@@ -3,7 +3,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -14,30 +13,12 @@ import (
 	"github.com/osbuild/images/internal/cmdutil"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distrofactory"
-	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/manifestgen"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/reporegistry"
 	"github.com/osbuild/images/pkg/rhsm/facts"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
-
-func save(ms manifest.OSBuildManifest, fpath string) error {
-	b, err := json.MarshalIndent(ms, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal data for %q: %w", fpath, err)
-	}
-	b = append(b, '\n') // add new line at end of file
-	fp, err := os.Create(fpath)
-	if err != nil {
-		return fmt.Errorf("failed to create output file %q: %w", fpath, err)
-	}
-	defer fp.Close()
-	if _, err := fp.Write(b); err != nil {
-		return fmt.Errorf("failed to write output file %q: %w", fpath, err)
-	}
-	return nil
-}
 
 func u(s string) string {
 	return strings.Replace(s, "-", "_", -1)
@@ -140,7 +121,7 @@ func run() error {
 	fmt.Print("DONE\n")
 
 	manifestPath := filepath.Join(buildDir, "manifest.json")
-	if err := save(mf.Bytes(), manifestPath); err != nil {
+	if err := os.WriteFile(manifestPath, mf.Bytes(), 0644); err != nil {
 		return err
 	}
 
