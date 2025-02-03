@@ -30,12 +30,6 @@ const (
 // Uses:
 //   - Storage API
 func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
-	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Storage client: %v", err)
-	}
-	defer storageClient.Close()
-
 	// Open the image file
 	imageFile, err := os.Open(filename)
 	if err != nil {
@@ -54,6 +48,17 @@ func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object 
 	if _, err := imageFile.Seek(0, 0); err != nil {
 		return nil, fmt.Errorf("cannot seek the image: %v", err)
 	}
+	md5sum := imageFileHash.Sum(nil)
+
+	return g.StorageObjectUploadFromReader(ctx, imageFile, md5sum, bucket, object, metadata)
+}
+
+func (g *GCP) StorageObjectUploadFromReader(ctx context.Context, imageFile io.Reader, md5sum []byte, bucket, object string, metadata map[string]string) (*storage.ObjectAttrs, error) {
+	storageClient, err := storage.NewClient(ctx, option.WithCredentials(g.creds))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Storage client: %v", err)
+	}
+	defer storageClient.Close()
 
 	// Upload the image
 	// The Bucket MUST exist and be of a STANDARD storage class
@@ -61,7 +66,7 @@ func (g *GCP) StorageObjectUpload(ctx context.Context, filename, bucket, object 
 	wc := obj.NewWriter(ctx)
 
 	// Uploaded data is rejected if its MD5 hash does not match the set value.
-	wc.MD5 = imageFileHash.Sum(nil)
+	wc.MD5 = md5sum
 
 	if metadata != nil {
 		wc.ObjectAttrs.Metadata = metadata
