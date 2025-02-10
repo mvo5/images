@@ -11,8 +11,11 @@ import (
 )
 
 // SupportedFilters returns what filter prefixes are supported
-func SupportedFilters() []string {
-	return supportedFilters
+func SupportedFilters() (supported []string) {
+	for key := range supportedFilters {
+		supported = append(supported, key)
+	}
+	return supported
 }
 
 func splitPrefixSearchTerm(s string) (string, string) {
@@ -41,8 +44,8 @@ func newFilter(sl ...string) (*filter, error) {
 	}
 	for i, s := range sl {
 		prefix, searchTerm := splitPrefixSearchTerm(s)
-		if prefix != "" && !slices.Contains(supportedFilters, prefix) {
-			return nil, fmt.Errorf("unsupported filter prefix: %q (supported: %v)", prefix, strings.Join(supportedFilters, ","))
+		if prefix != "" && !slices.Contains(SupportedFilters(), prefix) {
+			return nil, fmt.Errorf("unsupported filter prefix: %q (supported: %v)", prefix, strings.Join(SupportedFilters(), ","))
 		}
 		gl, err := glob.Compile(searchTerm)
 		if err != nil {
@@ -52,10 +55,6 @@ func newFilter(sl ...string) (*filter, error) {
 		filter.terms[i].pattern = gl
 	}
 	return filter, nil
-}
-
-var supportedFilters = []string{
-	"distro", "arch", "type", "bootmode",
 }
 
 type term struct {
@@ -69,6 +68,31 @@ type filter struct {
 	terms []term
 }
 
+type matcherFunc func(distro distro.Distro, arch distro.Arch, imgType distro.ImageType, term term) bool
+
+var supportedFilters = map[string]matcherFunc{
+	"distro":   matcherFuncDistro,
+	"arch":     matcherFuncArch,
+	"type":     matcherFuncType,
+	"bootmode": matcherFuncBootmode,
+}
+
+func matcherFuncDistro(distro distro.Distro, arch distro.Arch, imgType distro.ImageType, term term) bool {
+	return term.pattern.Match(distro.Name())
+}
+
+func matcherFuncArch(distro distro.Distro, arch distro.Arch, imgType distro.ImageType, term term) bool {
+	return term.pattern.Match(arch.Name())
+}
+
+func matcherFuncType(distro distro.Distro, arch distro.Arch, imgType distro.ImageType, term term) bool {
+	return term.pattern.Match(imgType.Name())
+}
+
+func matcherFuncBootmode(distro distro.Distro, arch distro.Arch, imgType distro.ImageType, term term) bool {
+	return term.pattern.Match(imgType.BootMode().String())
+}
+
 // Matches returns true if the given (distro,arch,imgType) tuple matches
 // the filter expressions
 func (fl filter) Matches(distro distro.Distro, arch distro.Arch, imgType distro.ImageType) bool {
@@ -78,19 +102,15 @@ func (fl filter) Matches(distro distro.Distro, arch distro.Arch, imgType distro.
 		case "":
 			// no prefix, do a "fuzzy" search accross the common
 			// things users may want
-			m1 := term.pattern.Match(distro.Name())
-			m2 := term.pattern.Match(arch.Name())
-			m3 := term.pattern.Match(imgType.Name())
+			m1 := matcherFuncDistro(distro, arch, imgType, term)
+			m2 := matcherFuncArch(distro, arch, imgType, term)
+			m3 := matcherFuncType(distro, arch, imgType, term)
 			m = m && (m1 || m2 || m3)
-		case "distro":
-			m = m && term.pattern.Match(distro.Name())
-		case "arch":
-			m = m && term.pattern.Match(arch.Name())
-		case "type":
-			m = m && term.pattern.Match(imgType.Name())
-			// mostly here to show how flexible this is
-		case "bootmode":
-			m = m && term.pattern.Match(imgType.BootMode().String())
+		default:
+			fn, ok := supportedFilters[term.prefix]
+			if ok {
+				m = m && fn(distro, arch, imgType, term)
+			}
 		}
 	}
 	return m
