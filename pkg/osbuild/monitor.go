@@ -62,15 +62,9 @@ type Progress struct {
 // NewStatusScanner returns a StatusScanner that can parse osbuild
 // jsonseq monitor status messages
 func NewStatusScanner(r io.Reader) *StatusScanner {
-	scanner := bufio.NewScanner(r)
-	// osbuild can currently generate very long messages, the default
-	// 64kb is too small for e.g. the dracut stage (see also
-	// https://github.com/osbuild/osbuild/issues/1976). Increase for
-	// but to unblock us.
-	buf := make([]byte, 0, 512_000)
-	scanner.Buffer(buf, 512_000)
+	reader := bufio.NewReader(r)
 	return &StatusScanner{
-		scanner:         scanner,
+		reader:          reader,
 		contextMap:      make(map[string]*contextJSON),
 		stageContextMap: make(map[string]*stageContextJSON),
 	}
@@ -78,7 +72,7 @@ func NewStatusScanner(r io.Reader) *StatusScanner {
 
 // StatusScanner scan scan the osbuild jsonseq monitor output
 type StatusScanner struct {
-	scanner         *bufio.Scanner
+	reader          *bufio.Reader
 	contextMap      map[string]*contextJSON
 	stageContextMap map[string]*stageContextJSON
 }
@@ -86,12 +80,15 @@ type StatusScanner struct {
 // Status returns a single status struct from the scanner or nil
 // if the end of the status reporting is reached.
 func (sr *StatusScanner) Status() (*Status, error) {
-	if !sr.scanner.Scan() {
-		return nil, sr.scanner.Err()
+	line, err := sr.reader.ReadBytes('\n')
+	if err != nil && err != io.EOF {
+		return nil, err
+	}
+	if len(line) == 0 {
+		return nil, nil
 	}
 
 	var status statusJSON
-	line := sr.scanner.Bytes()
 	line = bytes.Trim(line, "\x1e")
 	if err := json.Unmarshal(line, &status); err != nil {
 		return nil, fmt.Errorf("cannot scan line %q: %w", line, err)
