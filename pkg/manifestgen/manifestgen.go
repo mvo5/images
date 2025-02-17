@@ -234,7 +234,13 @@ func DefaultDepsolver(cacheDir string, packageSets map[string][]rpmmd.PackageSet
 		// need no extra argument here to select the SBOM
 		// type. Once we have more types than Spdx of course
 		// we need to add a option to select the type.
-		res, err := solver.Depsolve(pkgSet, sbom.StandardTypeSpdx)
+		//
+		// XXX: hack, old osbuild in riscv5 build
+		sbomType := sbom.StandardTypeSpdx
+		if arch == "riscv64" {
+			sbomType = sbom.StandardTypeNone
+		}
+		res, err := solver.Depsolve(pkgSet, sbomType)
 		if err != nil {
 			return nil, fmt.Errorf("error depsolving: %w", err)
 		}
