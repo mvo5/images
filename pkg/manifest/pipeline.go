@@ -1,6 +1,7 @@
 package manifest
 
 import (
+	"github.com/osbuild/images/internal/experimental"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -182,7 +183,11 @@ func (p Base) serialize() osbuild.Pipeline {
 		Name: p.name,
 	}
 	if p.build != nil {
-		pipeline.Build = "name:" + p.build.Name()
+		if forcedBuildroot := experimental.Buildroot(); forcedBuildroot != "" {
+			pipeline.Build = forcedBuildroot
+		} else {
+			pipeline.Build = "name:" + p.build.Name()
+		}
 	}
 	return pipeline
 }
