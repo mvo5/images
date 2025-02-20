@@ -7,15 +7,22 @@ import (
 
 const envKEY = "IMAGES_EXPERIMENTAL"
 
-func Buildroot() string {
+func experimentalOptions() map[string]string {
+	expMap := map[string]string{}
+
 	env := os.Getenv(envKEY)
 	if env == "" {
-		return ""
+		return expMap
 	}
+
 	for _, s := range strings.Split(env, ",") {
-		if strings.HasPrefix(s, "force-buildroot=") {
-			return strings.SplitN(s, "=", 2)[1]
-		}
+		l := strings.SplitN(s, "=", 2)
+		expMap[l[0]] = l[1]
 	}
-	return ""
+	return expMap
+}
+
+func Buildroot() string {
+	expMap := experimentalOptions()
+	return expMap["buildroot"]
 }

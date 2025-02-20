@@ -3,6 +3,8 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/internal/experimental"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -47,6 +49,18 @@ type BuildOptions struct {
 func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts *BuildOptions) Build {
 	if opts == nil {
 		opts = &BuildOptions{}
+	}
+
+	// XXX: hack, find a better way
+	if forcedBuildroot := experimental.Buildroot(); forcedBuildroot != "" {
+		cntSrcs := []container.SourceSpec{
+			{
+				Source:    forcedBuildroot,
+				Name:      forcedBuildroot,
+				TLSVerify: common.ToPtr(false),
+			},
+		}
+		return NewBuildFromContainer(m, runner, cntSrcs, opts)
 	}
 
 	name := "build"
@@ -242,13 +256,18 @@ func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
 		panic(err)
 	}
 	pipeline.AddStage(stage)
-	pipeline.AddStage(osbuild.NewSELinuxStage(
-		&osbuild.SELinuxStageOptions{
-			FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
-			ExcludePaths: []string{"/sysroot"},
-			Labels:       p.getSELinuxLabels(),
-		},
-	))
+
+	// HACK: some forced containers do not have selinux support
+	// (like the riscv5 one)
+	if s := experimental.Buildroot(); s == "" {
+		pipeline.AddStage(osbuild.NewSELinuxStage(
+			&osbuild.SELinuxStageOptions{
+				FileContexts: "etc/selinux/targeted/contexts/files/file_contexts",
+				ExcludePaths: []string{"/sysroot"},
+				Labels:       p.getSELinuxLabels(),
+			},
+		))
+	}
 
 	return pipeline
 }
