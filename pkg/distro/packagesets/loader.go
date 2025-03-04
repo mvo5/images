@@ -25,6 +25,7 @@ type conditions struct {
 	Architecture          map[string]packageSet `yaml:"architecture,omitempty"`
 	VersionLessThan       map[string]packageSet `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual map[string]packageSet `yaml:"version_greater_or_equal,omitempty"`
+	IsRHEL                map[bool]packageSet   `yaml:"is_rhel,omitempty"`
 }
 
 func Load(it distro.ImageType, replacements map[string]string) rpmmd.PackageSet {
@@ -36,6 +37,8 @@ func Load(it distro.ImageType, replacements map[string]string) rpmmd.PackageSet 
 	distroNameVer := distribution.Name()
 	distroName := strings.SplitN(distroNameVer, "-", 2)[0]
 	distroVersion := distribution.OsVersion()
+	// XXX: duplicates pkg/distro/rhel/distribution.go:IsRHEL()
+	isRHEL := strings.HasPrefix(distroNameVer, "rhel")
 
 	distroSets, err := Data.Open(filepath.Join(distroName, "package_sets.yaml"))
 	if err != nil {
@@ -91,6 +94,14 @@ func Load(it distro.ImageType, replacements map[string]string) rpmmd.PackageSet 
 				})
 			}
 		}
+
+		if isRHELSet, ok := pkgSet.Condition.IsRHEL[isRHEL]; ok {
+			rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
+				Include: isRHELSet.Include,
+				Exclude: isRHELSet.Exclude,
+			})
+		}
+
 	}
 
 	return rpmmdPkgSet
