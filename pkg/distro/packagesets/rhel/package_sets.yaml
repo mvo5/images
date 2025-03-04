@@ -60,4 +60,8 @@ qcow2: &qcow2
     is_rhel:
       true:
         include:
+          - "insights-client"
           - "subscription-manager-cockpit"
+
+oci:
+  <<: *qcow2

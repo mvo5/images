@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/distro/packagesets"
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
@@ -129,4 +130,8 @@ func distroSpecificPackageSet(t *rhel.ImageType) rpmmd.PackageSet {
 		}
 	}
 	return rpmmd.PackageSet{}
+}
+
+func packageSetLoader(t *rhel.ImageType) rpmmd.PackageSet {
+	return packagesets.Load(t, nil)
 }
