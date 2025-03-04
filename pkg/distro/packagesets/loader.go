@@ -25,6 +25,7 @@ type conditions struct {
 	Architecture          map[string]packageSet `yaml:"architecture,omitempty"`
 	VersionLessThan       map[string]packageSet `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual map[string]packageSet `yaml:"version_greater_or_equal,omitempty"`
+	MajorVersionEqual     map[string]packageSet `yaml:"major_version_equal,omitempty"`
 	IsRHEL                map[bool]packageSet   `yaml:"is_rhel,omitempty"`
 }
 
@@ -91,6 +92,15 @@ func Load(it distro.ImageType, replacements map[string]string) rpmmd.PackageSet 
 				rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
 					Include: gteqSet.Include,
 					Exclude: gteqSet.Exclude,
+				})
+			}
+		}
+
+		for majorVer, meqSet := range pkgSet.Condition.MajorVersionEqual {
+			if common.MajorVersionEqual(distroVersion, majorVer) {
+				rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
+					Include: meqSet.Include,
+					Exclude: meqSet.Exclude,
 				})
 			}
 		}
