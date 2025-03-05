@@ -4,9 +4,9 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -40,7 +40,7 @@ func init() {
 // went wrong. Your manifest will be streamed to osbuild
 // for building.
 func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+	repos *inputs.RepoContainerConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple OCI container!
@@ -50,7 +50,7 @@ func (img *MyContainer) InstantiateManifest(m *manifest.Manifest,
 	build.Checkpoint()
 
 	// create a minimal non-bootable OS tree
-	os := manifest.NewOS(build, &platform.X86{}, repos)
+	os := manifest.NewOS(build, &platform.X86{}, repos.Repos)
 	os.ExtraBasePackages = []string{"@core"}
 	os.OSCustomizations.Language = "en_US.UTF-8"
 	os.OSCustomizations.Hostname = "my-host"

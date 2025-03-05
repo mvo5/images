@@ -8,13 +8,14 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 func TestBuildContainerBuildableNo(t *testing.T) {
-	repos := []rpmmd.RepoConfig{}
+	repos := &inputs.RepoContainerConfig{}
 	mf := New()
 	runner := &runner.Fedora{Version: 39}
 
@@ -157,7 +158,8 @@ func TestNewBuildWithExperimentalOverride(t *testing.T) {
 		}
 		mf := New()
 		runner := &runner.Fedora{Version: 42}
-		buildIf := NewBuild(&mf, runner, nil, nil)
+		repos := &inputs.RepoContainerConfig{}
+		buildIf := NewBuild(&mf, runner, repos, nil)
 		require.NotNil(t, buildIf)
 		if withForcedBuildroot {
 			bootstrapPipeline := mf.pipelines[0]

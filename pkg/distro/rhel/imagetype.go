@@ -13,6 +13,7 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -361,7 +362,10 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, fmt.Errorf("unsupported distro release version: %s", t.Arch().Distro().Releasever())
 	}
 
-	_, err = img.InstantiateManifest(&mf, repos, t.arch.distro.runner, rng)
+	repoCnt := &inputs.RepoContainerConfig{
+		Repos: repos,
+	}
+	_, err = img.InstantiateManifest(&mf, repoCnt, t.arch.distro.runner, rng)
 	if err != nil {
 		return nil, nil, err
 	}

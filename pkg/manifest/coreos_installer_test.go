@@ -3,18 +3,21 @@ package manifest
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
-	"github.com/stretchr/testify/require"
 )
 
 func newCoreOSInstaller() *CoreOSInstaller {
 	m := &Manifest{}
 	runner := &runner.Linux{}
-	build := NewBuild(m, runner, nil, nil)
+	repos := &inputs.RepoContainerConfig{}
+	build := NewBuild(m, runner, repos, nil)
 
 	x86plat := &platform.X86{}
 

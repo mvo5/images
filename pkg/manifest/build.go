@@ -5,6 +5,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -46,7 +47,7 @@ type BuildOptions struct {
 
 // NewBuild creates a new build pipeline from the repositories in repos
 // and the specified packages.
-func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts *BuildOptions) Build {
+func NewBuild(m *Manifest, runner runner.Runner, repos *inputs.RepoContainerConfig, opts *BuildOptions) Build {
 	if opts == nil {
 		opts = &BuildOptions{}
 	}
@@ -56,7 +57,7 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		Base:               NewBase(name, nil),
 		runner:             runner,
 		dependents:         make([]Pipeline, 0),
-		repos:              filterRepos(repos, name),
+		repos:              filterRepos(repos.Repos, name),
 		containerBuildable: opts.ContainerBuildable,
 	}
 

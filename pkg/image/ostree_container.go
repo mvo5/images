@@ -6,6 +6,7 @@ import (
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
@@ -41,13 +42,13 @@ func NewOSTreeContainer(ref string) *OSTreeContainer {
 }
 
 func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+	repos *inputs.RepoContainerConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
 	buildPipeline.Checkpoint()
 
-	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
+	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos.Repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
 	osPipeline.Workload = img.Workload
@@ -63,7 +64,7 @@ func (img *OSTreeContainer) InstantiateManifest(m *manifest.Manifest,
 	serverPipeline := manifest.NewOSTreeCommitServer(
 		buildPipeline,
 		img.Platform,
-		repos,
+		repos.Repos,
 		commitPipeline,
 		nginxConfigPath,
 		listenPort,

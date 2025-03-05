@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
@@ -71,7 +72,7 @@ func NewOSTreeSimplifiedInstaller(rawImage *OSTreeDiskImage, installDevice strin
 }
 
 func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+	repos *inputs.RepoContainerConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, nil)
@@ -86,7 +87,7 @@ func (img *OSTreeSimplifiedInstaller) InstantiateManifest(m *manifest.Manifest,
 	coiPipeline := manifest.NewCoreOSInstaller(
 		buildPipeline,
 		img.Platform,
-		repos,
+		repos.Repos,
 		"kernel",
 		img.Product,
 		img.OSVersion,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/runner"
@@ -13,7 +14,8 @@ import (
 func TestZstdSerialize(t *testing.T) {
 	mani := manifest.New()
 	runner := &runner.Linux{}
-	build := manifest.NewBuild(&mani, runner, nil, nil)
+	repos := &inputs.RepoContainerConfig{}
+	build := manifest.NewBuild(&mani, runner, repos, nil)
 
 	// setup
 	rawImage := manifest.NewRawImage(build, nil)

@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/datasizes"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -68,7 +69,7 @@ func NewAnacondaContainerInstaller(container container.SourceSpec, ref string) *
 }
 
 func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+	repos *inputs.RepoContainerConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	buildPipeline := manifest.NewBuild(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: true})
@@ -78,7 +79,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.Platform,
-		repos,
+		repos.Repos,
 		"kernel",
 		img.Product,
 		img.OSVersion,

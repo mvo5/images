@@ -8,16 +8,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/runner"
-	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -29,7 +31,8 @@ const (
 func newTestAnacondaISOTree() *AnacondaInstallerISOTree {
 	m := &Manifest{}
 	runner := &runner.Linux{}
-	build := NewBuild(m, runner, nil, nil)
+	repos := &inputs.RepoContainerConfig{}
+	build := NewBuild(m, runner, repos, nil)
 
 	x86plat := &platform.X86{}
 

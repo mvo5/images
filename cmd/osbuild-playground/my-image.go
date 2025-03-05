@@ -5,9 +5,9 @@ import (
 
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -24,7 +24,7 @@ func init() {
 }
 
 func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+	repos *inputs.RepoContainerConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
 	// Let's create a simple raw image!
@@ -45,7 +45,7 @@ func (img *MyImage) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	// create a minimal bootable OS tree
-	os := manifest.NewOS(build, platform, repos)
+	os := manifest.NewOS(build, platform, repos.Repos)
 	os.PartitionTable = pt   // we need a partition table
 	os.KernelName = "kernel" // use the default fedora kernel
 

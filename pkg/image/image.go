@@ -4,14 +4,14 @@ import (
 	"math/rand"
 
 	"github.com/osbuild/images/pkg/artifact"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 type ImageKind interface {
 	Name() string
-	InstantiateManifest(m *manifest.Manifest, repos []rpmmd.RepoConfig, runner runner.Runner, rng *rand.Rand) (*artifact.Artifact, error)
+	InstantiateManifest(m *manifest.Manifest, repos *inputs.RepoContainerConfig, runner runner.Runner, rng *rand.Rand) (*artifact.Artifact, error)
 }
 
 type Base struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/pkg/customizations/anaconda"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -16,7 +17,8 @@ import (
 func newAnacondaInstaller() *AnacondaInstaller {
 	m := &Manifest{}
 	runner := &runner.Linux{}
-	build := NewBuild(m, runner, nil, nil)
+	repos := &inputs.RepoContainerConfig{}
+	build := NewBuild(m, runner, repos, nil)
 
 	x86plat := &platform.X86{}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/subscription"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
@@ -20,7 +21,7 @@ import (
 
 // NewTestOS returns a minimally populated OS struct for use in testing
 func NewTestOS() *OS {
-	repos := []rpmmd.RepoConfig{}
+	repos := &inputs.RepoContainerConfig{}
 	manifest := New()
 	runner := &runner.Fedora{Version: 38}
 	build := NewBuild(&manifest, runner, repos, nil)
@@ -31,14 +32,14 @@ func NewTestOS() *OS {
 		BIOS: true,
 	}
 
-	os := NewOS(build, platform, repos)
+	os := NewOS(build, platform, repos.Repos)
 	packages := []rpmmd.PackageSpec{
 		{Name: "pkg1", Checksum: "sha1:c02524e2bd19490f2a7167958f792262754c5f46"},
 	}
 	os.serializeStart(Inputs{
 		Depsolved: dnfjson.DepsolveResult{
 			Packages: packages,
-			Repos:    repos,
+			Repos:    repos.Repos,
 		},
 	})
 

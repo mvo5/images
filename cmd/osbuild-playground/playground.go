@@ -8,6 +8,7 @@ import (
 
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -30,7 +31,10 @@ func RunPlayground(img image.ImageKind, d distro.Distro, arch distro.Arch, repos
 	rnd := rand.New(rand.NewSource(0))
 
 	// TODO: query distro for runner
-	artifact, err := img.InstantiateManifest(&manifest, repos[arch.Name()], &runner.Fedora{Version: 36}, rnd)
+	repoCnt := &inputs.RepoContainerConfig{
+		Repos: repos[arch.Name()],
+	}
+	artifact, err := img.InstantiateManifest(&manifest, repoCnt, &runner.Fedora{Version: 36}, rnd)
 	if err != nil {
 		panic("InstantiateManifest() failed: " + err.Error())
 	}

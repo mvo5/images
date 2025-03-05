@@ -10,6 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -366,13 +367,14 @@ func TestLiveInstallerSquashfsRootfs(t *testing.T) {
 }
 
 func instantiateAndSerialize(t *testing.T, img image.ImageKind, depsolved map[string]dnfjson.DepsolveResult, containers map[string][]container.Spec, commits map[string][]ostree.CommitSpec) string {
+	var repos inputs.RepoContainerConfig
 	source := rand.NewSource(int64(0))
 	// math/rand is good enough in this case
 	/* #nosec G404 */
 	rng := rand.New(source)
 
 	mf := manifest.New()
-	_, err := img.InstantiateManifest(&mf, nil, &runner.CentOS{Version: 9}, rng)
+	_, err := img.InstantiateManifest(&mf, &repos, &runner.CentOS{Version: 9}, rng)
 	assert.NoError(t, err)
 
 	fmt.Printf("Serializing with commits: %+v\n", commits)

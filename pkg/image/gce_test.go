@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/osbuild/images/pkg/distro/inputs"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -19,11 +19,11 @@ func TestNewGCETarPipeline(t *testing.T) {
 		{"disk.raw", ""},
 		{"foo.img", `s/foo\.img/disk.raw/`},
 	} {
-		var repos []rpmmd.RepoConfig
+		var repos inputs.RepoContainerConfig
 		m := &manifest.Manifest{}
 		runner := &runner.Fedora{}
 
-		buildPipeline := manifest.NewBuild(m, runner, repos, nil)
+		buildPipeline := manifest.NewBuild(m, runner, &repos, nil)
 		buildPipeline.Checkpoint()
 
 		imgPipeline := manifest.NewRawImage(buildPipeline, nil)
