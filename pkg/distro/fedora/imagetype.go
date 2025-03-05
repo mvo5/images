@@ -299,8 +299,10 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 	}
 	mf := manifest.New()
 	mf.Distro = manifest.DISTRO_FEDORA
+
 	repoCnt := &inputs.RepoContainerConfig{
-		Repos: repos,
+		Repos:                 repos,
+		BootstrapContainerRef: bootstrapContainerFor(t),
 	}
 	_, err = img.InstantiateManifest(&mf, repoCnt, t.arch.distro.runner, rng)
 	if err != nil {
@@ -501,4 +503,18 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 	}
 
 	return warnings, nil
+}
+
+// XXX: this will become part of the yaml distro definitions
+func bootstrapContainerFor(t *imageType) string {
+	arch := t.arch.Name()
+	distro := t.arch.distro
+
+	// XXX: remove once fedora containers are part of the upstream
+	// fedora registry
+	if arch == "riscv64" {
+		return "ghcr.io/mvo5/fedora-buildroot:" + distro.OsVersion()
+	}
+
+	return "registry.fedoraproject.org/fedora-toolbox:" + distro.OsVersion()
 }

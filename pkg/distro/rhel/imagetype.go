@@ -3,7 +3,6 @@ package rhel
 import (
 	"fmt"
 	"math/rand"
-
 	"slices"
 
 	"github.com/osbuild/images/internal/environment"
@@ -363,7 +362,8 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	}
 
 	repoCnt := &inputs.RepoContainerConfig{
-		Repos: repos,
+		Repos:                 repos,
+		BootstrapContainerRef: bootstrapContainerFor(t),
 	}
 	_, err = img.InstantiateManifest(&mf, repoCnt, t.arch.distro.runner, rng)
 	if err != nil {
@@ -402,5 +402,16 @@ func NewImageType(
 		buildPipelines:   buildPipelines,
 		payloadPipelines: payloadPipelines,
 		exports:          exports,
+	}
+}
+
+// XXX: this will become part of the yaml distro definitions
+func bootstrapContainerFor(t *ImageType) string {
+	distro := t.arch.distro
+
+	if distro.IsRHEL() {
+		return fmt.Sprintf("registry.access.redhat.com/ubi%s/ubi:latest", distro.Releasever())
+	} else {
+		return "quay.io/centos/centos:" + distro.Releasever()
 	}
 }

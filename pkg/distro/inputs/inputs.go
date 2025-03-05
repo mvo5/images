@@ -9,5 +9,8 @@ import (
 type RepoContainerConfig struct {
 	Repos []rpmmd.RepoConfig
 
-	BuildrootContainerRef string
+	// Container reference for the (optional) bootstrap container
+	// used when doing a cross-arch or cross-distro bootstrap of
+	// the buildroot
+	BootstrapContainerRef string
 }
