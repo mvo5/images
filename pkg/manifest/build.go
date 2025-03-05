@@ -62,8 +62,8 @@ func NewBuild(m *Manifest, runner runner.Runner, repos *inputs.RepoContainerConf
 	}
 
 	// This allows to bootstrap the buildroot with a custom container
-	// for e.g. cross-arch-build experiments,
-	maybeAddExperimentalContainerBootstrap(m, runner, opts, pipeline)
+	// for e.g. cross-arch-build
+	maybeAddContainerBootstrap(m, runner, repos, opts, pipeline)
 
 	m.addPipeline(pipeline)
 	return pipeline
@@ -157,25 +157,33 @@ func (p *BuildrootFromPackages) getSELinuxLabels() map[string]string {
 	return labels
 }
 
-// maybeAddExperimentalContainerBootstrap will return a container buildroot
+// maybeAddContainerBootstrap will return a container buildroot
 // if the "IMAGE_BUILDER_EXPERIMENTAL=bootstrap=<container-ref>" is
-// defined. This allows us to do cross-arch build experimentation.
+// defined or if the RepoContainerConfig contains a boostrap container
+// reference.
+//
+// This allows us to do cross-arch build experimentation.
 //
 // A "bootstrap" container has only these requirements:
 // - python3 for the runners
 // - rpm so that the real buildroot rpms can get installed
 // - setfiles so that the selinux stage for the real buildroot can run
 // (and does not even need a working dnf or repo setup).
-func maybeAddExperimentalContainerBootstrap(m *Manifest, runner runner.Runner, opts *BuildOptions, build *BuildrootFromPackages) {
+func maybeAddContainerBootstrap(m *Manifest, runner runner.Runner, repos *inputs.RepoContainerConfig, opts *BuildOptions, build *BuildrootFromPackages) {
 	bootstrapBuildrootRef := experimentalflags.String("bootstrap")
+	if bootstrapBuildrootRef == "" {
+		bootstrapBuildrootRef = repos.BootstrapContainerRef
+	}
 	if bootstrapBuildrootRef == "" {
 		return
 	}
 
 	cntSrcs := []container.SourceSpec{
 		{
-			Source:    bootstrapBuildrootRef,
-			Name:      bootstrapBuildrootRef,
+			Source: bootstrapBuildrootRef,
+			Name:   bootstrapBuildrootRef,
+			// XXX: remove this once the riscv container can
+			// be verified
 			TLSVerify: common.ToPtr(false),
 		},
 	}

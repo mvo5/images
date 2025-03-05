@@ -362,8 +362,10 @@ func (t *ImageType) Manifest(bp *blueprint.Blueprint,
 	}
 
 	repoCnt := &inputs.RepoContainerConfig{
-		Repos:                 repos,
-		BootstrapContainerRef: bootstrapContainerFor(t),
+		Repos: repos,
+	}
+	if options.UseBootstrapContainer {
+		repoCnt.BootstrapContainerRef = bootstrapContainerFor(t)
 	}
 	_, err = img.InstantiateManifest(&mf, repoCnt, t.arch.distro.runner, rng)
 	if err != nil {
