@@ -1,23 +1,59 @@
 ---
 .common:
-  cloud_base_pkgset: &cloud_base_pkgset
-    include:
-      - "@Fedora Cloud Server"
-      - "chrony"  # not mentioned in the kickstart anaconda pulls it when setting the timezone
-      - "langpacks-en"
-    exclude:
-      - "dracut-config-rescue"
-      - "firewalld"
-      - "geolite2-city"
-      - "geolite2-country"
-      - "plymouth"
+  pkg_sets:
+    cloud_base_pkgset: &cloud_base_pkgset
+      include:
+        - "@Fedora Cloud Server"
+        - "chrony"  # not mentioned in the kickstart anaconda pulls it when setting the timezone
+        - "langpacks-en"
+      exclude:
+        - "dracut-config-rescue"
+        - "firewalld"
+        - "geolite2-city"
+        - "geolite2-country"
+        - "plymouth"
+  partitioning:
+    guids:
+      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
+      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+    # static UUIDs for partitions and filesystems
+    # NOTE(akoutsou): These are unnecessary and have stuck around since the
+    # beginning where (I believe) the goal was to have predictable,
+    # reproducible partition tables. They might be removed soon in favour of
+    # proper, random UUIDs, with reproducibility being controlled by fixing
+    # rng seeds.
+    uuids:
+      - &bios_boot_partition_uuid "FAC7F1FB-3E8D-4137-A512-961DE09A5549"
+      - &efi_system_partition_uuid "68B2905B-DF3E-4FB3-80FA-49D1E773AA33"
+      - &efi_filesystem_uuid "7B77-95E7"
+    default_partition_tables: &default_partition_tables
+      x86_64:
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - size: 1*MiB
+            bootloader: true
+            type: *bios_boot_partition_guid
+            uiid: *bios_boot_partition_uuid
+          - size: 200*MiB
+            type: *efi_system_partition_guid
+            uiid: *efi_system_partition_uuid
+            payload:
+              type: vfat
+              uuid: *efi_filesystem_uuid
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
 
 image_types:
   qcow2: &qcow2
     package_sets:
-     - *cloud_base_pkgset
-     - include:
-         - "qemu-guest-agent"
+      - *cloud_base_pkgset
+      - include:
+          - "qemu-guest-agent"
+    partition_table: *default_partition_table
   ami: *qcow2
   oci: *qcow2
   openstack: *qcow2
