@@ -1,4 +1,4 @@
-package packagesets
+package yamlloader
 
 import (
 	"os"

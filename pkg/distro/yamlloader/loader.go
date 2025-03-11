@@ -1,4 +1,4 @@
-package packagesets
+package yamlloader
 
 import (
 	"embed"
@@ -46,7 +46,7 @@ type conditions struct {
 // imagetype. By default the imagetype name is used to load the packageset
 // but with "overrideTypeName" this can be overriden (useful for e.g.
 // installer image types).
-func Load(it distro.ImageType, overrideTypeName string, replacements map[string]string) rpmmd.PackageSet {
+func LoadPkgSet(it distro.ImageType, overrideTypeName string, replacements map[string]string) rpmmd.PackageSet {
 	typeName := it.Name()
 	if overrideTypeName != "" {
 		typeName = overrideTypeName
@@ -63,7 +63,7 @@ func Load(it distro.ImageType, overrideTypeName string, replacements map[string]
 	distroName := distroNameVer[:strings.LastIndex(distroNameVer, "-")]
 	distroVersion := distribution.OsVersion()
 
-	distroSets, err := DataFS.Open(filepath.Join(distroName, "package_sets.yaml"))
+	distroSets, err := DataFS.Open(filepath.Join(distroName, "imagetypes.yaml"))
 	if err != nil {
 		panic(err)
 	}

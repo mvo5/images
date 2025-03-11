@@ -1,4 +1,4 @@
-package packagesets_test
+package yamlloader_test
 
 import (
 	"os"
@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/pkg/distro"
-	"github.com/osbuild/images/pkg/distro/packagesets"
 	"github.com/osbuild/images/pkg/distro/test_distro"
+	"github.com/osbuild/images/pkg/distro/yamlloader"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
@@ -26,7 +26,7 @@ func makeTestImageType(t *testing.T) distro.ImageType {
 
 func makeFakePkgsSet(t *testing.T, distroName, content string) string {
 	tmpdir := t.TempDir()
-	fakePkgsSetPath := filepath.Join(tmpdir, distroName, "package_sets.yaml")
+	fakePkgsSetPath := filepath.Join(tmpdir, distroName, "imagetypes.yaml")
 	err := os.MkdirAll(filepath.Dir(fakePkgsSetPath), 0755)
 	assert.NoError(t, err)
 	err = os.WriteFile(fakePkgsSetPath, []byte(content), 0644)
@@ -53,10 +53,10 @@ image_types:
 `
 	// XXX: we cannot use distro.Name() as it will give us a name+ver
 	baseDir := makeFakePkgsSet(t, test_distro.TestDistroNameBase, fakePkgsSetYaml)
-	restore := packagesets.MockDataFS(baseDir)
+	restore := yamlloader.MockDataFS(baseDir)
 	defer restore()
 
-	pkgSet := packagesets.Load(it, "", nil)
+	pkgSet := yamlloader.LoadPkgSet(it, "", nil)
 	assert.NotNil(t, pkgSet)
 	assert.Equal(t, rpmmd.PackageSet{
 		Include: []string{"from-condition-inc2", "inc1"},
@@ -80,10 +80,10 @@ image_types:
 `
 	// XXX: we cannot use distro.Name() as it will give us a name+ver
 	baseDir := makeFakePkgsSet(t, test_distro.TestDistroNameBase, fakePkgsSetYaml)
-	restore := packagesets.MockDataFS(baseDir)
+	restore := yamlloader.MockDataFS(baseDir)
 	defer restore()
 
-	pkgSet := packagesets.Load(it, "override-name", nil)
+	pkgSet := yamlloader.LoadPkgSet(it, "override-name", nil)
 	assert.NotNil(t, pkgSet)
 	assert.Equal(t, rpmmd.PackageSet{
 		Include: []string{"from-override-inc1"},
@@ -123,10 +123,10 @@ image_types:
 `
 	// XXX: we cannot use distro.Name() as it will give us a name+ver
 	baseDir := makeFakePkgsSet(t, test_distro.TestDistroNameBase, fakePkgsSetYaml)
-	restore := packagesets.MockDataFS(baseDir)
+	restore := yamlloader.MockDataFS(baseDir)
 	defer restore()
 
-	pkgSet := packagesets.Load(it, "", nil)
+	pkgSet := yamlloader.LoadPkgSet(it, "", nil)
 	assert.NotNil(t, pkgSet)
 	assert.Equal(t, rpmmd.PackageSet{
 		Include: []string{"from-base-condition-inc", "from-base-inc", "from-condition-inc", "from-other-type-inc", "from-type-inc"},
