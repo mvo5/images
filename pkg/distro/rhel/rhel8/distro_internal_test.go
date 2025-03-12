@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/distro"
@@ -53,7 +54,7 @@ func TestEC2Partitioning(t *testing.T) {
 					continue
 				}
 				t.Run(fmt.Sprintf("%s/%s/%s", tt.distro, arch, it), func(t *testing.T) {
-					a, err := DistroFactory(tt.distro).GetArch(arch)
+					a, err := common.Must(DistroFactory(tt.distro)).GetArch(arch)
 					require.NoError(t, err)
 					i, err := a.GetImageType(it)
 					require.NoError(t, err)
@@ -88,31 +89,31 @@ func TestDistroFactory(t *testing.T) {
 	testCases := []testCase{
 		{
 			strID:    "rhel-8.0",
-			expected: newDistro("rhel", 0),
+			expected: common.Must(newDistro("rhel", 0)),
 		},
 		{
 			strID:    "rhel-80",
-			expected: newDistro("rhel", 0),
+			expected: common.Must(newDistro("rhel", 0)),
 		},
 		{
 			strID:    "rhel-8.4",
-			expected: newDistro("rhel", 4),
+			expected: common.Must(newDistro("rhel", 4)),
 		},
 		{
 			strID:    "rhel-84",
-			expected: newDistro("rhel", 4),
+			expected: common.Must(newDistro("rhel", 4)),
 		},
 		{
 			strID:    "rhel-8.10",
-			expected: newDistro("rhel", 10),
+			expected: common.Must(newDistro("rhel", 10)),
 		},
 		{
 			strID:    "rhel-810",
-			expected: newDistro("rhel", 10),
+			expected: common.Must(newDistro("rhel", 10)),
 		},
 		{
 			strID:    "centos-8",
-			expected: newDistro("centos", -1),
+			expected: common.Must(newDistro("centos", -1)),
 		},
 		{
 			strID:    "centos-8.4",
@@ -170,7 +171,8 @@ func TestDistroFactory(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := DistroFactory(tc.strID)
+			// XXX: check error
+			d, _ := DistroFactory(tc.strID)
 			if tc.expected == nil {
 				assert.Nil(t, d)
 			} else {

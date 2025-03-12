@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
@@ -22,7 +23,7 @@ type rhelFamilyDistro struct {
 var rhelFamilyDistros = []rhelFamilyDistro{
 	{
 		name:   "rhel-810",
-		distro: rhel8.DistroFactory("rhel-810"),
+		distro: common.Must(rhel8.DistroFactory("rhel-810")),
 	},
 }
 

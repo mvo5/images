@@ -31,7 +31,10 @@ func main() {
 
 	df := distrofactory.NewDefault()
 
-	d := df.GetDistro(distroName)
+	d, err := df.GetDistro(distroName)
+	if err != nil {
+		panic(err)
+	}
 	if d == nil {
 		panic(fmt.Errorf("Distro %q does not exist", distroName))
 	}

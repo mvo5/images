@@ -64,7 +64,10 @@ func (i *ImageFilter) Filter(searchTerms ...string) ([]Result, error) {
 		return nil, err
 	}
 	for _, distroName := range distroNames {
-		distro := i.fac.GetDistro(distroName)
+		distro, err := i.fac.GetDistro(distroName)
+		if err != nil {
+			return nil, err
+		}
 		if distro == nil {
 			// XXX: log here?
 			continue

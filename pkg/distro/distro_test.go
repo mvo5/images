@@ -60,7 +60,7 @@ func TestImageTypePipelineNames(t *testing.T) {
 	distroFactory := distrofactory.NewDefault()
 	distros := listTestedDistros(t)
 	for _, distroName := range distros {
-		d := distroFactory.GetDistro(distroName)
+		d := common.Must(distroFactory.GetDistro(distroName))
 		for _, archName := range d.ListArches() {
 			arch, err := d.GetArch(archName)
 			assert.Nil(t, err)
@@ -387,7 +387,7 @@ func TestPipelineRepositories(t *testing.T) {
 	for tName, tCase := range testCases {
 		t.Run(tName, func(t *testing.T) {
 			for _, distroName := range distros {
-				d := distroFactory.GetDistro(distroName)
+				d := common.Must(distroFactory.GetDistro(distroName))
 				for _, archName := range d.ListArches() {
 					arch, err := d.GetArch(archName)
 					require.Nil(err)
@@ -557,7 +557,7 @@ func TestDistro_ManifestFIPSWarning(t *testing.T) {
 		if strings.HasPrefix(distroName, "rhel-7") {
 			continue
 		}
-		d := distroFactory.GetDistro(distroName)
+		d := common.Must(distroFactory.GetDistro(distroName))
 		require.NotNil(t, d)
 
 		fips_enabled := true
@@ -604,7 +604,7 @@ func TestOSTreeOptionsErrorForNonOSTreeImgTypes(t *testing.T) {
 	assert.NotEmpty(distros)
 
 	for _, distroName := range distros {
-		d := distroFactory.GetDistro(distroName)
+		d := common.Must(distroFactory.GetDistro(distroName))
 		assert.NotNil(d)
 
 		arches := d.ListArches()

@@ -504,7 +504,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "WARNING: invalid distro names: [%s]\n", strings.Join(invalidDistros, ","))
 	}
 	for _, distroName := range distros {
-		distribution := distroFac.GetDistro(distroName)
+		distribution, err := distroFac.GetDistro(distroName)
+		if err != nil {
+			panic(err)
+		}
 		if distribution == nil {
 			fmt.Fprintf(os.Stderr, "WARNING: invalid distro name %q\n", distroName)
 			continue

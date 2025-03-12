@@ -73,10 +73,10 @@ func defaultDistroImageConfig(d *rhel.Distribution) *distro.ImageConfig {
 	}
 }
 
-func newDistro(name string, major, minor int) *rhel.Distribution {
+func newDistro(name string, major, minor int) (*rhel.Distribution, error) {
 	rd, err := rhel.NewDistribution(name, major, minor)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	rd.CheckOptions = checkOptions
 	rd.DefaultImageConfig = defaultDistroImageConfig
@@ -362,7 +362,7 @@ func newDistro(name string, major, minor int) *rhel.Distribution {
 	}
 
 	rd.AddArches(x86_64, aarch64, ppc64le, s390x)
-	return rd
+	return rd, nil
 }
 
 func ParseID(idStr string) (*distro.ID, error) {
@@ -405,10 +405,11 @@ func ParseID(idStr string) (*distro.ID, error) {
 	return id, nil
 }
 
-func DistroFactory(idStr string) distro.Distro {
+func DistroFactory(idStr string) (distro.Distro, error) {
 	id, err := ParseID(idStr)
 	if err != nil {
-		return nil
+		// XXX: add something like errors.Is(err, ErrNotForUs) here
+		return nil, nil
 	}
 
 	return newDistro(id.Name, 9, id.MinorVersion)

@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -17,7 +19,8 @@ var rng = rand.New(rand.NewSource(0))
 func TestESP(t *testing.T) {
 	var distros []distro.Distro
 	for _, distroName := range []string{"fedora-40", "fedora-41", "fedora-42"} {
-		d := DistroFactory(distroName)
+		d, err := DistroFactory(distroName)
+		require.NoError(t, err)
 		distros = append(distros, d)
 	}
 

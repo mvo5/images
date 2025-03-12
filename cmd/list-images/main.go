@@ -87,7 +87,10 @@ func main() {
 
 	configs := make([]config, 0)
 	for _, distroName := range distros {
-		distribution := distroFac.GetDistro(distroName)
+		distribution, err := distroFac.GetDistro(distroName)
+		if err != nil {
+			panic(err)
+		}
 		if distribution == nil {
 			fmt.Fprintf(os.Stderr, "WARNING: invalid distro name %q", distroName)
 			continue

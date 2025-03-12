@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/packagesets"
 	"github.com/osbuild/images/pkg/distro/test_distro"
@@ -16,7 +17,7 @@ import (
 func makeTestImageType(t *testing.T) distro.ImageType {
 	// XXX: it would be nice if testdistro had a ready-made image-type,
 	// i.e. testdistro.TestImageType1
-	distro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	distro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 	arch, err := distro.GetArch(test_distro.TestArchName)
 	assert.NoError(t, err)
 	it, err := arch.GetImageType(test_distro.TestImageTypeName)

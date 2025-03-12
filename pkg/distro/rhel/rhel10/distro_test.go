@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
@@ -23,7 +24,7 @@ type rhelFamilyDistro struct {
 var rhelFamilyDistros = []rhelFamilyDistro{
 	{
 		name:   "rhel-10.0",
-		distro: rhel10.DistroFactory("rhel-10.0"),
+		distro: common.Must(rhel10.DistroFactory("rhel-10.0")),
 	},
 }
 
@@ -398,7 +399,7 @@ func TestRhel10_KernelOption(t *testing.T) {
 
 func TestRhel10_KernelOption_NoIfnames(t *testing.T) {
 	for _, distroName := range []string{"rhel-10.0", "centos-10"} {
-		distro := rhel10.DistroFactory(distroName)
+		distro := common.Must(rhel10.DistroFactory(distroName))
 		for _, archName := range distro.ListArches() {
 			arch, err := distro.GetArch(archName)
 			assert.NoError(t, err)

@@ -4,12 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/osbuild/images/pkg/blueprint"
-	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
 // math/rand is good enough in this case
@@ -29,7 +30,7 @@ func TestDistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.0",
-			expected: newDistro("rhel", 10, 0),
+			expected: common.Must(newDistro("rhel", 10, 0)),
 		},
 		{
 			strID:    "rhel-103",
@@ -37,7 +38,7 @@ func TestDistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.3",
-			expected: newDistro("rhel", 10, 3),
+			expected: common.Must(newDistro("rhel", 10, 3)),
 		},
 		{
 			strID:    "rhel-1010",
@@ -45,11 +46,11 @@ func TestDistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-10.10",
-			expected: newDistro("rhel", 10, 10),
+			expected: common.Must(newDistro("rhel", 10, 10)),
 		},
 		{
 			strID:    "centos-10",
-			expected: newDistro("centos", 10, -1),
+			expected: common.Must(newDistro("centos", 10, -1)),
 		},
 
 		{
@@ -152,7 +153,8 @@ func TestDistroFactory(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := DistroFactory(tc.strID)
+			// XXX: check error
+			d, _ := DistroFactory(tc.strID)
 			if tc.expected == nil {
 				assert.Nil(t, d)
 			} else {
@@ -165,7 +167,7 @@ func TestDistroFactory(t *testing.T) {
 
 func TestRhel10_NoBootPartition(t *testing.T) {
 	for _, distroName := range []string{"rhel-10.0", "centos-10"} {
-		dist := DistroFactory(distroName)
+		dist := common.Must(DistroFactory(distroName))
 		for _, archName := range dist.ListArches() {
 			arch, err := dist.GetArch(archName)
 			assert.NoError(t, err)

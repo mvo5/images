@@ -19,7 +19,10 @@ func main() {
 	}
 
 	for _, distroName := range testedRepoRegistry.ListDistros() {
-		distro := distroFac.GetDistro(distroName)
+		distro, err := distroFac.GetDistro(distroName)
+		if err != nil {
+			panic(err)
+		}
 		if distro == nil {
 			fmt.Fprintf(os.Stderr, "WARNING: invalid distro name %q", distroName)
 			continue

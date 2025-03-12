@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/distro_test_common"
@@ -22,11 +23,11 @@ type fedoraFamilyDistro struct {
 var fedoraFamilyDistros = []fedoraFamilyDistro{
 	{
 		name:   "fedora-40",
-		distro: fedora.DistroFactory("fedora-40"),
+		distro: common.Must(fedora.DistroFactory("fedora-40")),
 	},
 	{
 		name:   "fedora-41",
-		distro: fedora.DistroFactory("fedora-41"),
+		distro: common.Must(fedora.DistroFactory("fedora-41")),
 	},
 }
 
@@ -990,7 +991,7 @@ func TestDistroFactory(t *testing.T) {
 	testCases := []testCase{
 		{
 			strID:    "fedora-38",
-			expected: fedora.DistroFactory("fedora-38"),
+			expected: common.Must(fedora.DistroFactory("fedora-38")),
 		},
 		{
 			strID:    "fedora-38.1",
@@ -1020,7 +1021,8 @@ func TestDistroFactory(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := fedora.DistroFactory(tc.strID)
+			// XXX: check error here
+			d, _ := fedora.DistroFactory(tc.strID)
 			if tc.expected == nil {
 				assert.Nil(t, d)
 			} else {

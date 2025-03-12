@@ -23,7 +23,8 @@ func newFakeResult(t *testing.T, resultSpec string) imagefilter.Result {
 	// like GetDistro("rhel-8.1:i386,amd64:ami,qcow2") that then
 	// creates test distro/type/arch on the fly instead of the current
 	// very static setup
-	di := fac.GetDistro(l[0])
+	di, err := fac.GetDistro(l[0])
+	require.NoError(t, err)
 	require.NotNil(t, di)
 	ar, err := di.GetArch(l[2])
 	require.NoError(t, err)

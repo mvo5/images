@@ -6,13 +6,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func getTestingRepoRegistry() *RepoRegistry {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 	return &RepoRegistry{
 		map[string]map[string][]rpmmd.RepoConfig{
 			testDistro.Name(): {
@@ -54,15 +55,15 @@ func getTestingRepoRegistry() *RepoRegistry {
 
 func TestReposByImageType_reposByImageTypeName(t *testing.T) {
 	rr := getTestingRepoRegistry()
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 
-	ta, _ := testDistro.GetArch(test_distro.TestArchName)
-	ta2, _ := testDistro.GetArch(test_distro.TestArch2Name)
+	ta := common.Must(testDistro.GetArch(test_distro.TestArchName))
+	ta2 := common.Must(testDistro.GetArch(test_distro.TestArch2Name))
 
-	ta_it, _ := ta.GetImageType(test_distro.TestImageTypeName)
+	ta_it := common.Must(ta.GetImageType(test_distro.TestImageTypeName))
 
-	ta2_it, _ := ta2.GetImageType(test_distro.TestImageTypeName)
-	ta2_it2, _ := ta2.GetImageType(test_distro.TestImageType2Name)
+	ta2_it := common.Must(ta2.GetImageType(test_distro.TestImageTypeName))
+	ta2_it2 := common.Must(ta2.GetImageType(test_distro.TestImageType2Name))
 
 	type args struct {
 		input distro.ImageType
@@ -113,7 +114,7 @@ func TestReposByImageType_reposByImageTypeName(t *testing.T) {
 // TestInvalidreposByImageTypeName tests return values from reposByImageTypeName
 // for invalid distro name, arch and image type
 func TestInvalidreposByImageTypeName(t *testing.T) {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 	rr := getTestingRepoRegistry()
 
 	type args struct {
@@ -207,10 +208,10 @@ func TestInvalidreposByImageTypeName(t *testing.T) {
 
 func TestReposByArch(t *testing.T) {
 	rr := getTestingRepoRegistry()
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 
-	ta, _ := testDistro.GetArch(test_distro.TestArchName)
-	ta2, _ := testDistro.GetArch(test_distro.TestArch2Name)
+	ta := common.Must(testDistro.GetArch(test_distro.TestArchName))
+	ta2 := common.Must(testDistro.GetArch(test_distro.TestArch2Name))
 
 	type args struct {
 		arch        distro.Arch
@@ -290,7 +291,7 @@ func TestInvalidReposByArch(t *testing.T) {
 // TestInvalidReposByArchName tests return values from ReposByArchName
 // for invalid distro name and arch
 func TestInvalidReposByArchName(t *testing.T) {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := common.Must(test_distro.DistroFactory(test_distro.TestDistro1Name))
 	rr := getTestingRepoRegistry()
 
 	type args struct {

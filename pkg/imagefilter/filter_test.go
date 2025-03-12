@@ -48,7 +48,8 @@ func TestImageFilterFilter(t *testing.T) {
 		// XXX: it would be nice if TestDistro would support constructing
 		// like GetDistro("rhel-8.1:i386,amd64:ami,qcow2") instead of
 		// the current very static setup
-		di := fac.GetDistro(tc.distro)
+		di, err := fac.GetDistro(tc.distro)
+		require.NoError(t, err)
 		require.NotNil(t, di)
 		ar, err := di.GetArch(tc.arch)
 		require.NoError(t, err)

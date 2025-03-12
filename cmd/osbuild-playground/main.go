@@ -58,12 +58,18 @@ func main() {
 	distroFac := distrofactory.NewDefault()
 	var d distro.Distro
 	if distroArg == "host" {
-		d = distroFac.FromHost()
+		d, err := distroFac.FromHost()
+		if err != nil {
+			panic(err)
+		}
 		if d == nil {
 			panic("host distro not supported")
 		}
 	} else {
-		d = distroFac.GetDistro(distroArg)
+		d, err := distroFac.GetDistro(distroArg)
+		if err != nil {
+			panic(err)
+		}
 		if d == nil {
 			panic(fmt.Sprintf("distro '%s' not supported\n", distroArg))
 		}

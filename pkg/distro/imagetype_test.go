@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
@@ -18,7 +19,7 @@ func TestManifestRepositoryCustomization(t *testing.T) {
 
 	distroFactory := distrofactory.NewDefault()
 	for _, distroName := range []string{"fedora-42", "rhel-9.6"} {
-		distro := distroFactory.GetDistro(distroName)
+		distro := common.Must(distroFactory.GetDistro(distroName))
 		arch, err := distro.GetArch("x86_64")
 		assert.NoError(t, err)
 		imgType, err := arch.GetImageType("qcow2")

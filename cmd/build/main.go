@@ -60,7 +60,10 @@ func run() error {
 		return fmt.Errorf("failed to create target directory: %w", err)
 	}
 
-	distribution := distroFac.GetDistro(distroName)
+	distribution, err := distroFac.GetDistro(distroName)
+	if err != nil {
+		return err
+	}
 	if distribution == nil {
 		return fmt.Errorf("invalid or unsupported distribution: %q", distroName)
 	}

@@ -70,10 +70,10 @@ func distroISOLabelFunc(t *rhel.ImageType) string {
 	}
 }
 
-func newDistro(name string, minor int) *rhel.Distribution {
+func newDistro(name string, minor int) (*rhel.Distribution, error) {
 	rd, err := rhel.NewDistribution(name, 8, minor)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	rd.CheckOptions = checkOptions
@@ -409,7 +409,7 @@ func newDistro(name string, minor int) *rhel.Distribution {
 		)
 	}
 	rd.AddArches(x86_64, aarch64, ppc64le)
-	return rd
+	return rd, nil
 }
 
 func ParseID(idStr string) (*distro.ID, error) {
@@ -452,10 +452,11 @@ func ParseID(idStr string) (*distro.ID, error) {
 	return id, nil
 }
 
-func DistroFactory(idStr string) distro.Distro {
+func DistroFactory(idStr string) (distro.Distro, error) {
 	id, err := ParseID(idStr)
 	if err != nil {
-		return nil
+		// XXX: add something like errors.Is(err, ErrNotForUs) here
+		return nil, nil
 	}
 
 	return newDistro(id.Name, id.MinorVersion)

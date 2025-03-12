@@ -307,7 +307,7 @@ func (t *TestImageType) Manifest(b *blueprint.Blueprint, options distro.ImageOpt
 // It contains two architectures "test_arch" and "test_arch2".
 // "test_arch" contains one image type "test_type".
 // "test_arch2" contains two image types "test_type" and "test_type2".
-func newTestDistro(releasever string) *TestDistro {
+func newTestDistro(releasever string) (*TestDistro, error) {
 	td := TestDistro{
 		name:             fmt.Sprintf("%s-%s", TestDistroNameBase, releasever),
 		releasever:       releasever,
@@ -377,21 +377,21 @@ func newTestDistro(releasever string) *TestDistro {
 
 	td.addArches(&ta1, &ta2, &ta3)
 
-	return &td
+	return &td, nil
 }
 
-func DistroFactory(idStr string) distro.Distro {
+func DistroFactory(idStr string) (distro.Distro, error) {
 	id, err := distro.ParseID(idStr)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	if id.Name != TestDistroNameBase {
-		return nil
+		return nil, fmt.Errorf("mismatch %q != %q", id.Name, TestDistroNameBase)
 	}
 
 	if id.MinorVersion != -1 {
-		return nil
+		return nil, fmt.Errorf("only minior version -1 supported")
 	}
 
 	return newTestDistro(fmt.Sprint(id.MajorVersion))

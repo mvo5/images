@@ -521,9 +521,9 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 
 }
 
-func getDistro(version int) distribution {
+func getDistro(version int) (distribution, error) {
 	if version < 0 {
-		panic("Invalid Fedora version (must be positive)")
+		return distribution{}, fmt.Errorf("Invalid Fedora version: %v (must be positive)", version)
 	}
 	return distribution{
 		name:               fmt.Sprintf("fedora-%d", version),
@@ -534,7 +534,7 @@ func getDistro(version int) distribution {
 		ostreeRefTmpl:      fmt.Sprintf("fedora/%d/%%s/iot", version),
 		runner:             &runner.Fedora{Version: uint64(version)},
 		defaultImageConfig: defaultDistroImageConfig,
-	}
+	}, nil
 }
 
 func (d *distribution) Name() string {
@@ -659,8 +659,11 @@ func (a *architecture) Distro() distro.Distro {
 	return a.distro
 }
 
-func newDistro(version int) distro.Distro {
-	rd := getDistro(version)
+func newDistro(version int) (distro.Distro, error) {
+	rd, err := getDistro(version)
+	if err != nil {
+		return nil, err
+	}
 
 	// Architecture definitions
 	x86_64 := architecture{
@@ -1127,7 +1130,7 @@ func newDistro(version int) distro.Distro {
 	)
 
 	rd.addArches(x86_64, aarch64, ppc64le, s390x, riscv64)
-	return &rd
+	return &rd, nil
 }
 
 func ParseID(idStr string) (*distro.ID, error) {
@@ -1147,10 +1150,11 @@ func ParseID(idStr string) (*distro.ID, error) {
 	return id, nil
 }
 
-func DistroFactory(idStr string) distro.Distro {
+func DistroFactory(idStr string) (distro.Distro, error) {
 	id, err := ParseID(idStr)
 	if err != nil {
-		return nil
+		// XXX: add something like errors.Is(err, ErrNotForUs) here
+		return nil, nil
 	}
 
 	return newDistro(id.MajorVersion)

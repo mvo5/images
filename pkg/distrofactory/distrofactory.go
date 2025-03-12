@@ -16,7 +16,7 @@ import (
 // FactoryFunc is a function that returns a distro.Distro for a given distro
 // represented as a string. If the string does not represent a distro, that can
 // be detected by the factory, it should return nil.
-type FactoryFunc func(idStr string) distro.Distro
+type FactoryFunc func(idStr string) (distro.Distro, error)
 
 // Factory is a list of distro.Distro factories.
 type Factory struct {
@@ -29,18 +29,22 @@ type Factory struct {
 // getDistro returns the distro.Distro that matches the given distro ID. If no
 // distro.Distro matches the given distro ID, it returns nil. If multiple distro
 // factories match the given distro ID, it panics.
-func (f *Factory) getDistro(name string) distro.Distro {
+func (f *Factory) getDistro(name string) (distro.Distro, error) {
 	var match distro.Distro
 	for _, f := range f.factories {
-		if d := f(name); d != nil {
+		d, err := f(name)
+		if err != nil {
+			return nil, err
+		}
+		if d != nil {
 			if match != nil {
-				panic(fmt.Sprintf("distro ID was matched by multiple distro factories: %v, %v", match, d))
+				return nil, fmt.Errorf("distro ID was matched by multiple distro factories: %v, %v", match, d)
 			}
 			match = d
 		}
 	}
 
-	return match
+	return match, nil
 }
 
 // GetDistro returns the distro.Distro that matches the given distro ID. If no
@@ -48,20 +52,29 @@ func (f *Factory) getDistro(name string) distro.Distro {
 // distro ID using the aliases map and tries again. If no distro.Distro matches
 // the given distro ID, it returns nil. If multiple distro factories match the
 // given distro ID, it panics.
-func (f *Factory) GetDistro(name string) distro.Distro {
-	match := f.getDistro(name)
-
-	if alias, ok := f.aliases[name]; match == nil && ok {
-		match = f.getDistro(alias)
+func (f *Factory) GetDistro(name string) (distro.Distro, error) {
+	match, err := f.getDistro(name)
+	if err != nil {
+		return nil, err
 	}
 
-	return match
+	if alias, ok := f.aliases[name]; match == nil && ok {
+		match, err = f.getDistro(alias)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return match, err
 }
 
 // FromHost returns a distro.Distro instance, that is specific to the host.
 // If the host distro is not supported, nil is returned.
-func (f *Factory) FromHost() distro.Distro {
-	hostDistroName, _ := distro.GetHostDistroName()
+func (f *Factory) FromHost() (distro.Distro, error) {
+	hostDistroName, err := distro.GetHostDistroName()
+	if err != nil {
+		return nil, err
+	}
 	return f.GetDistro(hostDistroName)
 }
 
@@ -74,10 +87,10 @@ func (f *Factory) RegisterAliases(aliases map[string]string) error {
 	for alias, target := range aliases {
 		var targetExists bool
 		for _, factory := range f.factories {
-			if factory(alias) != nil {
+			if a, _ := factory(alias); a != nil {
 				errors = append(errors, fmt.Sprintf("alias '%s' masks an existing distro", alias))
 			}
-			if factory(target) != nil {
+			if t, _ := factory(target); t != nil {
 				targetExists = true
 			}
 		}

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/distro_test_common"
@@ -20,7 +21,7 @@ type rhelFamilyDistro struct {
 var rhelFamilyDistros = []rhelFamilyDistro{
 	{
 		name:   "rhel-79",
-		distro: rhel7.DistroFactory("rhel-7.9"),
+		distro: common.Must(rhel7.DistroFactory("rhel-7.9")),
 	},
 }
 
@@ -452,7 +453,7 @@ func TestDistroFactory(t *testing.T) {
 		},
 		{
 			strID:    "rhel-7.9",
-			expected: rhel7.DistroFactory("rhel-7.9"),
+			expected: common.Must(rhel7.DistroFactory("rhel-7.9")),
 		},
 		{
 			strID:    "fedora-38",
@@ -486,7 +487,8 @@ func TestDistroFactory(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := rhel7.DistroFactory(tc.strID)
+			// XXX: actually check for error here
+			d, _ := rhel7.DistroFactory(tc.strID)
 			if tc.expected == nil {
 				assert.Nil(t, d)
 			} else {

@@ -6,6 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -13,7 +16,6 @@ import (
 	"github.com/osbuild/images/pkg/distro/rhel"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/stretchr/testify/require"
 )
 
 // math/rand is good enough in this case
@@ -24,7 +26,7 @@ func TestESP(t *testing.T) {
 	var distros []distro.Distro
 	distroFactory := distrofactory.NewDefault()
 	for _, distroName := range []string{"rhel-7.9", "rhel-8.8", "rhel-8.9", "rhel-8.10", "centos-8", "rhel-9.0", "rhel-9.2", "rhel-9.4", "centos-9", "rhel-10.0", "centos-10"} {
-		distros = append(distros, distroFactory.GetDistro(distroName))
+		distros = append(distros, common.Must(distroFactory.GetDistro(distroName)))
 	}
 
 	distro_test_common.TestESP(t, distros, func(i distro.ImageType) (*disk.PartitionTable, error) {
@@ -57,7 +59,7 @@ func TestAMIHybridBoot(t *testing.T) {
 
 	for _, tc := range testCases {
 		// test only x86_64. ami for aarch64 has always UEFI, other arches are not defined.
-		a, err := distroFactory.GetDistro(tc.distro).GetArch("x86_64")
+		a, err := common.Must(distroFactory.GetDistro(tc.distro)).GetArch("x86_64")
 		require.NoError(t, err)
 
 		for _, it := range a.ListImageTypes() {

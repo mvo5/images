@@ -67,8 +67,9 @@ func TestGetDistroDefaultList(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.strID, func(t *testing.T) {
-			d := df.GetDistro(tc.strID)
-			assert.NotNil(t, d)
+			d, err := df.GetDistro(tc.strID)
+			assert.NoError(t, err)
+			assert.NotNil(t, d, tc.strID)
 			assert.Equal(t, tc.expectedDistroName, d.Name())
 		})
 	}
@@ -129,7 +130,8 @@ func TestGetDistroDefaultListWithAliases(t *testing.T) {
 			}
 
 			assert.NoError(t, err)
-			d := df.GetDistro(tc.strID)
+			// XXX: check errors
+			d, _ := df.GetDistro(tc.strID)
 			assert.NotNil(t, d)
 			assert.Equal(t, tc.expectedDistroName, d.Name())
 		})
