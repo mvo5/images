@@ -1,5 +1,22 @@
 ---
 .common:
+  default_distro_image_config: &default_distro_image_config
+    hostname: "localhost.localdomain"
+    timezone: "UTC"
+    locale:       "C.UTF-8"
+    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
+    install_weak_deps:        true
+    machine_id_uninitialized: true
+
+  vmdk_default_image_config: &vmdk_default_image_config
+    <<: *default_distro_image_config
+    locale: "en_US.UTF-8"
+    enabled_services: 
+      - "cloud-init.service"
+      - "cloud-config.service"
+      - "cloud-final.service"
+      - "cloud-init-local.service"
+
   cloud_base_pkgset: &cloud_base_pkgset
     include:
       - "@Fedora Cloud Server"
@@ -14,6 +31,9 @@
 
 image_types:
   qcow2: &qcow2
+    image_config: &qcow2_image_config
+      <<: *default_distro_image_config
+      default_target: "multi-user.target"
     package_sets:
      - *cloud_base_pkgset
      - include:
@@ -23,13 +43,21 @@ image_types:
   openstack: *qcow2
 
   vhd:
+    image_config:
+      <<: *qcow2_image_config
+      sshd_config:
+        config:
+          client_alive_interval: 120
+
     package_sets:
       - *cloud_base_pkgset
       - include:
           - "WALinuxAgent"
 
   vmdk: &vmdk
-    package_sets:
+    image_config:
+      <<: *vmdk_default_image_config
+    package_sets: &vmdk_pkgsets
       - include:
           - "@Fedora Cloud Server"
           - "chrony"
@@ -48,7 +76,10 @@ image_types:
           - "grubby-deprecated"
           - "extlinux-bootloader"
 
-  ova: *vmdk
+  ova:
+    image_config:
+      <<: *vmdk_default_image_config
+    package_sets: *vmdk_pkgsets
 
   # NOTE: keep in sync with official fedora-iot definitions:
   # https://pagure.io/fedora-iot/ostree/blob/main/f/fedora-iot-base.yaml
@@ -173,6 +204,9 @@ image_types:
   iot_container: *iot_commit
 
   iot_bootable_container:
+    image_config:
+      <<: *default_distro_image_config
+      machine_id_uninitialized: false
     package_sets:
       - include:
           - "acl"
@@ -437,6 +471,26 @@ image_types:
               include:
                 - "dmidecode"
 
+  iot_raw_image:
+    image_config:
+      <<: *default_distro_image_config
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      ostree_conf_sysroot_readonly: true
+      lock_root_user: true
+      ignition_platform: "metal"
+
+  iot_qcow2_image:
+    image_config:
+      <<: *default_distro_image_config
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      ostree_conf_sysroot_readonly: true
+      lock_root_user: true
+      ignition_platform: "qemu"
+
   iot_installer:
     package_sets:
       - *anaconda_pkgset
@@ -444,6 +498,9 @@ image_types:
           - "fedora-release-iot"
 
   live_installer:
+    image_config:
+      <<: *default_distro_image_config
+      locale: "en_US.UTF-8"
     package_sets:
       - include:
           - "@workstation-product-environment"
@@ -475,9 +532,19 @@ image_types:
               include:
                 - "anaconda-webui"
 
-  image_installer: *anaconda
+  image_installer:
+    image_config:
+      <<: *default_distro_image_config
+      locale: "en_US.UTF-8"
+    package_sets:
+      - *anaconda_pkgset
 
   container: &container
+    image_config:
+      no_selinux: true
+      exclude_docs: true
+      locale: "C.UTF-8"
+      timezone: "Etc/UTC"
     package_sets:
       - include:
           - "bash"
@@ -525,6 +592,23 @@ image_types:
           - "xkeyboard-config"
 
   wsl:
+    image_config:
+      <<: *default_distro_image_config
+      cloud_init:
+        - filename: "99_wsl.cfg"
+          config:
+            datasource_list:
+              - "WSL"
+              - "None"
+            network:
+              config: "disabled"
+      no_selinux: true
+      exclude_docs: true
+      locale: "C.UTF-8"
+      timezone: "Etc/UTC"
+      wsl_config:
+        boot:
+          systemd: true
     package_sets:
       - include:
           - "bash"

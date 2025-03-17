@@ -8,7 +8,7 @@ import (
 type SshdConfigConfig struct {
 	PasswordAuthentication          *bool                `json:"PasswordAuthentication,omitempty"`
 	ChallengeResponseAuthentication *bool                `json:"ChallengeResponseAuthentication,omitempty"`
-	ClientAliveInterval             *int                 `json:"ClientAliveInterval,omitempty"`
+	ClientAliveInterval             *int                 `json:"ClientAliveInterval,omitempty"  yaml:"client_alive_interval,omitempty"`
 	PermitRootLogin                 PermitRootLoginValue `json:"PermitRootLogin,omitempty"`
 }
 

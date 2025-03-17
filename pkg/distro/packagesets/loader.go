@@ -30,7 +30,8 @@ type toplevelYAML struct {
 }
 
 type imageType struct {
-	PackageSets []packageSet `yaml:"package_sets"`
+	PackageSets []packageSet        `yaml:"package_sets"`
+	ImageConfig *distro.ImageConfig `yaml:"image_config,omitempty"`
 }
 
 type packageSet struct {
@@ -46,26 +47,18 @@ type conditions struct {
 	DistroName            map[string]packageSet `yaml:"distro_name,omitempty"`
 }
 
-// Load loads the PackageSet from the yaml source file discovered via the
-// imagetype. By default the imagetype name is used to load the packageset
-// but with "overrideTypeName" this can be overriden (useful for e.g.
-// installer image types).
-func Load(it distro.ImageType, overrideTypeName string, replacements map[string]string) (rpmmd.PackageSet, error) {
-	typeName := it.Name()
-	if overrideTypeName != "" {
-		typeName = overrideTypeName
-	}
+func load(distroNameVer, typeName string, replacements map[string]string) (*imageType, error) {
 	typeName = strings.ReplaceAll(typeName, "-", "_")
 
-	arch := it.Arch()
-	archName := arch.Name()
-	distribution := arch.Distro()
-	distroNameVer := distribution.Name()
 	// we need to split from the right for "centos-stream-10" like
 	// distro names, sadly go has no rsplit() so we do it manually
 	// XXX: we cannot use distroidparser here because of import cycles
-	distroName := distroNameVer[:strings.LastIndex(distroNameVer, "-")]
-	distroVersion := strings.SplitN(distroNameVer, "-", 2)[1]
+	distroName := distroNameVer
+	distroVersion := ""
+	if idx := strings.LastIndex(distroNameVer, "-"); idx > 0 {
+		distroName = distroNameVer[:idx]
+		distroVersion = distroNameVer[idx+1:]
+	}
 	distroNameMajorVer := strings.SplitN(distroNameVer, ".", 2)[0]
 
 	// XXX: this is a short term measure, pass a set of
@@ -94,12 +87,12 @@ func Load(it distro.ImageType, overrideTypeName string, replacements map[string]
 		// and use condition.version_gt etc
 		baseDir = distroName
 	default:
-		return rpmmd.PackageSet{}, fmt.Errorf("unsupported distro in loader %q (add to loader.go)", distroName)
+		return nil, fmt.Errorf("unsupported distro in loader %q (add to loader.go)", distroName)
 	}
 
 	f, err := dataFS.Open(filepath.Join(baseDir, "package_sets.yaml"))
 	if err != nil {
-		return rpmmd.PackageSet{}, err
+		return nil, err
 	}
 	defer f.Close()
 
@@ -110,12 +103,40 @@ func Load(it distro.ImageType, overrideTypeName string, replacements map[string]
 	// use yaml aliases/anchors to de-duplicate them
 	var toplevel toplevelYAML
 	if err := decoder.Decode(&toplevel); err != nil {
-		return rpmmd.PackageSet{}, err
+		return nil, err
 	}
 
 	imgType, ok := toplevel.ImageTypes[typeName]
 	if !ok {
-		return rpmmd.PackageSet{}, fmt.Errorf("unknown image type name %q", typeName)
+		return nil, fmt.Errorf("unknown image type name %q", typeName)
+	}
+	return &imgType, nil
+}
+
+// XXX: rename to "LoadPkgSet"
+// Load loads the PackageSet from the yaml source file discovered via the
+// imagetype. By default the imagetype name is used to load the packageset
+// but with "overrideTypeName" this can be overriden (useful for e.g.
+// installer image types).
+func Load(it distro.ImageType, overrideTypeName string, replacements map[string]string) (rpmmd.PackageSet, error) {
+	typeName := it.Name()
+	if overrideTypeName != "" {
+		typeName = overrideTypeName
+	}
+
+	arch := it.Arch()
+	archName := arch.Name()
+	distribution := arch.Distro()
+	distroNameVer := distribution.Name()
+	// we need to split from the right for "centos-stream-10" like
+	// distro names, sadly go has no rsplit() so we do it manually
+	// XXX: we cannot use distroidparser here because of import cycles
+	distroName := distroNameVer[:strings.LastIndex(distroNameVer, "-")]
+	distroVersion := strings.SplitN(distroNameVer, "-", 2)[1]
+
+	imgType, err := load(distroNameVer, typeName, replacements)
+	if err != nil {
+		return rpmmd.PackageSet{}, err
 	}
 
 	var rpmmdPkgSet rpmmd.PackageSet
@@ -170,4 +191,13 @@ func Load(it distro.ImageType, overrideTypeName string, replacements map[string]
 	sort.Strings(rpmmdPkgSet.Exclude)
 
 	return rpmmdPkgSet, nil
+}
+
+func LoadImageConfig(distroName, typeName string, replacements map[string]string) (*distro.ImageConfig, error) {
+	imgType, err := load(distroName, typeName, replacements)
+	if err != nil {
+		return nil, err
+	}
+
+	return imgType.ImageConfig, nil
 }

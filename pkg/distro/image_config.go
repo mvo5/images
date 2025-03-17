@@ -12,29 +12,29 @@ import (
 
 // ImageConfig represents a (default) configuration applied to the image payload.
 type ImageConfig struct {
-	Hostname            *string
-	Timezone            *string
+	Hostname            *string `yaml:"hostname,omitempty"`
+	Timezone            *string `yaml:"timezone,omitempty"`
 	TimeSynchronization *osbuild.ChronyStageOptions
-	Locale              *string
+	Locale              *string `yaml:"locale,omitempty"`
 	Keyboard            *osbuild.KeymapStageOptions
-	EnabledServices     []string
+	EnabledServices     []string `yaml:"enabled_services,omitempty"`
 	DisabledServices    []string
 	MaskedServices      []string
-	DefaultTarget       *string
+	DefaultTarget       *string `yaml:"default_target,omitempty"`
 	Sysconfig           []*osbuild.SysconfigStageOptions
 
 	// List of files from which to import GPG keys into the RPM database
 	GPGKeyFiles []string
 
 	// Disable SELinux labelling
-	NoSElinux *bool
+	NoSElinux *bool `yaml:"no_selinux,omitempty"`
 
 	// Do not use. Forces auto-relabelling on first boot.
 	// See https://github.com/osbuild/osbuild/commit/52cb27631b587c1df177cd17625c5b473e1e85d2
 	SELinuxForceRelabel *bool
 
 	// Disable documentation
-	ExcludeDocs *bool
+	ExcludeDocs *bool `yaml:"exclude_docs,omitempty"`
 
 	ShellInit []shell.InitFile
 
@@ -42,7 +42,7 @@ type ImageConfig struct {
 	// when the user want the image to be subscribed on first boot and when not
 	RHSMConfig          map[subscription.RHSMStatus]*subscription.RHSMConfig
 	SystemdLogind       []*osbuild.SystemdLogindStageOptions
-	CloudInit           []*osbuild.CloudInitStageOptions
+	CloudInit           []*osbuild.CloudInitStageOptions `yaml:"cloud_init,omitempty"`
 	Modprobe            []*osbuild.ModprobeStageOptions
 	DracutConf          []*osbuild.DracutConfStageOptions
 	SystemdUnit         []*osbuild.SystemdUnitStageOptions
@@ -53,7 +53,7 @@ type ImageConfig struct {
 	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
 	Sysctld             []*osbuild.SysctldStageOptions
 	DNFConfig           []*osbuild.DNFConfigStageOptions
-	SshdConfig          *osbuild.SshdConfigStageOptions
+	SshdConfig          *osbuild.SshdConfigStageOptions `yaml:"sshd_config,omitempty"`
 	Authconfig          *osbuild.AuthconfigStageOptions
 	PwQuality           *osbuild.PwqualityConfStageOptions
 	WAAgentConfig       *osbuild.WAAgentConfStageOptions
@@ -64,7 +64,7 @@ type ImageConfig struct {
 	Firewall            *osbuild.FirewallStageOptions
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
-	WSLConfig           *osbuild.WSLConfStageOptions
+	WSLConfig           *osbuild.WSLConfStageOptions `yaml:"wsl_config,omitempty"`
 
 	Files       []*fsnode.File
 	Directories []*fsnode.Directory
@@ -79,7 +79,7 @@ type ImageConfig struct {
 
 	// The default OSCAP datastream to use for the image as a fallback,
 	// if no datastream value is provided by the user.
-	DefaultOSCAPDatastream *string
+	DefaultOSCAPDatastream *string `yaml:"default_oscap_datastream,omitempty"`
 
 	// NoBLS configures the image bootloader with traditional menu entries
 	// instead of BLS. Required for legacy systems like RHEL 7.
@@ -88,22 +88,22 @@ type ImageConfig struct {
 	// OSTree specific configuration
 
 	// Read only sysroot and boot
-	OSTreeConfSysrootReadOnly *bool
+	OSTreeConfSysrootReadOnly *bool `yaml:"ostree_conf_sysroot_readonly,omitempty"`
 
 	// Lock the root account in the deployment unless the user defined root
 	// user options in the build configuration.
-	LockRootUser *bool
+	LockRootUser *bool `yaml:"lock_root_user,omitempty"`
 
-	IgnitionPlatform *string
+	IgnitionPlatform *string `yaml:"ignition_platform,omitempty"`
 
 	// InstallWeakDeps enables installation of weak dependencies for packages
 	// that are statically defined for the pipeline.
-	InstallWeakDeps *bool
+	InstallWeakDeps *bool `yaml:"install_weak_deps,omitempty"`
 
 	// How to handle the /etc/machine-id file, when set to true it causes the
 	// machine id to be set to 'uninitialized' which causes ConditionFirstboot
 	// to be triggered in systemd
-	MachineIdUninitialized *bool
+	MachineIdUninitialized *bool `yaml:"machine_id_uninitialized,omitempty"`
 
 	// MountUnits creates systemd .mount units to describe the filesystem
 	// instead of writing to /etc/fstab

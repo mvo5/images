@@ -7,8 +7,8 @@ import (
 )
 
 type CloudInitStageOptions struct {
-	Filename string              `json:"filename"`
-	Config   CloudInitConfigFile `json:"config"`
+	Filename string              `json:"filename" yaml:"filename"`
+	Config   CloudInitConfigFile `json:"config" yaml:"config"`
 }
 
 func (CloudInitStageOptions) isStageOptions() {}
@@ -28,9 +28,9 @@ type CloudInitConfigFile struct {
 	SystemInfo     *CloudInitConfigSystemInfo `json:"system_info,omitempty"`
 	Reporting      *CloudInitConfigReporting  `json:"reporting,omitempty"`
 	Datasource     *CloudInitConfigDatasource `json:"datasource,omitempty"`
-	DatasourceList []string                   `json:"datasource_list,omitempty"`
+	DatasourceList []string                   `json:"datasource_list,omitempty" yaml:"datasource_list,omitempty"`
 	Output         *CloudInitConfigOutput     `json:"output,omitempty"`
-	Network        *CloudInitConfigNetwork    `json:"network,omitempty"`
+	Network        *CloudInitConfigNetwork    `json:"network,omitempty" yaml:"network,omitempty"`
 }
 
 // Represents the 'system_info' configuration section
