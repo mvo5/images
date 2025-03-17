@@ -30,8 +30,17 @@ type toplevelYAML struct {
 }
 
 type imageType struct {
-	PackageSets []packageSet        `yaml:"package_sets"`
-	ImageConfig *distro.ImageConfig `yaml:"image_config,omitempty"`
+	PackageSets []packageSet `yaml:"package_sets"`
+	ImageConfig imageConfig  `yaml:"image_config,omitempty"`
+}
+
+type imageConfig struct {
+	*distro.ImageConfig
+	Condition *conditionsImgConf `yaml:"condition,omitempty"`
+}
+
+type conditionsImgConf struct {
+	VersionLessThan map[string]*distro.ImageConfig `yaml:"version_less_than,omitempty"`
 }
 
 type packageSet struct {
@@ -198,6 +207,21 @@ func LoadImageConfig(distroName, typeName string, replacements map[string]string
 	if err != nil {
 		return nil, err
 	}
+	imgConfig := imgType.ImageConfig
 
-	return imgType.ImageConfig, nil
+	if imgConfig.Condition != nil {
+		for ltVer, ltSet := range imgConfig.Condition.VersionLessThan {
+			if r, ok := replacements[ltVer]; ok {
+				ltVer = r
+			}
+			if common.VersionLessThan(distroVersion, ltVer) {
+				
+					Include: ltSet.Include,
+					Exclude: ltSet.Exclude,
+				})
+			}
+		}
+	}
+
+	return imgConfig, nil
 }
