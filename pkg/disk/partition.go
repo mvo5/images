@@ -8,7 +8,8 @@ import (
 )
 
 type Partition struct {
-	Start    uint64 // Start of the partition in bytes
+	Start uint64 // Start of the partition in bytes
+	// XXX: use datasizes.Size here
 	Size     uint64 // Size of the partition in bytes
 	Type     string // Partition type, e.g. 0x83 for MBR or a UUID for gpt
 	Bootable bool   // `Legacy BIOS bootable` (GPT) or `active` (DOS) flag
@@ -108,7 +109,7 @@ func (p *Partition) MarshalJSON() ([]byte, error) {
 
 	partWithPayloadType := struct {
 		partAlias
-		PayloadType string
+		PayloadType string `json:"payload_type"`
 	}{
 		partAlias(*p),
 		entityName,
@@ -122,7 +123,7 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 	var partWithoutPayload struct {
 		partAlias
 		Payload     json.RawMessage
-		PayloadType string
+		PayloadType string `json:"payload_type"`
 	}
 
 	dec := json.NewDecoder(bytes.NewBuffer(data))
@@ -142,8 +143,30 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 	entValP := reflect.New(entType).Elem().Addr()
 	ent := entValP.Interface()
 	if err := json.Unmarshal(partWithoutPayload.Payload, &ent); err != nil {
-		return err
+		return fmt.Errorf("unmarshal part without payload failed %q: %w", partWithoutPayload.Payload, err)
 	}
 	p.Payload = ent.(PayloadEntity)
 	return nil
+}
+
+// unmarshalYAMLviaJSON unmarshals via the JSON interface, this avoids code
+// duplication on the expense of slightly uglier errors
+func unmarshalYAMLviaJSON(u json.Unmarshaler, unmarshal func(any) error) error {
+	var data any
+	if err := unmarshal(&data); err != nil {
+		return fmt.Errorf("cannot unmarshal to any: %w", err)
+	}
+
+	dataJSON, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("unmarshal yaml via json failed: %w", err)
+	}
+	if err := u.UnmarshalJSON(dataJSON); err != nil {
+		return fmt.Errorf("unmarshal yaml via json for %s failed: %w", dataJSON, err)
+	}
+	return nil
+}
+
+func (p *Partition) UnmarshalYAML(unmarshal func(any) error) error {
+	return unmarshalYAMLviaJSON(p, unmarshal)
 }

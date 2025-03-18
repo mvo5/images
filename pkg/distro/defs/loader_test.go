@@ -185,8 +185,23 @@ func TestDefsPartitionTable(t *testing.T) {
 image_types:
   test_type:
     partition_table:
-      x86_64:
-        size: 100
+      test_arch:
+        size: 1_000_000_000
+        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
+        type: "gpt"
+        partitions:
+          - payload_type: no-payload
+            size: 1_048_576
+            bootable: true
+          - payload_type: filesystem
+            size: 209_715_200
+            payload:
+              type: vfat
+              mountpoint: "/boot/efi"
+              label: "EFI-SYSTEM"
+              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              fstab_freq: 0
+              fstab_passno: 2
 `
 	// XXX: we cannot use distro.Name() as it will give us a name+ver
 	baseDir := makeFakePkgsSet(t, test_distro.TestDistroNameBase, fakeDistroYaml)
@@ -196,6 +211,24 @@ image_types:
 	partTable, err := defs.PartitionTable(it)
 	assert.NoError(t, err)
 	assert.Equal(t, &disk.PartitionTable{
-		Size: 100,
+		Size: 1_000_000_000,
+		UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
+		Type: disk.PT_GPT,
+		Partitions: []disk.Partition{
+			{
+				Size:     1048576,
+				Bootable: true,
+			},
+			{
+				Size: 209_715_200,
+				Payload: &disk.Filesystem{
+					Type:         "vfat",
+					Label:        "EFI-SYSTEM",
+					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
+					FSTabFreq:    0,
+					FSTabPassNo:  2,
+				},
+			},
+		},
 	}, partTable)
 }
