@@ -223,6 +223,7 @@ image_types:
 				Size: 209_715_200,
 				Payload: &disk.Filesystem{
 					Type:         "vfat",
+					Mountpoint:   "/boot/efi",
 					Label:        "EFI-SYSTEM",
 					FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 					FSTabFreq:    0,

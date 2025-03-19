@@ -14,7 +14,7 @@ type Filesystem struct {
 	// is just a string.
 	UUID       string `json:"uuid"`
 	Label      string `json:"label"`
-	Mountpoint string `json:"mountpoint:"`
+	Mountpoint string `json:"mountpoint"`
 	// The fourth field of fstab(5); fs_mntops
 	FSTabOptions string `json:"fstab_options"`
 	// The fifth field of fstab(5); fs_freq

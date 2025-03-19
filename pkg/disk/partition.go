@@ -126,6 +126,7 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 		PayloadType string `json:"payload_type"`
 	}
 
+	// XXX: use dec.DisallowUnknownFields() here and below
 	dec := json.NewDecoder(bytes.NewBuffer(data))
 	if err := dec.Decode(&partWithoutPayload); err != nil {
 		return fmt.Errorf("cannot build partition from %q: %w", data, err)
@@ -138,7 +139,7 @@ func (p *Partition) UnmarshalJSON(data []byte) error {
 
 	entType := payloadEntityMap[partWithoutPayload.PayloadType]
 	if entType == nil {
-		return fmt.Errorf("cannot build partition from %q", data)
+		return fmt.Errorf("cannot build partition from %q: unknown payload type %q", data, partWithoutPayload.PayloadType)
 	}
 	entValP := reflect.New(entType).Elem().Addr()
 	ent := entValP.Interface()

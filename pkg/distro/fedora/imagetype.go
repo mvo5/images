@@ -57,9 +57,11 @@ type imageType struct {
 	rpmOstree bool
 	// bootable image
 	bootable bool
+	// XXX: remove this once everything is yaml
+	basePartitionTables distro.BasePartitionTableMap
 	// List of valid arches for the image type
-	basePartitionTables    distro.BasePartitionTableMap
-	requiredPartitionSizes map[string]uint64
+	basePartitionTablesFunc func(distro.ImageType) (*disk.PartitionTable, error)
+	requiredPartitionSizes  map[string]uint64
 }
 
 func (t *imageType) Name() string {
@@ -144,9 +146,19 @@ func (t *imageType) getPartitionTable(
 	options distro.ImageOptions,
 	rng *rand.Rand,
 ) (*disk.PartitionTable, error) {
-	basePartitionTable, exists := t.basePartitionTables[t.arch.Name()]
-	if !exists {
-		return nil, fmt.Errorf("unknown arch for partition table: %s", t.arch.Name())
+	var basePartitionTable disk.PartitionTable
+	if t.basePartitionTablesFunc != nil {
+		pt, err := t.basePartitionTablesFunc(t)
+		if err != nil {
+			return nil, err
+		}
+		basePartitionTable = *pt
+	} else {
+		pt, exists := t.basePartitionTables[t.arch.Name()]
+		if !exists {
+			return nil, fmt.Errorf("unknown arch for partition table: %s", t.arch.Name())
+		}
+		basePartitionTable = pt
 	}
 
 	imageSize := t.Size(options.Size)
