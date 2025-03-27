@@ -360,7 +360,7 @@ func initialSetupKickstart() *fsnode.File {
 }
 
 // Partition tables
-func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func minimalrawPartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	// RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999
 	bootSize := uint64(600) * datasizes.MebiByte
 	if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() {
@@ -369,7 +369,7 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type:        disk.PT_GPT,
 			StartOffset: 8 * datasizes.MebiByte,
@@ -415,9 +415,9 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID:        "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type:        disk.PT_GPT,
 			StartOffset: 8 * datasizes.MebiByte,
@@ -463,16 +463,16 @@ func minimalrawPartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 	default:
-		return disk.PartitionTable{}, false
+		return nil, nil
 	}
 }
 
-func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func edgeBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
@@ -547,9 +547,9 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
@@ -618,9 +618,9 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 
 	default:
-		return disk.PartitionTable{}, false
+		return nil, nil
 	}
 }

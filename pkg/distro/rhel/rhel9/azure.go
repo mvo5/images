@@ -84,7 +84,7 @@ func mkAzureSapInternalImgType(rd *rhel.Distribution) *rhel.ImageType {
 }
 
 // PARTITION TABLES
-func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func azureInternalBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	var bootSize uint64
 	switch {
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL():
@@ -100,7 +100,7 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Size: 64 * datasizes.GibiByte,
@@ -207,9 +207,9 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 					},
 				},
 			},
-		}, true
+		}, nil
 	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Size: 64 * datasizes.GibiByte,
@@ -310,9 +310,9 @@ func azureInternalBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, b
 					},
 				},
 			},
-		}, true
+		}, nil
 	default:
-		return disk.PartitionTable{}, false
+		return nil, nil
 	}
 }
 

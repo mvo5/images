@@ -8,7 +8,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func defaultBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
 		return disk.PartitionTable{
@@ -270,7 +270,7 @@ func edgeBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	}
 }
 
-func ec2PartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func ec2PartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	// x86_64 - without /boot
 	// aarch  - <= 8.9 - 512MiB, 8.10 and centos: 1 GiB
 	var aarch64BootSize uint64

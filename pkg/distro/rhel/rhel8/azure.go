@@ -139,10 +139,10 @@ func mkAzureEap7RhuiImgType() *rhel.ImageType {
 
 // PARTITION TABLES
 
-func azureRhuiBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func azureRhuiBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Size: 64 * datasizes.GibiByte,

@@ -7,7 +7,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func defaultBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	switch t.Arch().Name() {
 	case arch.ARCH_X86_64.String():
 		return disk.PartitionTable{

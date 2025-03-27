@@ -51,7 +51,7 @@ type ImageFunc func(workload workload.Workload, t *ImageType, customizations *bl
 
 type PackageSetFunc func(t *ImageType) (rpmmd.PackageSet, error)
 
-type BasePartitionTableFunc func(t *ImageType) (disk.PartitionTable, bool)
+type BasePartitionTableFunc func(t *ImageType) (*disk.PartitionTable, error)
 
 type ISOLabelFunc func(t *ImageType) string
 
@@ -194,9 +194,11 @@ func (t *ImageType) GetPartitionTable(
 ) (*disk.PartitionTable, error) {
 	archName := t.arch.Name()
 
-	basePartitionTable, exists := t.BasePartitionTables(t)
-
-	if !exists {
+	basePartitionTable, err := t.BasePartitionTables(t)
+	if err != nil {
+		return nil, err
+	}
+	if basePartitionTable == nil {
 		return nil, fmt.Errorf("no partition table defined for architecture %q for image type %q", archName, t.Name())
 	}
 
@@ -224,7 +226,7 @@ func (t *ImageType) GetPartitionTable(
 		return disk.NewCustomPartitionTable(partitioning, partOptions, rng)
 	}
 
-	return disk.NewPartitionTable(&basePartitionTable, customizations.GetFilesystems(), imageSize, options.PartitioningMode, t.platform.GetArch(), nil, rng)
+	return disk.NewPartitionTable(basePartitionTable, customizations.GetFilesystems(), imageSize, options.PartitioningMode, t.platform.GetArch(), nil, rng)
 }
 
 func (t *ImageType) getDefaultImageConfig() *distro.ImageConfig {
@@ -250,8 +252,11 @@ func (t *ImageType) PartitionType() disk.PartitionTableType {
 		return disk.PT_NONE
 	}
 
-	basePartitionTable, exists := t.BasePartitionTables(t)
-	if !exists {
+	basePartitionTable, err := t.BasePartitionTables(t)
+	if err != nil {
+		panic(err)
+	}
+	if basePartitionTable == nil {
 		return disk.PT_NONE
 	}
 

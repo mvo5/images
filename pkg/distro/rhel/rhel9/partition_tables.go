@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/rhel"
 )
 
-func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
+func defaultBasePartitionTables(t *rhel.ImageType) (*disk.PartitionTable, error) {
 	var bootSize uint64
 	switch {
 	case common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL():
@@ -28,7 +28,7 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 	case arch.ARCH_X86_64.String():
 		// RHEL EC2 x86_64 images prior to 9.3 support only BIOS boot
 		if common.VersionLessThan(t.Arch().Distro().OsVersion(), "9.3") && t.IsRHEL() && (strings.HasPrefix(t.Name(), "ec2") || t.Name() == "ami") {
-			return disk.PartitionTable{
+			return &disk.PartitionTable{
 				UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 				Type: disk.PT_GPT,
 				Partitions: []disk.Partition{
@@ -65,9 +65,9 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 						},
 					},
 				},
-			}, true
+			}, nil
 		}
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
@@ -118,9 +118,9 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 	case arch.ARCH_AARCH64.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "D209C89E-EA5E-4FBD-B161-B461CCE297E0",
 			Type: disk.PT_GPT,
 			Partitions: []disk.Partition{
@@ -165,9 +165,9 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 	case arch.ARCH_PPC64LE.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "0x14fc63d2",
 			Type: disk.PT_DOS,
 			Partitions: []disk.Partition{
@@ -198,10 +198,9 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
-
+		}, nil
 	case arch.ARCH_S390X.String():
-		return disk.PartitionTable{
+		return &disk.PartitionTable{
 			UUID: "0x14fc63d2",
 			Type: disk.PT_DOS,
 			Partitions: []disk.Partition{
@@ -228,9 +227,9 @@ func defaultBasePartitionTables(t *rhel.ImageType) (disk.PartitionTable, bool) {
 					},
 				},
 			},
-		}, true
+		}, nil
 
 	default:
-		return disk.PartitionTable{}, false
+		return nil, nil
 	}
 }
