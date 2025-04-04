@@ -87,12 +87,13 @@ type ImageType struct {
 	RPMOSTree bool
 	// bootable image
 	Bootable bool
+
+	ISOLabelFn ISOLabelFunc
+
 	// List of valid arches for the image type
 	BasePartitionTables BasePartitionTableFunc
 	// Optional list of unsupported partitioning modes
 	UnsupportedPartitioningModes []disk.PartitioningMode
-
-	ISOLabelFn ISOLabelFunc
 
 	// TODO: determine a better place for these options, but for now they are here
 	DiskImagePartTool     *osbuild.PartTool

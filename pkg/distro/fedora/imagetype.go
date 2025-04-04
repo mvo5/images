@@ -33,32 +33,36 @@ type packageSetFunc func(t *imageType) (rpmmd.PackageSet, error)
 type isoLabelFunc func(t *imageType) string
 
 type imageType struct {
-	arch                   *architecture
-	platform               platform.Platform
+	name             string
+	filename         string
+	mimeType         string
+	packageSets      map[string]packageSetFunc
+	buildPipelines   []string
+	payloadPipelines []string
+	exports          []string
+	image            imageFunc
+
+	arch     *architecture
+	platform platform.Platform
+
 	environment            environment.Environment
 	workload               workload.Workload
-	name                   string
-	nameAliases            []string
-	filename               string
 	compression            string
-	mimeType               string
-	packageSets            map[string]packageSetFunc
 	defaultImageConfig     *distro.ImageConfig
 	defaultInstallerConfig *distro.InstallerConfig
 	kernelOptions          []string
 	defaultSize            uint64
-	buildPipelines         []string
-	payloadPipelines       []string
-	exports                []string
-	image                  imageFunc
-	isoLabel               isoLabelFunc
 
 	// bootISO: installable ISO
 	bootISO bool
 	// rpmOstree: iot/ostree
 	rpmOstree bool
 	// bootable image
-	bootable               bool
+	bootable bool
+
+	isoLabel isoLabelFunc
+
+	nameAliases            []string
 	requiredPartitionSizes map[string]uint64
 }
 
