@@ -12,16 +12,21 @@ import (
 )
 
 // ImageConfig represents a (default) configuration applied to the image payload.
+//
+// XXX: when moving into YAML must have a way to override based on architeture, distro_version
 type ImageConfig struct {
-	Hostname            *string `yaml:"hostname,omitempty"`
-	Timezone            *string `yaml:"timezone,omitempty"`
+	Hostname *string `yaml:"hostname,omitempty"`
+	Timezone *string `yaml:"timezone,omitempty"`
+	// XXX: every detail is used here, ibust, minpoll, maxpoll, no sense to abstract this
 	TimeSynchronization *osbuild.ChronyStageOptions
 	Locale              *string `yaml:"locale,omitempty"`
-	Keyboard            *osbuild.KeymapStageOptions
-	EnabledServices     []string
-	DisabledServices    []string
-	MaskedServices      []string
-	DefaultTarget       *string
+	// XXX: only "Keyboard used here"
+	Keyboard *osbuild.KeymapStageOptions
+	// XXX: needs version override
+	EnabledServices  []string
+	DisabledServices []string
+	MaskedServices   []string
+	DefaultTarget    *string
 
 	Sysconfig           *Sysconfig `yaml:"sysconfig,omitempty"`
 	DefaultKernel       *string    `yaml:"default_kernel,omitempty"`
@@ -44,28 +49,38 @@ type ImageConfig struct {
 
 	// for RHSM configuration, we need to potentially distinguish the case
 	// when the user want the image to be subscribed on first boot and when not
-	RHSMConfig          map[subscription.RHSMStatus]*subscription.RHSMConfig
-	SystemdLogind       []*osbuild.SystemdLogindStageOptions
-	CloudInit           []*osbuild.CloudInitStageOptions
-	Modprobe            []*osbuild.ModprobeStageOptions
-	DracutConf          []*osbuild.DracutConfStageOptions
-	SystemdUnit         []*osbuild.SystemdUnitStageOptions
-	Authselect          *osbuild.AuthselectStageOptions
-	SELinuxConfig       *osbuild.SELinuxConfigStageOptions
-	Tuned               *osbuild.TunedStageOptions
-	Tmpfilesd           []*osbuild.TmpfilesdStageOptions
-	PamLimitsConf       []*osbuild.PamLimitsConfStageOptions
-	Sysctld             []*osbuild.SysctldStageOptions
-	DNFConfig           []*osbuild.DNFConfigStageOptions
-	SshdConfig          *osbuild.SshdConfigStageOptions
-	Authconfig          *osbuild.AuthconfigStageOptions
-	PwQuality           *osbuild.PwqualityConfStageOptions
-	WAAgentConfig       *osbuild.WAAgentConfStageOptions
-	Grub2Config         *osbuild.GRUB2Config
-	DNFAutomaticConfig  *osbuild.DNFAutomaticConfigStageOptions
-	YumConfig           *osbuild.YumConfigStageOptions
-	YUMRepos            []*osbuild.YumReposStageOptions
-	Firewall            *osbuild.FirewallStageOptions
+	RHSMConfig map[subscription.RHSMStatus]*subscription.RHSMConfig
+	// XXX: only NAutoVTs is used here (in all of RHEL)
+	SystemdLogind []*osbuild.SystemdLogindStageOptions
+	// XXX: makes no sense to abstract it(?)
+	CloudInit []*osbuild.CloudInitStageOptions
+	// XXX: nouveau,amdgpu,floppy,intel_cstate are used
+	Modprobe []*osbuild.ModprobeStageOptions
+	// XXX: change to DracutFIPS for fedora iotOCI, also more very specialized, no sense to abstract?
+	DracutConf    []*osbuild.DracutConfStageOptions
+	SystemdUnit   []*osbuild.SystemdUnitStageOptions
+	Authselect    *osbuild.AuthselectStageOptions
+	SELinuxConfig *osbuild.SELinuxConfigStageOptions
+	Tuned         *osbuild.TunedStageOptions
+	Tmpfilesd     []*osbuild.TmpfilesdStageOptions
+	PamLimitsConf []*osbuild.PamLimitsConfStageOptions
+	Sysctld       []*osbuild.SysctldStageOptions
+	DNFConfig     []*osbuild.DNFConfigStageOptions
+	// XXX: used: clientAliveInterval,PasswordAuthentication
+	SshdConfig *osbuild.SshdConfigStageOptions
+	Authconfig *osbuild.AuthconfigStageOptions
+	// XXX: all options are used, no sense in abstracting
+	PwQuality *osbuild.PwqualityConfStageOptions
+	// XXX: only RDFormat,RDEnableSwap are used
+	WAAgentConfig *osbuild.WAAgentConfStageOptions
+	// XXX: used Tiemout,TerminalInput,TerminalOuptut,Serial
+	Grub2Config        *osbuild.GRUB2Config
+	DNFAutomaticConfig *osbuild.DNFAutomaticConfigStageOptions
+	// XXX: used by rhel7, pretty specific
+	YumConfig *osbuild.YumConfigStageOptions
+	YUMRepos  []*osbuild.YumReposStageOptions
+	Firewall  *osbuild.FirewallStageOptions
+	// XXX: no sense abstracting
 	UdevRules           *osbuild.UdevRulesStageOptions
 	GCPGuestAgentConfig *osbuild.GcpGuestAgentConfigOptions
 
