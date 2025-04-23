@@ -6,10 +6,11 @@ import (
 )
 
 type SshdConfigConfig struct {
-	PasswordAuthentication          *bool                `json:"PasswordAuthentication,omitempty"`
-	ChallengeResponseAuthentication *bool                `json:"ChallengeResponseAuthentication,omitempty"`
-	ClientAliveInterval             *int                 `json:"ClientAliveInterval,omitempty"`
-	PermitRootLogin                 PermitRootLoginValue `json:"PermitRootLogin,omitempty"`
+	PasswordAuthentication          *bool `json:"PasswordAuthentication,omitempty"`
+	ChallengeResponseAuthentication *bool `json:"ChallengeResponseAuthentication,omitempty"`
+	// XXX: json/yaml not consistent :(
+	ClientAliveInterval *int                 `json:"ClientAliveInterval,omitempty" yaml:"client_alive_interval,omitempty"`
+	PermitRootLogin     PermitRootLoginValue `json:"PermitRootLogin,omitempty"`
 }
 
 // PermitRootLoginValue is defined to represent all valid types of the
