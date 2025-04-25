@@ -3,10 +3,13 @@ import argparse
 import contextlib
 import json
 import os
+import pathlib
+import subprocess
 import uuid
 from tempfile import TemporaryDirectory
 
 import imgtestlib as testlib
+from vm import QEMU
 
 BASE_TEST_SCRIPT = "test/scripts/base-host-check.sh"
 
@@ -21,7 +24,7 @@ def get_aws_config():
 
 
 @contextlib.contextmanager
-def create_ssh_key():
+def create_ssh_key(type="ecdsa"):
     with TemporaryDirectory() as tmpdir:
         keypath = os.path.join(tmpdir, "testkey")
         if ci_priv_key := os.environ.get("CI_PRIV_SSH_KEY_2"):
@@ -38,7 +41,12 @@ def create_ssh_key():
                 pubkeyfile.write(pubkey)
         else:
             # create an ssh key pair with empty password
-            cmd = ["ssh-keygen", "-t", "ecdsa", "-b", "256", "-m", "pem", "-N", "", "-f", keypath]
+            if type == "rsa":
+                # XXX: paramiko needs RSA
+                print("using ssh key")
+                cmd = ["ssh-keygen", "-t", "rsa", "-b", "2048", "-N", "", "-f", keypath]
+            else:
+                cmd = ["ssh-keygen", "-t", "ecdsa", "-b", "256", "-m", "pem", "-N", "", "-f", keypath]
             testlib.runcmd_nc(cmd)
 
         yield keypath, keypath + ".pub"
@@ -87,6 +95,35 @@ def boot_ami(distro, arch, image_type, image_path, config):
         with create_ssh_key() as (privkey, pubkey):
             image_name = f"image-boot-test-{distro}-{arch}-{image_type}-" + str(uuid.uuid4())
             cmd_boot_aws(arch, image_name, privkey, pubkey, raw_image_path, cmd)
+
+guestfish_script = """
+run
+list-filesystems
+mount /dev/mapper/rootlv /
+ls /
+mkdir-p /root/.ssh
+copy-in {pubkey} /root/.ssh/
+mv /root/.ssh/testkey.pub /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
+chmod 700 /root/.ssh
+copy-in {base_test_script}  /root
+sync
+"""
+
+def boot_qcow2(distro, arch, image_type, image_path, config):
+    cmd = [BASE_TEST_SCRIPT, config]
+    with create_ssh_key("rsa") as (privkey, pubkey):
+        script = guestfish_script.format(
+            pubkey=pubkey,
+            base_test_script=os.path.abspath(BASE_TEST_SCRIPT),
+        )
+        subprocess.run(
+            ["guestfish", "--rw", "-a", image_path],
+            input=script, text=True, check=True)
+        # boot
+        with QEMU(image_path) as qemu:
+            qemu.start()
+            qemu.run(f"/root/{os.path.basename(BASE_TEST_SCRIPT)}", "root", keyfile=privkey)
 
 
 def boot_container(distro, arch, image_type, image_path, manifest_id):
@@ -172,6 +209,8 @@ def main():
     match image_type:
         case "ami" | "ec2" | "ec2-ha" | "ec2-sap" | "edge-ami":
             boot_ami(distro, arch, image_type, image_path, build_config_path)
+        case "qcow2":
+            boot_qcow2(distro, arch, image_type, image_path, build_config_path)
         case "iot-bootable-container":
             manifest_id = build_info["manifest-checksum"]
             boot_container(distro, arch, image_type, image_path, manifest_id)
