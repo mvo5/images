@@ -20,134 +20,172 @@ func TestBaseFsNodeValidate(t *testing.T) {
 		// relative path is not allowed
 		{
 			Node: baseFsNode{
-				path: "relative/path/file",
+				baseFsNodeJSON{
+					Path: "relative/path/file",
+				},
 			},
 			Error: true,
 		},
 		// path ending with slash is not allowed
 		{
 			Node: baseFsNode{
-				path: "/dir/with/trailing/slash/",
+				baseFsNodeJSON{
+					Path: "/dir/with/trailing/slash/",
+				},
 			},
 			Error: true,
 		},
 		// empty path is not allowed
 		{
 			Node: baseFsNode{
-				path: "",
+				baseFsNodeJSON{
+					Path: "",
+				},
 			},
 			Error: true,
 		},
 		// path must be canonical
 		{
 			Node: baseFsNode{
-				path: "/dir/../file",
+				baseFsNodeJSON{
+					Path: "/dir/../file",
+				},
 			},
 			Error: true,
 		},
 		{
 			Node: baseFsNode{
-				path: "/dir/./file",
+				baseFsNodeJSON{
+					Path: "/dir/./file",
+				},
 			},
 			Error: true,
 		},
 		// valid paths
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
+				baseFsNodeJSON{
+					Path: "/etc/file",
+				},
 			},
 		},
 		{
 			Node: baseFsNode{
-				path: "/etc/dir",
+				baseFsNodeJSON{
+					Path: "/etc/dir",
+				},
 			},
 		},
 		// MODE
 		// invalid mode
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				mode: common.ToPtr(os.FileMode(os.ModeDir)),
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					Mode: common.ToPtr(os.FileMode(os.ModeDir)),
+				},
 			},
 			Error: true,
 		},
 		// valid mode
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				mode: common.ToPtr(os.FileMode(0o644)),
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					Mode: common.ToPtr(os.FileMode(0o644)),
+				},
 			},
 		},
 		// USER
 		// invalid user
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				user: "",
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					User: "",
+				},
 			},
 			Error: true,
 		},
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				user: "invalid@@@user",
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					User: "invalid@@@user",
+				},
 			},
 			Error: true,
 		},
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				user: int64(-1),
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					User: int64(-1),
+				},
 			},
 			Error: true,
 		},
 		// valid user
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				user: "osbuild",
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					User: "osbuild",
+				},
 			},
 		},
 		{
 			Node: baseFsNode{
-				path: "/etc/file",
-				user: int64(0),
+				baseFsNodeJSON{
+					Path: "/etc/file",
+					User: int64(0),
+				},
 			},
 		},
 		// GROUP
 		// invalid group
 		{
 			Node: baseFsNode{
-				path:  "/etc/file",
-				group: "",
+				baseFsNodeJSON{
+					Path:  "/etc/file",
+					Group: "",
+				},
 			},
 			Error: true,
 		},
 		{
 			Node: baseFsNode{
-				path:  "/etc/file",
-				group: "invalid@@@group",
+				baseFsNodeJSON{
+					Path:  "/etc/file",
+					Group: "invalid@@@group",
+				},
 			},
 			Error: true,
 		},
 		{
 			Node: baseFsNode{
-				path:  "/etc/file",
-				group: int64(-1),
+				baseFsNodeJSON{
+					Path:  "/etc/file",
+					Group: int64(-1),
+				},
 			},
 			Error: true,
 		},
 		// valid group
 		{
 			Node: baseFsNode{
-				path:  "/etc/file",
-				group: "osbuild",
+				baseFsNodeJSON{
+					Path:  "/etc/file",
+					Group: "osbuild",
+				},
 			},
 		},
 		{
 			Node: baseFsNode{
-				path:  "/etc/file",
-				group: int64(0),
+				baseFsNodeJSON{
+					Path:  "/etc/file",
+					Group: int64(0),
+				},
 			},
 		},
 	}

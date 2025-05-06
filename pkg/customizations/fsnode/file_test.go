@@ -31,7 +31,7 @@ func TestNewFile(t *testing.T) {
 			mode:     nil,
 			user:     nil,
 			group:    nil,
-			expected: &File{baseFsNode: baseFsNode{path: "/etc/file", mode: nil, user: nil, group: nil}, data: nil},
+			expected: &File{fileJSON{baseFsNode: baseFsNode{baseFsNodeJSON{Path: "/etc/file", Mode: nil, User: nil, Group: nil}}, Data: nil}},
 		},
 		{
 			name:     "file-with-data",
@@ -40,7 +40,7 @@ func TestNewFile(t *testing.T) {
 			mode:     nil,
 			user:     nil,
 			group:    nil,
-			expected: &File{baseFsNode: baseFsNode{path: "/etc/file", mode: nil, user: nil, group: nil}, data: []byte("data")},
+			expected: &File{fileJSON{baseFsNode: baseFsNode{baseFsNodeJSON{Path: "/etc/file", Mode: nil, User: nil, Group: nil}}, Data: []byte("data")}},
 		},
 		{
 			name:     "file-with-mode",
@@ -49,7 +49,7 @@ func TestNewFile(t *testing.T) {
 			mode:     common.ToPtr(os.FileMode(0644)),
 			user:     nil,
 			group:    nil,
-			expected: &File{baseFsNode: baseFsNode{path: "/etc/file", mode: common.ToPtr(os.FileMode(0644)), user: nil, group: nil}, data: nil},
+			expected: &File{fileJSON{baseFsNode: baseFsNode{baseFsNodeJSON{Path: "/etc/file", Mode: common.ToPtr(os.FileMode(0644)), User: nil, Group: nil}}, Data: nil}},
 		},
 		{
 			name:     "file-with-user-and-group-string",
@@ -58,7 +58,7 @@ func TestNewFile(t *testing.T) {
 			mode:     nil,
 			user:     "user",
 			group:    "group",
-			expected: &File{baseFsNode: baseFsNode{path: "/etc/file", mode: nil, user: "user", group: "group"}, data: nil},
+			expected: &File{fileJSON{baseFsNode: baseFsNode{baseFsNodeJSON{Path: "/etc/file", Mode: nil, User: "user", Group: "group"}}, Data: nil}},
 		},
 		{
 			name:     "file-with-user-and-group-int64",
@@ -67,7 +67,7 @@ func TestNewFile(t *testing.T) {
 			mode:     nil,
 			user:     int64(1000),
 			group:    int64(1000),
-			expected: &File{baseFsNode: baseFsNode{path: "/etc/file", mode: nil, user: int64(1000), group: int64(1000)}, data: nil},
+			expected: &File{fileJSON{baseFsNode: baseFsNode{baseFsNodeJSON{Path: "/etc/file", Mode: nil, User: int64(1000), Group: int64(1000)}}, Data: nil}},
 		},
 	}
 

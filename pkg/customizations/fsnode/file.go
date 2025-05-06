@@ -1,17 +1,16 @@
 package fsnode
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"os"
-
-	"github.com/osbuild/images/internal/common"
 )
 
-type File struct {
+type fileJSON struct {
 	baseFsNode
-	data []byte
+	Data []byte `json:"data"`
+}
+
+type File struct {
+	fileJSON
 }
 
 func (f *File) IsDir() bool {
@@ -22,40 +21,7 @@ func (f *File) Data() []byte {
 	if f == nil {
 		return nil
 	}
-	return f.data
-}
-
-func (f *File) UnmarshalJSON(data []byte) error {
-	if err := f.baseFsNode.UnmarshalJSON(data); err != nil {
-		return err
-	}
-
-	var m map[string]interface{}
-	dec := json.NewDecoder(bytes.NewBuffer(data))
-	if err := dec.Decode(&m); err != nil {
-		return err
-	}
-	if data, ok := m["data"]; ok {
-		dataStr, ok := data.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for data (want string)", data)
-		}
-		f.data = []byte(dataStr)
-	}
-
-	// validate only known names are used
-	fieldNames := fieldNames(f)
-	for k := range m {
-		if !fieldNames[k] {
-			return fmt.Errorf("unknown key %q in file", k)
-		}
-	}
-
-	return nil
-}
-
-func (f *File) UnmarshalYAML(unmarshal func(any) error) error {
-	return common.UnmarshalYAMLviaJSON(f, unmarshal)
+	return f.fileJSON.Data
 }
 
 // NewFile creates a new file with the given path, data, mode, user and group.
@@ -68,7 +34,9 @@ func NewFile(path string, mode *os.FileMode, user interface{}, group interface{}
 	}
 
 	return &File{
-		baseFsNode: *baseNode,
-		data:       data,
+		fileJSON: fileJSON{
+			baseFsNode: *baseNode,
+			Data:       data,
+		},
 	}, nil
 }

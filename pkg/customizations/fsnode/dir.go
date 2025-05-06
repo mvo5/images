@@ -9,18 +9,13 @@ import (
 	"github.com/osbuild/images/internal/common"
 )
 
+type directoryJSON struct {
+	Base             baseFsNode
+	EnsureParentDirs bool `json:"ensure_parent_dirs" yaml:"ensure_parent_dirs"`
+}
+
 type Directory struct {
-	baseFsNode
-	// We cannot use a "json" tag here because "go vet" complains
-	// that it is used on an unexported field and "go vet" cannot
-	// ignore lines.
-	//
-	// Longer term it is probably worthwhile to refactor this
-	// code so that custom unmarshaling is not needed, i.e.
-	// just have an unexpored "type directoryJSON" with
-	// exported fields and a public method only type (like
-	// we have now).
-	ensureParentDirs bool `rename:"ensure_parent_dirs"`
+	directoryJSON
 }
 
 func (d *Directory) IsDir() bool {
@@ -31,37 +26,22 @@ func (d *Directory) EnsureParentDirs() bool {
 	if d == nil {
 		return false
 	}
-	return d.ensureParentDirs
+	return d.directoryJSON.EnsureParentDirs
 }
 
 func (d *Directory) UnmarshalJSON(data []byte) error {
-	if err := d.baseFsNode.UnmarshalJSON(data); err != nil {
-		return err
-	}
-
-	// XXX: ideally we would also check here that we do not
-	// get extra/mistyped fields
-	var m map[string]interface{}
+	var dv directoryJSON
 	dec := json.NewDecoder(bytes.NewBuffer(data))
-	if err := dec.Decode(&m); err != nil {
+	dec.UseNumber()
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&dv); err != nil {
 		return err
 	}
-	if ensureParents, ok := m["ensure_parent_dirs"]; ok {
-		d.ensureParentDirs, ok = ensureParents.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for ensure_parent_dirs (want bool)", ensureParents)
-		}
-	}
+	fmt.Printf("%+v %q\n", dv, data)
+	d.directoryJSON = dv
 
-	// validate only known names are used
-	fieldNames := fieldNames(d)
-	for k := range m {
-		if !fieldNames[k] {
-			return fmt.Errorf("unknown key %q in dir", k)
-		}
-	}
+	return d.validate()
 
-	return nil
 }
 
 func (d *Directory) UnmarshalYAML(unmarshal func(any) error) error {
@@ -78,7 +58,9 @@ func NewDirectory(path string, mode *os.FileMode, user interface{}, group interf
 	}
 
 	return &Directory{
-		baseFsNode:       *baseNode,
-		ensureParentDirs: ensureParentDirs,
+		directoryJSON: directoryJSON{
+			baseFsNode:       *baseNode,
+			EnsureParentDirs: ensureParentDirs,
+		},
 	}, nil
 }
