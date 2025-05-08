@@ -470,11 +470,6 @@ func newDistro(version int) distro.Distro {
 		}
 	}
 
-	x86_64.addImageTypes(
-		&platform.X86{},
-		mkWslImgType(rd),
-	)
-
 	// add distro installer configuration to all installer types
 	distroInstallerConfig := defaultDistroInstallerConfig(&rd)
 
