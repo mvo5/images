@@ -68,14 +68,14 @@ type imageType struct {
 	// - "build": unused AFAICT
 	// Note that this does not directly maps to pipeline names
 	// but we should look into making it so.
-	PackageSets map[string][]packageSet `yaml:"package_sets"`
+	PackageSetsDefs map[string][]packageSet `yaml:"package_sets"`
 	// archStr->partitionTable
 	PartitionTables map[string]*disk.PartitionTable `yaml:"partition_table"`
 	// override specific aspects of the partition table
 	PartitionTablesOverrides *partitionTablesOverrides `yaml:"partition_tables_override"`
 
-	ImageConfig     imageConfig     `yaml:"image_config,omitempty"`
-	InstallerConfig installerConfig `yaml:"installer_config,omitempty"`
+	ImageConfigDefs     imageConfig     `yaml:"image_config,omitempty"`
+	InstallerConfigDefs installerConfig `yaml:"installer_config,omitempty"`
 
 	Filename    string                      `yaml:"filename"`
 	MimeType    string                      `yaml:"mime_type"`
@@ -99,8 +99,10 @@ type imageType struct {
 
 	NameAliases []string `yaml:"name_aliases"`
 
-	// name is set by the loader
-	name string
+	// all set by the loader
+	name          string
+	arch          string
+	distroNameVer string
 }
 
 func (it *imageType) Name() string {
@@ -209,29 +211,12 @@ func DistroImageConfig(distroNameVer string) (*distro.ImageConfig, error) {
 
 // PackageSets loads the PackageSets from the yaml source file
 // discovered via the imagetype.
-func PackageSets(it distro.ImageType, replacements map[string]string) (map[string]rpmmd.PackageSet, error) {
-	typeName := it.Name()
-
-	arch := it.Arch()
-	archName := arch.Name()
-	distribution := arch.Distro()
-	distroNameVer := distribution.Name()
-	distroName, distroVersion := splitDistroNameVer(distroNameVer)
-
-	// each imagetype can have multiple package sets, so that we can
-	// use yaml aliases/anchors to de-duplicate them
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-
-	imgType, ok := toplevel.ImageTypes[typeName]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
-	}
+func (it *ImageTypeYAML) PackageSets(replacements map[string]string) (map[string]rpmmd.PackageSet, error) {
+	archName := it.arch
+	distroName, distroVersion := splitDistroNameVer(it.distroNameVer)
 
 	res := make(map[string]rpmmd.PackageSet)
-	for key, pkgSets := range imgType.PackageSets {
+	for key, pkgSets := range it.PackageSetsDefs {
 		var rpmmdPkgSet rpmmd.PackageSet
 		for _, pkgSet := range pkgSets {
 			rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
@@ -291,27 +276,14 @@ func PackageSets(it distro.ImageType, replacements map[string]string) (map[strin
 }
 
 // PartitionTable returns the partionTable for the given distro/imgType.
-func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.PartitionTable, error) {
-	distroNameVer := it.Arch().Distro().Name()
-
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-
-	imgType, ok := toplevel.ImageTypes[it.Name()]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, it.Name())
-	}
-	if imgType.PartitionTables == nil {
+func (it *ImageTypeYAML) PartitionTable(replacements map[string]string) (*disk.PartitionTable, error) {
+	if it.PartitionTables == nil {
 		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, it.Name())
 	}
-	arch := it.Arch()
-	archName := arch.Name()
 
-	if imgType.PartitionTablesOverrides != nil {
-		cond := imgType.PartitionTablesOverrides.Condition
-		distroName, distroVersion := splitDistroNameVer(it.Arch().Distro().Name())
+	if it.PartitionTablesOverrides != nil {
+		cond := it.PartitionTablesOverrides.Condition
+		distroName, distroVersion := splitDistroNameVer(it.distroNameVer)
 
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
@@ -320,7 +292,7 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 			}
 			if common.VersionLessThan(distroVersion, ltVer) {
 				for arch, overridePt := range ltOverrides {
-					imgType.PartitionTables[arch] = overridePt
+					it.PartitionTables[arch] = overridePt
 				}
 			}
 		}
@@ -332,21 +304,21 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 			}
 			if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
 				for arch, overridePt := range geOverrides {
-					imgType.PartitionTables[arch] = overridePt
+					it.PartitionTables[arch] = overridePt
 				}
 			}
 		}
 
 		if distroNameOverrides, ok := cond.DistroName[distroName]; ok {
 			for arch, overridePt := range distroNameOverrides {
-				imgType.PartitionTables[arch] = overridePt
+				it.PartitionTables[arch] = overridePt
 			}
 		}
 	}
 
-	pt, ok := imgType.PartitionTables[archName]
+	pt, ok := it.PartitionTables[it.arch]
 	if !ok {
-		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, it.Name(), archName)
+		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, it.Name(), it.arch)
 	}
 
 	return pt, nil
@@ -420,24 +392,16 @@ func load(distroNameVer string) (*toplevelYAML, error) {
 }
 
 // ImageConfig returns the image type specific ImageConfig
-func ImageConfig(distroNameVer, archName, typeName string, replacements map[string]string) (*distro.ImageConfig, error) {
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-	imgType, ok := toplevel.ImageTypes[typeName]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
-	}
-	imgConfig := imgType.ImageConfig.ImageConfig
-	cond := imgType.ImageConfig.Condition
+func (it *ImageTypeYAML) ImageConfig(replacements map[string]string) *distro.ImageConfig {
+	imgConfig := it.ImageConfigDefs.ImageConfig
+	cond := it.ImageConfigDefs.Condition
 	if cond != nil {
-		distroName, distroVersion := splitDistroNameVer(distroNameVer)
+		distroName, distroVersion := splitDistroNameVer(it.distroNameVer)
 
 		if distroNameCnf, ok := cond.DistroName[distroName]; ok {
 			imgConfig = distroNameCnf.InheritFrom(imgConfig)
 		}
-		if archCnf, ok := cond.Architecture[archName]; ok {
+		if archCnf, ok := cond.Architecture[it.arch]; ok {
 			imgConfig = archCnf.InheritFrom(imgConfig)
 		}
 		for ltVer, ltConf := range cond.VersionLessThan {
@@ -450,7 +414,7 @@ func ImageConfig(distroNameVer, archName, typeName string, replacements map[stri
 		}
 	}
 
-	return imgConfig, nil
+	return imgConfig
 }
 
 // nNonEmpty returns the number of non-empty maps in the given
@@ -465,31 +429,27 @@ func nNonEmpty[K comparable, V any](maps ...map[K]V) int {
 	return nonEmpty
 }
 
+func (it *ImageTypeYAML) validate() error {
+	if cond := it.InstallerConfigDefs.Condition; cond != nil {
+		if nNonEmpty(cond.DistroName, cond.Architecture, cond.VersionLessThan) > 1 {
+			return fmt.Errorf("only a single conditional allowed in installer config for %v", it.name)
+		}
+	}
+	return nil
+}
+
 // InstallerConfig returns the InstallerConfig for the given imgType
 // Note that on conditions the InstallerConfig is fully replaced, do
 // any merging in YAML
-func InstallerConfig(distroNameVer, archName, typeName string, replacements map[string]string) (*distro.InstallerConfig, error) {
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-	imgType, ok := toplevel.ImageTypes[typeName]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
-	}
-	installerConfig := imgType.InstallerConfig.InstallerConfig
-	cond := imgType.InstallerConfig.Condition
+func (it *ImageTypeYAML) InstallerConfig(replacements map[string]string) *distro.InstallerConfig {
+	installerConfig := it.InstallerConfigDefs.InstallerConfig
+	cond := it.InstallerConfigDefs.Condition
 	if cond != nil {
-		if nNonEmpty(cond.DistroName, cond.Architecture, cond.VersionLessThan) > 1 {
-			return nil, fmt.Errorf("only a single conditional allowed in installer config for %v", typeName)
-		}
-
-		distroName, distroVersion := splitDistroNameVer(distroNameVer)
-
+		distroName, distroVersion := splitDistroNameVer(it.distroNameVer)
 		if distroNameCnf, ok := cond.DistroName[distroName]; ok {
 			installerConfig = distroNameCnf
 		}
-		if archCnf, ok := cond.Architecture[archName]; ok {
+		if archCnf, ok := cond.Architecture[it.arch]; ok {
 			installerConfig = archCnf
 		}
 		for ltVer, ltConf := range cond.VersionLessThan {
@@ -502,22 +462,28 @@ func InstallerConfig(distroNameVer, archName, typeName string, replacements map[
 		}
 	}
 
-	return installerConfig, nil
+	return installerConfig
 }
 
-func ImageTypes(distroNameVer string) (map[string]ImageTypeYAML, error) {
+func ImageTypes(distroNameVer string) ([]ImageTypeYAML, error) {
 	toplevel, err := load(distroNameVer)
 	if err != nil {
 		return nil, err
 	}
 
-	// We have a bunch of names like "server-ami" that are writen
-	// in the YAML as "server_ami" so we need to normalize
-	imgTypes := make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
+	var imgTypes []ImageTypeYAML
 	for name := range toplevel.ImageTypes {
 		v := toplevel.ImageTypes[name]
 		v.name = name
-		imgTypes[name] = v
+		v.distroNameVer = distroNameVer
+		if err := v.validate(); err != nil {
+			return nil, err
+		}
+		for _, platform := range v.Platforms {
+			perArchImgType := v
+			perArchImgType.arch = platform.Arch.String()
+			imgTypes = append(imgTypes, perArchImgType)
+		}
 	}
 
 	return imgTypes, nil

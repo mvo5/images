@@ -186,6 +186,10 @@ func (t *TestImageType) Filename() string {
 	return "test.img"
 }
 
+func (t *TestImageType) ImageConfig() *distro.ImageConfig {
+	return nil
+}
+
 func (t *TestImageType) MIMEType() string {
 	return "application/x-test"
 }
