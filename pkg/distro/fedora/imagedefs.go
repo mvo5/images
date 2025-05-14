@@ -3,7 +3,6 @@ package fedora
 import (
 	"fmt"
 
-	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/distro/defs"
 )
 
@@ -16,7 +15,7 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 
 }
 
-func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeYAML) imageType {
+func newImageTypeFrom(d *distribution, imgYAML defs.ImageTypeYAML) imageType {
 	typName := imgYAML.Name()
 	it := imageType{
 		name:                   typName,
@@ -34,10 +33,10 @@ func newImageTypeFrom(d *distribution, ar *architecture, imgYAML defs.ImageTypeY
 		exports:                imgYAML.Exports,
 		requiredPartitionSizes: imgYAML.RequiredPartitionSizes,
 		environment:            &imgYAML.Environment,
+		defaultImageConfig:     imgYAML.ImageConfig(VersionReplacements()),
+		defaultInstallerConfig: imgYAML.InstallerConfig(VersionReplacements()),
+		imgYAML:                imgYAML,
 	}
-	it.defaultImageConfig = common.Must(defs.ImageConfig(d.name, ar.name, typName, VersionReplacements()))
-	it.defaultInstallerConfig = common.Must(defs.InstallerConfig(d.name, ar.name, typName, VersionReplacements()))
-
 	switch imgYAML.Image {
 	case "disk":
 		it.image = diskImage

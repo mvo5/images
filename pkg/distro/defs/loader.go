@@ -103,10 +103,20 @@ type imageType struct {
 	name          string
 	arch          string
 	distroNameVer string
+	// XXX: rename to platformDef
+	platform platform.PlatformConf
 }
 
 func (it *imageType) Name() string {
 	return it.name
+}
+
+func (it *imageType) Arch() string {
+	return it.arch
+}
+
+func (it *imageType) Platform() platform.Platform {
+	return &it.platform
 }
 
 type imageConfig struct {
@@ -482,6 +492,7 @@ func ImageTypes(distroNameVer string) ([]ImageTypeYAML, error) {
 		for _, platform := range v.Platforms {
 			perArchImgType := v
 			perArchImgType.arch = platform.Arch.String()
+			perArchImgType.platform = platform
 			imgTypes = append(imgTypes, perArchImgType)
 		}
 	}

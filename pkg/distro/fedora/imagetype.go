@@ -54,6 +54,8 @@ type imageType struct {
 	image                  imageFunc
 	isoLabel               isoLabelFunc
 
+	imgYAML defs.ImageTypeYAML
+
 	// bootISO: installable ISO
 	bootISO bool
 	// rpmOstree: iot/ostree
@@ -141,7 +143,7 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return defs.PartitionTable(t, VersionReplacements())
+	return t.imgYAML.PartitionTable(VersionReplacements())
 }
 
 func (t *imageType) getPartitionTable(
@@ -240,7 +242,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 
 	// don't add any static packages if Minimal was selected
 	if !bp.Minimal {
-		pkgSets, err := defs.PackageSets(t, VersionReplacements())
+		pkgSets, err := t.imgYAML.PackageSets(VersionReplacements())
 		if err != nil {
 			return nil, nil, err
 		}

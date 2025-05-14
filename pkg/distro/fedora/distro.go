@@ -75,21 +75,15 @@ func newDistro(version int) (distro.Distro, error) {
 		return nil, err
 	}
 	for _, imgTypeYAML := range its {
-		// use as marker for images that are not converted to
-		// YAML yet
-		if imgTypeYAML.Filename == "" {
-			continue
+		archName := imgTypeYAML.Arch()
+		ar, ok := rd.arches[archName]
+		if !ok {
+			ar = newArchitecture(rd, archName)
+			rd.arches[archName] = ar
 		}
-		for _, pl := range imgTypeYAML.Platforms {
-			ar, ok := rd.arches[pl.Arch.String()]
-			if !ok {
-				ar = newArchitecture(rd, pl.Arch.String())
-				rd.arches[pl.Arch.String()] = ar
-			}
-			it := newImageTypeFrom(rd, ar, imgTypeYAML)
-			if err := ar.addImageType(&pl, it); err != nil {
-				return nil, err
-			}
+		it := newImageTypeFrom(rd, imgTypeYAML)
+		if err := ar.addImageType(imgTypeYAML.Platform(), it); err != nil {
+			return nil, err
 		}
 	}
 
