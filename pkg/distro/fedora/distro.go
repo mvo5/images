@@ -81,7 +81,7 @@ func newDistro(version int) (distro.Distro, error) {
 			ar = newArchitecture(rd, archName)
 			rd.arches[archName] = ar
 		}
-		it := newImageTypeFrom(rd, imgTypeYAML)
+		it := newImageTypeFrom(rd, &imgTypeYAML)
 		if err := ar.addImageType(imgTypeYAML.Platform(), it); err != nil {
 			return nil, err
 		}

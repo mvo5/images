@@ -111,6 +111,11 @@ func (it *imageType) Name() string {
 	return it.name
 }
 
+func (it *imageType) OsVersion() string {
+	_, ver := splitDistroNameVer(it.distroNameVer)
+	return ver
+}
+
 func (it *imageType) Arch() string {
 	return it.arch
 }
@@ -498,4 +503,46 @@ func ImageTypes(distroNameVer string) ([]ImageTypeYAML, error) {
 	}
 
 	return imgTypes, nil
+}
+
+// compatibility with RHEL, can go once we converted everything to
+// ImageTypeYAML
+func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.PartitionTable, error) {
+	arch := it.Arch()
+	distroNameVer := arch.Distro().Name()
+
+	toplevel, err := load(distroNameVer)
+	if err != nil {
+		return nil, err
+	}
+
+	imgType, ok := toplevel.ImageTypes[it.Name()]
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, it.Name())
+	}
+	imgType.name = it.Name()
+	imgType.arch = arch.Name()
+	imgType.distroNameVer = distroNameVer
+
+	return imgType.PartitionTable(replacements)
+}
+
+func PackageSets(it distro.ImageType, replacements map[string]string) (map[string]rpmmd.PackageSet, error) {
+	arch := it.Arch()
+	distroNameVer := arch.Distro().Name()
+
+	toplevel, err := load(distroNameVer)
+	if err != nil {
+		return nil, err
+	}
+
+	imgType, ok := toplevel.ImageTypes[it.Name()]
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, it.Name())
+	}
+	imgType.name = it.Name()
+	imgType.arch = arch.Name()
+	imgType.distroNameVer = distroNameVer
+
+	return imgType.PackageSets(replacements)
 }

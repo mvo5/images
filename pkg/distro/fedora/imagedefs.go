@@ -15,9 +15,11 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 
 }
 
-func newImageTypeFrom(d *distribution, imgYAML defs.ImageTypeYAML) imageType {
+func newImageTypeFrom(d *distribution, imgYAML *defs.ImageTypeYAML) imageType {
 	typName := imgYAML.Name()
 	it := imageType{
+		ImageTypeYAML: imgYAML,
+
 		name:                   typName,
 		nameAliases:            imgYAML.NameAliases,
 		filename:               imgYAML.Filename,
@@ -35,7 +37,6 @@ func newImageTypeFrom(d *distribution, imgYAML defs.ImageTypeYAML) imageType {
 		environment:            &imgYAML.Environment,
 		defaultImageConfig:     imgYAML.ImageConfig(VersionReplacements()),
 		defaultInstallerConfig: imgYAML.InstallerConfig(VersionReplacements()),
-		imgYAML:                imgYAML,
 	}
 	switch imgYAML.Image {
 	case "disk":

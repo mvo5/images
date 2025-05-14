@@ -36,6 +36,8 @@ type isoLabelFunc func(t *imageType) string
 var _ = distro.ImageType(&imageType{})
 
 type imageType struct {
+	*defs.ImageTypeYAML
+
 	arch                   *architecture
 	platform               platform.Platform
 	environment            environment.Environment
@@ -53,8 +55,6 @@ type imageType struct {
 	exports                []string
 	image                  imageFunc
 	isoLabel               isoLabelFunc
-
-	imgYAML defs.ImageTypeYAML
 
 	// bootISO: installable ISO
 	bootISO bool
@@ -143,7 +143,7 @@ func (t *imageType) BootMode() platform.BootMode {
 }
 
 func (t *imageType) BasePartitionTable() (*disk.PartitionTable, error) {
-	return t.imgYAML.PartitionTable(VersionReplacements())
+	return t.PartitionTable(VersionReplacements())
 }
 
 func (t *imageType) getPartitionTable(
@@ -242,7 +242,7 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 
 	// don't add any static packages if Minimal was selected
 	if !bp.Minimal {
-		pkgSets, err := t.imgYAML.PackageSets(VersionReplacements())
+		pkgSets, err := t.PackageSets(VersionReplacements())
 		if err != nil {
 			return nil, nil, err
 		}
