@@ -1,0 +1,186 @@
+distros:
+  - &fedora
+    name: fedora-43
+    os_version: 43
+    release_version: 43
+    platform_id: platform:f43
+    product: "Fedora"
+    ostree_ref_tmpl: "fedora/43/%s/iot"
+    defs: fedora
+    # XXX: should we put the repositories in here? instead of loading them from "data/repositories/${name}.json
+  - <<: *fedora
+    name: fedora-42
+    os_version: 42
+    release_version: 42
+    platform_id: platform:f42
+  - <<: *fedora
+    name: fedora-41
+    os_version: 41
+    release_version: 41
+    platform_id: platform:f41
+
+  - &rhel_10
+    name: rhel-10.1
+    product: "Red Hat Enterprise Linux"
+    os_version: "10.1"
+    release_version: "10"
+    module_platform_id: "platform:el10"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/10/%s/edge"
+    defs: "rhel-10"
+  - <<: *rhel_10
+    name: rhel-10.0
+    os_version: "10.0"
+
+  - <<: *rhel_10
+    name: centos-10
+    product: "CentOS Stream"
+    os_version: "10-stream"
+    vendor: "centos"
+    ostree_ref_tmpl: "centos/10/%s/edge"
+
+  - <<: *rhel_10
+    name: almalinux_kitten-10
+    product: "AlmaLinux Kitten"
+    os_version: "10-kitten"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/10/%s/edge"
+
+  - &rhel_9
+    name: rhel-9.7
+    os_version: "9.7"
+    product: "Red Hat Enterprise Linux"
+    release_version: "9"
+    module_platform_id: "platform:el9"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/9/%s/edge"
+    defs: "rhel-9"
+  - <<: *rhel_9
+    name: rhel-9.6
+    os_version: "9.6"
+  - <<: *rhel_9
+    name: rhel-9.5
+    os_version: "9.5"
+  - <<: *rhel_9
+    name: rhel-9.4
+    os_version: "9.4"
+  - <<: *rhel_9
+    name: rhel-9.3
+    os_version: "9.3"
+  - <<: *rhel_9
+    name: rhel-9.2
+    os_version: "9.2"
+  - <<: *rhel_9
+    name: rhel-9.1
+    os_version: "9.1"
+  - <<: *rhel_9
+    name: rhel-9.0
+    os_version: "9.0"
+
+  - <<: *rhel_9
+    name: centos-9
+    product: "CentOS Stream"
+    os_version: "9-stream"
+    vendor: "centos"
+    ostree_ref_tmpl: "centos/9/%s/edge"
+
+  - &almalinux_9
+    <<: *rhel_9
+    name: almalinux-9.5
+    os_version: "9.5"
+    product: "AlmaLinux"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/9/%s/edge"
+  - <<: *almalinux_9
+    name: almalinux-9.4
+    os_version: "9.4"
+  - <<: *almalinux_9
+    name: almalinux-9.3
+    os_version: "9.3"
+  - <<: *almalinux_9
+    name: almalinux-9.2
+    os_version: "9.2"
+  - <<: *almalinux_9
+    name: almalinux-9.1
+    os_version: "9.1"
+  - <<: *almalinux_9
+    name: almalinux-9.0
+    os_version: "9.0"
+    
+  - &rhel_8
+    name: rhel-8.10
+    os_version: "8.10"
+    product: "Red Hat Enterprise Linux"
+    release_version: "8"
+    module_platform_id: "platform:el8"
+    vendor: "redhat"
+    ostree_ref_tmpl: "rhel/8/%s/edge"
+    defs: "rhel-8"
+  - <<: *rhel_8
+    name: rhel-8.9
+    os_version: "8.9"
+  - <<: *rhel_8
+    name: rhel-8.8
+    os_version: "8.8"
+  - <<: *rhel_8
+    name: rhel-8.7
+    os_version: "8.7"
+  - <<: *rhel_8
+    name: rhel-8.6
+    os_version: "8.6"
+  - <<: *rhel_8
+    name: rhel-8.5
+    os_version: "8.5"
+  - <<: *rhel_8
+    name: rhel-8.4
+    os_version: "8.4"
+  - <<: *rhel_8
+    name: rhel-8.3
+    os_version: "8.3"
+  - <<: *rhel_8
+    name: rhel-8.1
+    os_version: "8.1"
+  - <<: *rhel_8
+    name: rhel-8.1
+    os_version: "8.1"
+  - <<: *rhel_8
+    name: rhel-8.0
+    os_version: "8.0"
+
+  - &almalinux_8
+    <<: *rhel_8
+    name: almalinux-8.10
+    os_version: "8.10"
+    product: "AlmaLinux"
+    vendor: "almalinux"
+    ostree_ref_tmpl: "almalinux/8/%s/edge"
+  - <<: *almalinux_8
+    name: almalinux-8.9
+    os_version: "8.9"
+  - <<: *almalinux_8
+    name: almalinux-8.8
+    os_version: "8.8"
+  - <<: *almalinux_8
+    name: almalinux-8.7
+    os_version: "8.7"
+  - <<: *almalinux_8
+    name: almalinux-8.6
+    os_version: "8.6"
+  - <<: *almalinux_8
+    name: almalinux-8.5
+    os_version: "8.5"
+  - <<: *almalinux_8
+    name: almalinux-8.4
+    os_version: "8.4"
+  - <<: *almalinux_8
+    name: almalinux-8.3
+    os_version: "8.3"
+  - <<: *almalinux_8
+    name: almalinux-8.2
+    os_version: "8.2"
+  - <<: *almalinux_8
+    name: almalinux-8.1
+    os_version: "8.1"
+  - <<: *almalinux_8
+    name: almalinux-8.0
+    os_version: "8.0"
