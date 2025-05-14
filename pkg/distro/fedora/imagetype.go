@@ -26,7 +26,7 @@ import (
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
-type imageFunc func(workload workload.Workload, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
+type imageFunc func(workload workload.Workload, t *defs.ImageTypeYAML, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
 
 type packageSetFunc func(t *imageType) (map[string]rpmmd.PackageSet, error)
 

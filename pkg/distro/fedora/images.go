@@ -334,7 +334,7 @@ func ostreeDeploymentCustomizations(
 // IMAGES
 
 func diskImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -342,17 +342,17 @@ func diskImage(workload workload.Workload,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewDiskImage()
-	img.Platform = t.platform
+	img.Platform = t.Platform()
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t.ImageTypeYAML, packageSets[osPkgsKey], containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}
 
-	img.Environment = t.environment
+	img.Environment = &t.Environment
 	img.Workload = workload
-	img.Compression = t.compression
+	img.Compression = t.Compression
 	if bp.Minimal {
 		// Disable weak dependencies if the 'minimal' option is enabled
 		img.OSCustomizations.InstallWeakDeps = false
@@ -364,13 +364,13 @@ func diskImage(workload workload.Workload,
 	}
 	img.PartitionTable = pt
 
-	img.Filename = t.Filename()
+	img.Filename = t.Filename
 
 	return img, nil
 }
 
 func containerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -378,24 +378,24 @@ func containerImage(workload workload.Workload,
 	rng *rand.Rand) (image.ImageKind, error) {
 	img := image.NewBaseContainer()
 
-	img.Platform = t.platform
+	img.Platform = t.Platform()
 
 	var err error
-	img.OSCustomizations, err = osCustomizations(t.ImageTypeYAML, packageSets[osPkgsKey], containers, bp.Customizations)
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
 	if err != nil {
 		return nil, err
 	}
 
-	img.Environment = t.environment
+	img.Environment = &t.Environment
 	img.Workload = workload
 
-	img.Filename = t.Filename()
+	img.Filename = t.Filename
 
 	return img, nil
 }
 
 func liveInstallerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -404,7 +404,7 @@ func liveInstallerImage(workload workload.Workload,
 
 	img := image.NewAnacondaLiveInstaller()
 
-	img.Platform = t.platform
+	img.Platform = t.Platform()
 	img.Workload = workload
 	img.ExtraBasePackages = packageSets[installerPkgsKey]
 
@@ -451,7 +451,7 @@ func liveInstallerImage(workload workload.Workload,
 }
 
 func imageInstallerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -546,7 +546,7 @@ func imageInstallerImage(workload workload.Workload,
 }
 
 func iotCommitImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -593,7 +593,7 @@ func iotCommitImage(workload workload.Workload,
 }
 
 func bootableContainerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -629,7 +629,7 @@ func bootableContainerImage(workload workload.Workload,
 }
 
 func iotContainerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -675,7 +675,7 @@ func iotContainerImage(workload workload.Workload,
 }
 
 func iotInstallerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -769,7 +769,7 @@ func iotInstallerImage(workload workload.Workload,
 }
 
 func iotImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
@@ -811,7 +811,7 @@ func iotImage(workload workload.Workload,
 }
 
 func iotSimplifiedInstallerImage(workload workload.Workload,
-	t *imageType,
+	t *defs.ImageTypeYAML,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
 	packageSets map[string]rpmmd.PackageSet,
