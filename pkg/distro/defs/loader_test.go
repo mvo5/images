@@ -19,6 +19,7 @@ import (
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 func makeTestImageType(t *testing.T) distro.ImageType {
@@ -727,6 +728,9 @@ distros:
     product: "Fedora"
     ostree_ref_tmpl: "fedora/43/%s/iot"
     defs_path: fedora
+    runner:
+      name: org.osbuild.fedora43
+      build_packages: ["glibc"]
 `
 
 func TestDistrosLoadingSmoke(t *testing.T) {
@@ -746,6 +750,10 @@ func TestDistrosLoadingSmoke(t *testing.T) {
 		Product:          "Fedora",
 		OSTreeRefTmpl:    "fedora/43/%s/iot",
 		DefsPath:         "fedora",
+		Runner: runner.RunnerConf{
+			Name:          "org.osbuild.fedora43",
+			BuildPackages: []string{"glibc"},
+		},
 	}, distros["fedora-43"])
 }
 

@@ -15,7 +15,6 @@ import (
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/platform"
-	"github.com/osbuild/images/pkg/runner"
 )
 
 const (
@@ -230,7 +229,6 @@ func mkIotQcow2ImgType(d distribution) imageType {
 type distribution struct {
 	defs.DistroYAML
 
-	runner runner.Runner
 	arches map[string]distro.Arch
 	// XXX: move into defs.DistroYAML
 	defaultImageConfig *distro.ImageConfig
@@ -256,7 +254,6 @@ func getDistro(version int) distribution {
 
 	return distribution{
 		DistroYAML: distroYAML,
-		runner:     &runner.Fedora{Version: uint64(version)},
 		// move into distroYAML
 		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
 	}
