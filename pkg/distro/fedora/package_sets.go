@@ -16,13 +16,13 @@ func packageSetLoader(t *imageType) (map[string]rpmmd.PackageSet, error) {
 func imageConfig(d distribution, imageType string) *distro.ImageConfig {
 	// arch is currently not used in fedora
 	arch := ""
-	return common.Must(defs.ImageConfig(d.name, arch, imageType, VersionReplacements()))
+	return common.Must(defs.ImageConfig(d.Name(), arch, imageType, VersionReplacements()))
 }
 
 func installerConfig(d distribution, imageType string) *distro.InstallerConfig {
 	// arch is currently not used in fedora
 	arch := ""
-	return common.Must(defs.InstallerConfig(d.name, arch, imageType, VersionReplacements()))
+	return common.Must(defs.InstallerConfig(d.Name(), arch, imageType, VersionReplacements()))
 }
 
 func newImageTypeFrom(d distribution, imgYAML defs.ImageTypeYAML) imageType {

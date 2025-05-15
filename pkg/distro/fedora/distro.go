@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
+
+	// we cannot use "maps" yet, as it needs go1.23
+	"golang.org/x/exp/maps"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
@@ -226,14 +228,11 @@ func mkIotQcow2ImgType(d distribution) imageType {
 }
 
 type distribution struct {
-	name               string
-	product            string
-	osVersion          string
-	releaseVersion     string
-	modulePlatformID   string
-	ostreeRefTmpl      string
-	runner             runner.Runner
-	arches             map[string]distro.Arch
+	defs.DistroYAML
+
+	runner runner.Runner
+	arches map[string]distro.Arch
+	// XXX: move into defs.DistroYAML
 	defaultImageConfig *distro.ImageConfig
 }
 
@@ -247,48 +246,48 @@ func getISOLabelFunc(variant string) isoLabelFunc {
 }
 
 func getDistro(version int) distribution {
-	if version < 0 {
-		panic("Invalid Fedora version (must be positive)")
-	}
+	distros := common.Must(defs.Distros())
 	nameVer := fmt.Sprintf("fedora-%d", version)
+	distroYAML, ok := distros[nameVer]
+	if !ok {
+		err := fmt.Errorf("cannot find %s in %q", nameVer, maps.Keys(distros))
+		panic(err)
+	}
+
 	return distribution{
-		name:               nameVer,
-		product:            "Fedora",
-		osVersion:          strconv.Itoa(version),
-		releaseVersion:     strconv.Itoa(version),
-		modulePlatformID:   fmt.Sprintf("platform:f%d", version),
-		ostreeRefTmpl:      fmt.Sprintf("fedora/%d/%%s/iot", version),
-		runner:             &runner.Fedora{Version: uint64(version)},
+		DistroYAML: distroYAML,
+		runner:     &runner.Fedora{Version: uint64(version)},
+		// move into distroYAML
 		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
 	}
 }
 
 func (d *distribution) Name() string {
-	return d.name
+	return d.DistroYAML.Name
 }
 
 func (d *distribution) Codename() string {
-	return "" // Fedora does not use distro codename
+	return d.DistroYAML.Codename
 }
 
 func (d *distribution) Releasever() string {
-	return d.releaseVersion
+	return d.DistroYAML.ReleaseVersion
 }
 
 func (d *distribution) OsVersion() string {
-	return d.releaseVersion
+	return d.DistroYAML.ReleaseVersion
 }
 
 func (d *distribution) Product() string {
-	return d.product
+	return d.DistroYAML.Product
 }
 
 func (d *distribution) ModulePlatformID() string {
-	return d.modulePlatformID
+	return d.DistroYAML.ModulePlatformID
 }
 
 func (d *distribution) OSTreeRef() string {
-	return d.ostreeRefTmpl
+	return d.DistroYAML.OSTreeRefTmpl
 }
 
 func (d *distribution) ListArches() []string {
@@ -415,7 +414,7 @@ func newDistro(version int) distro.Distro {
 	}
 
 	// XXX: move all image types should to YAML
-	its, err := defs.ImageTypes(rd.name)
+	its, err := defs.ImageTypes(rd.Name())
 	if err != nil {
 		panic(err)
 	}
