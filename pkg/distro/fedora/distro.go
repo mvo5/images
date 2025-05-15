@@ -229,8 +229,7 @@ func mkIotQcow2ImgType(d distribution) imageType {
 type distribution struct {
 	defs.DistroYAML
 
-	arches map[string]distro.Arch
-	// XXX: move into defs.DistroYAML
+	arches             map[string]distro.Arch
 	defaultImageConfig *distro.ImageConfig
 }
 
@@ -254,7 +253,11 @@ func getDistro(version int) distribution {
 
 	return distribution{
 		DistroYAML: distroYAML,
-		// move into distroYAML
+		// XXX: move into defs.DistroYAML? the downside of doing this
+		// is that we would have to duplicate the default image config
+		// accross the centos/alma/rhel distros.yaml, otherwise we
+		// just load it from the imagetypes file/dir and it is natually
+		// "in-sync"
 		defaultImageConfig: common.Must(defs.DistroImageConfig(nameVer)),
 	}
 }
