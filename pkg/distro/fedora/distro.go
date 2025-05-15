@@ -1,9 +1,11 @@
 package fedora
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"sort"
+	"text/template"
 
 	// we cannot use "maps" yet, as it needs go1.23
 	"golang.org/x/exp/maps"
@@ -62,7 +64,7 @@ func mkImageInstallerImgType(d distribution) imageType {
 		rpmOstree:              false,
 		image:                  imageInstallerImage,
 		// We don't know the variant of the OS pipeline being installed
-		isoLabel:               getISOLabelFunc("Unknown"),
+		isoLabel:               d.getISOLabelFunc("Unknown"),
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "os", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
@@ -83,7 +85,7 @@ func mkLiveInstallerImgType(d distribution) imageType {
 		bootISO:                true,
 		rpmOstree:              false,
 		image:                  liveInstallerImage,
-		isoLabel:               getISOLabelFunc("Workstation"),
+		isoLabel:               d.getISOLabelFunc("Workstation"),
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
@@ -154,7 +156,7 @@ func mkIotInstallerImgType(d distribution) imageType {
 		rpmOstree:              true,
 		bootISO:                true,
 		image:                  iotInstallerImage,
-		isoLabel:               getISOLabelFunc("IoT"),
+		isoLabel:               d.getISOLabelFunc("IoT"),
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"anaconda-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
@@ -175,7 +177,7 @@ func mkIotSimplifiedInstallerImgType(d distribution) imageType {
 		bootable:               true,
 		bootISO:                true,
 		image:                  iotSimplifiedInstallerImage,
-		isoLabel:               getISOLabelFunc("IoT"),
+		isoLabel:               d.getISOLabelFunc("IoT"),
 		buildPipelines:         []string{"build"},
 		payloadPipelines:       []string{"ostree-deployment", "image", "xz", "coi-tree", "efiboot-tree", "bootiso-tree", "bootiso"},
 		exports:                []string{"bootiso"},
@@ -233,15 +235,6 @@ type distribution struct {
 	defaultImageConfig *distro.ImageConfig
 }
 
-func getISOLabelFunc(variant string) isoLabelFunc {
-	const ISO_LABEL = "%s-%s-%s-%s"
-
-	return func(t *imageType) string {
-		return fmt.Sprintf(ISO_LABEL, t.Arch().Distro().Product(), t.Arch().Distro().OsVersion(), variant, t.Arch().Name())
-	}
-
-}
-
 func getDistro(version int) distribution {
 	distros := common.Must(defs.Distros())
 	nameVer := fmt.Sprintf("fedora-%d", version)
@@ -288,6 +281,26 @@ func (d *distribution) ModulePlatformID() string {
 
 func (d *distribution) OSTreeRef() string {
 	return d.DistroYAML.OSTreeRefTmpl
+}
+
+func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
+	return func(t *imageType) string {
+		type inputs struct {
+			Product      string
+			OsVersion    string
+			Arch         string
+			ImgTypeLabel string
+		}
+		templ := common.Must(template.New("iso-label").Parse(d.DistroYAML.ISOLabelTmpl))
+		var buf bytes.Buffer
+		templ.Execute(&buf, inputs{
+			Product:      t.Arch().Distro().Product(),
+			OsVersion:    t.Arch().Distro().OsVersion(),
+			Arch:         t.Arch().Name(),
+			ImgTypeLabel: isoLabel,
+		})
+		return buf.String()
+	}
 }
 
 func (d *distribution) ListArches() []string {
