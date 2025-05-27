@@ -505,7 +505,7 @@ func TestESP(t *testing.T, distros []distro.Distro, ptFunc func(i distro.ImageTy
 
 					switch i.BootMode() {
 					case platform.BOOT_HYBRID, platform.BOOT_UEFI:
-						require.NotNil(t, pt.FindMountable("/boot/efi"))
+						require.NotNil(t, pt.FindMountable("/boot/efi"), "expected /boot/efi but not found")
 					default:
 						require.Nil(t, pt.FindMountable("/boot/efi"))
 					}
