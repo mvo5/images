@@ -467,6 +467,11 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 	arch := it.Arch()
 	archName := arch.Name()
 
+	pt, ok := imgType.PartitionTables[archName]
+	if !ok {
+		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, it.Name(), archName)
+	}
+
 	if imgType.PartitionTablesOverrides != nil {
 		cond := imgType.PartitionTablesOverrides.Condition
 		distroName, distroVersion := common.SplitDistroNameVer(it.Arch().Distro().Name())
@@ -477,8 +482,8 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 				ltVer = r
 			}
 			if common.VersionLessThan(distroVersion, ltVer) {
-				for arch, overridePt := range ltOverrides {
-					imgType.PartitionTables[arch] = overridePt
+				if newPt, ok := ltOverrides[archName]; ok {
+					pt = newPt
 				}
 			}
 		}
@@ -489,22 +494,17 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 				gteqVer = r
 			}
 			if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
-				for arch, overridePt := range geOverrides {
-					imgType.PartitionTables[arch] = overridePt
+				if newPt, ok := geOverrides[archName]; ok {
+					pt = newPt
 				}
 			}
 		}
 
 		if distroNameOverrides, ok := cond.DistroName[distroName]; ok {
-			for arch, overridePt := range distroNameOverrides {
-				imgType.PartitionTables[arch] = overridePt
+			if newPt, ok := distroNameOverrides[archName]; ok {
+				pt = newPt
 			}
 		}
-	}
-
-	pt, ok := imgType.PartitionTables[archName]
-	if !ok {
-		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, it.Name(), archName)
 	}
 
 	return pt, nil
