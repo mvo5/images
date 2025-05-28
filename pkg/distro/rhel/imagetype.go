@@ -14,6 +14,7 @@ import (
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/experimentalflags"
 	"github.com/osbuild/images/pkg/image"
 	"github.com/osbuild/images/pkg/manifest"
@@ -96,6 +97,8 @@ type ImageType struct {
 	// TODO: determine a better place for these options, but for now they are here
 	DiskImagePartTool     *osbuild.PartTool
 	DiskImageVPCForceSize *bool
+
+	ImageTypeYAML defs.ImageTypeYAML
 }
 
 func (t *ImageType) Name() string {

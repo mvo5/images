@@ -363,26 +363,8 @@ func DistroImageConfig(distroNameVer string) (*distro.ImageConfig, error) {
 
 // PackageSets loads the PackageSets from the yaml source file
 // discovered via the imagetype.
-func PackageSets(it distro.ImageType, replacements map[string]string) (map[string]rpmmd.PackageSet, error) {
-	typeName := it.Name()
-
-	arch := it.Arch()
-	archName := arch.Name()
-	distribution := arch.Distro()
-	distroNameVer := distribution.Name()
+func (imgType *imageType) GetPackageSets(distroNameVer, archName string) (map[string]rpmmd.PackageSet, error) {
 	distroName, distroVersion := common.SplitDistroNameVer(distroNameVer)
-
-	// each imagetype can have multiple package sets, so that we can
-	// use yaml aliases/anchors to de-duplicate them
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-
-	imgType, ok := toplevel.ImageTypes[typeName]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
-	}
 
 	res := make(map[string]rpmmd.PackageSet)
 	for key, pkgSets := range imgType.PackageSets {
@@ -411,9 +393,6 @@ func PackageSets(it distro.ImageType, replacements map[string]string) (map[strin
 				// packageSets are strictly additive the order
 				// is irrelevant
 				for ltVer, ltSet := range pkgSet.Condition.VersionLessThan {
-					if r, ok := replacements[ltVer]; ok {
-						ltVer = r
-					}
 					if common.VersionLessThan(distroVersion, ltVer) {
 						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
 							Include: ltSet.Include,
@@ -423,9 +402,6 @@ func PackageSets(it distro.ImageType, replacements map[string]string) (map[strin
 				}
 
 				for gteqVer, gteqSet := range pkgSet.Condition.VersionGreaterOrEqual {
-					if r, ok := replacements[gteqVer]; ok {
-						gteqVer = r
-					}
 					if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
 						rpmmdPkgSet = rpmmdPkgSet.Append(rpmmd.PackageSet{
 							Include: gteqSet.Include,
@@ -445,33 +421,17 @@ func PackageSets(it distro.ImageType, replacements map[string]string) (map[strin
 }
 
 // PartitionTable returns the partionTable for the given distro/imgType.
-func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.PartitionTable, error) {
-	distroNameVer := it.Arch().Distro().Name()
-
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-
-	imgType, ok := toplevel.ImageTypes[it.Name()]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, it.Name())
-	}
+func (imgType *imageType) PartitionTable(distroNameVer, archName string) *disk.PartitionTable {
 	if imgType.PartitionTables == nil {
-		return nil, fmt.Errorf("%w: %q", ErrNoPartitionTableForImgType, it.Name())
+		return nil
 	}
-	arch := it.Arch()
-	archName := arch.Name()
 
 	if imgType.PartitionTablesOverrides != nil {
 		cond := imgType.PartitionTablesOverrides.Condition
-		distroName, distroVersion := common.SplitDistroNameVer(it.Arch().Distro().Name())
+		distroName, distroVersion := common.SplitDistroNameVer(distroNameVer)
 
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
-			if r, ok := replacements[ltVer]; ok {
-				ltVer = r
-			}
 			if common.VersionLessThan(distroVersion, ltVer) {
 				for arch, overridePt := range ltOverrides {
 					imgType.PartitionTables[arch] = overridePt
@@ -481,9 +441,6 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 
 		for _, gteqVer := range backward(versionLessThanSortedKeys(cond.VersionGreaterOrEqual)) {
 			geOverrides := cond.VersionGreaterOrEqual[gteqVer]
-			if r, ok := replacements[gteqVer]; ok {
-				gteqVer = r
-			}
 			if common.VersionGreaterThanOrEqual(distroVersion, gteqVer) {
 				for arch, overridePt := range geOverrides {
 					imgType.PartitionTables[arch] = overridePt
@@ -500,10 +457,10 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 
 	pt, ok := imgType.PartitionTables[archName]
 	if !ok {
-		return nil, fmt.Errorf("%w (%q): %q", ErrNoPartitionTableForArch, it.Name(), archName)
+		return nil
 	}
 
-	return pt, nil
+	return pt
 }
 
 func load(distroNameVer string) (*imageTypesYAML, error) {
@@ -565,15 +522,7 @@ func load(distroNameVer string) (*imageTypesYAML, error) {
 }
 
 // ImageConfig returns the image type specific ImageConfig
-func ImageConfig(distroNameVer, archName, typeName string, replacements map[string]string) (*distro.ImageConfig, error) {
-	toplevel, err := load(distroNameVer)
-	if err != nil {
-		return nil, err
-	}
-	imgType, ok := toplevel.ImageTypes[typeName]
-	if !ok {
-		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
-	}
+func (imgType *imageType) GetImageConfig(distroNameVer, archName string) *distro.ImageConfig {
 	imgConfig := imgType.ImageConfig.ImageConfig
 	cond := imgType.ImageConfig.Condition
 	if cond != nil {
@@ -587,16 +536,13 @@ func ImageConfig(distroNameVer, archName, typeName string, replacements map[stri
 		}
 		for _, ltVer := range versionLessThanSortedKeys(cond.VersionLessThan) {
 			ltOverrides := cond.VersionLessThan[ltVer]
-			if r, ok := replacements[ltVer]; ok {
-				ltVer = r
-			}
 			if common.VersionLessThan(distroVersion, ltVer) {
 				imgConfig = ltOverrides.InheritFrom(imgConfig)
 			}
 		}
 	}
 
-	return imgConfig, nil
+	return imgConfig
 }
 
 // nNonEmpty returns the number of non-empty maps in the given

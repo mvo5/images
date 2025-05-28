@@ -55,6 +55,7 @@ func (a *Architecture) AddImageTypes(platform platform.Platform, imageTypes ...*
 	}
 	for idx := range imageTypes {
 		it := imageTypes[idx]
+		it.ImageTypeYAML = a.distro.ImageTypes[it.Name()]
 		it.arch = a
 		it.platform = platform
 		a.imageTypes[it.name] = it

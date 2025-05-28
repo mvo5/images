@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -29,6 +30,10 @@ type Distribution struct {
 
 	// distro specific function to check options per image type
 	CheckOptions CheckOptionsFunc
+
+	// details from the distro.yaml, we load it here once to
+	// speed up things
+	ImageTypes map[string]defs.ImageTypeYAML
 }
 
 func (d *Distribution) Name() string {
@@ -187,6 +192,12 @@ func NewDistribution(name string, major, minor int) (*Distribution, error) {
 	default:
 		return nil, fmt.Errorf("unknown distro name: %s", name)
 	}
+
+	its, err := defs.ImageTypes(rd.Name())
+	if err != nil {
+		return nil, err
+	}
+	rd.ImageTypes = its
 
 	return rd, nil
 }
