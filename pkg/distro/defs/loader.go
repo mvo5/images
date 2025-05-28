@@ -191,6 +191,9 @@ type imageTypesYAML struct {
 	ImageConfig distroImageConfig    `yaml:"image_config,omitempty"`
 	ImageTypes  map[string]imageType `yaml:"image_types"`
 	Common      map[string]any       `yaml:".common,omitempty"`
+
+	// serialize all access, we mutate quite a bit here
+	mu sync.Mutex
 }
 
 type distroImageConfig struct {
@@ -349,6 +352,9 @@ func DistroImageConfig(distroNameVer string) (*distro.ImageConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
+
 	imgConfig := toplevel.ImageConfig.Default
 
 	cond := toplevel.ImageConfig.Condition
@@ -382,6 +388,8 @@ func PackageSets(it distro.ImageType, replacements map[string]string) (map[strin
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
 
 	imgType, ok := toplevel.ImageTypes[typeName]
 	if !ok {
@@ -456,6 +464,8 @@ func PartitionTable(it distro.ImageType, replacements map[string]string) (*disk.
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
 
 	imgType, ok := toplevel.ImageTypes[it.Name()]
 	if !ok {
@@ -629,6 +639,9 @@ func ImageConfig(distroNameVer, archName, typeName string, replacements map[stri
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
+
 	imgType, ok := toplevel.ImageTypes[typeName]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
@@ -678,6 +691,9 @@ func InstallerConfig(distroNameVer, archName, typeName string, replacements map[
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
+
 	imgType, ok := toplevel.ImageTypes[typeName]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrImageTypeNotFound, typeName)
@@ -716,6 +732,8 @@ func ImageTypes(distroNameVer string) (map[string]ImageTypeYAML, error) {
 	if err != nil {
 		return nil, err
 	}
+	toplevel.mu.Lock()
+	defer toplevel.mu.Unlock()
 
 	// We have a bunch of names like "server-ami" that are writen
 	// in the YAML as "server_ami" so we need to normalize
