@@ -97,6 +97,68 @@
           include:
             - "system-reinstall-bootc"
 
+  sap_image_config: &sap_image_config
+    selinux_config:
+      state: "permissive"
+    tuned:
+      profiles: ["sap-hana"]
+    # RHBZ#1959979
+    tmpfilesd:
+      - filename: "sap.conf"
+        config:
+          - type: "x"
+            path: "/tmp/.sap*"
+          - type: "x"
+            path: "/tmp/.hdb*lock"
+          - type: "x"
+            path: "/tmp/.trex*lock"
+    # RHBZ#1959963
+    pam_limits_conf:
+      - filename: "99-sap.conf"
+        config:
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+    # RHBZ#1959962
+    sysctld:
+      - filename: "sap.conf"
+        config:
+          - key: "kernel.pid_max"
+            value: "4194304"
+          - key: "vm.max_map_count"
+            value: "2147483647"
+    dnf_config:
+      set_release_ver_var: true
+
   sap_pkgset: &sap_pkgset
     include:
       # RHBZ#2076763
@@ -518,6 +580,260 @@
             aarch64:
               <<: *default_partition_table_aarch64
 
+  azure_image_config: &azure_image_config
+    timezone: "Etc/UTC"
+    locale: "en_US.UTF-8"
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    update_default_kernel: true
+    default_kernel: "kernel-core"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    enabled_services:
+      - "firewalld"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "sshd"
+      - "waagent"
+    sshd_config:
+      config:
+        ClientAliveInterval: 180
+    modprobe:
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+      - filename: "blacklist-intel-cstate.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_cstate"
+      - filename: "blacklist-floppy.conf"
+        commands:
+          - command: blacklist
+            modulename: "floppy"
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+          - command: blacklist
+            modulename: "lbm-nouveau"
+      - filename: "blacklist-skylake-edac.conf"
+        commands:
+          - command: blacklist
+            modulename: "skx_edac"
+    pwquality:
+      config:
+        minlen: 6
+        minclass: 3
+        dcredit: 0
+        ucredit: 0
+        lcredit: 0
+        ocredit: 0
+    waagent_config:
+      config:
+        "ResourceDisk.EnableSwap": false
+        "ResourceDisk.Format": false
+    grub2_config:
+      disable_recovery: true
+      disable_submenu: true
+      distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+      terminal: ["serial", "console"]
+      serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+      timeout: 10
+      timeout_style: "countdown"
+    udev_rules:
+      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+      rules:
+        - comment:
+            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+            - "This interface is transparently bonded to the synthetic interface,"
+            - "so NetworkManager should just ignore any SRIOV interfaces."
+        - rule:
+            - K: "SUBSYSTEM"
+              O: "=="
+              V: "net"
+            - K: "DRIVERS"
+              O: "=="
+              V: "hv_pci"
+            - K: "ACTION"
+              O: "=="
+              V: "add"
+            - K: "ENV"
+              A: "NM_UNMANAGED"
+              O: "="
+              V: "1"
+    systemd_dropin:
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-azure.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_AZURE"
+                value: "yes"
+    default_target: "multi-user.target"
+    conditions:
+      "chrony is added in rhel-9.6+":
+        when: distro_name == "rhel" and version_greater_or_equal("9.6")
+        merge:
+          time_synchronization:
+            refclocks:
+              - driver:
+                  name: "PHC"
+                  path: "/dev/ptp_hyperv"
+                poll: 3
+                dpoll: -2
+                offset: 0.0
+      "rhel needs the rhel release rpm gpg key":
+        when: distro_name == "rhel"
+        merge:
+            gpgkey_files:
+              - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      "x86_64 specific kernel commandline for rhel-9.6+":
+        when: arch == "x86_64" and version_greater_or_equal("9.6")
+        merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=tty1"
+            -  "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+            - "nvme_core.io_timeout=240"
+      "aarch64 specific kernel options for rhel 9.6+":
+        when: arch == "aarch64" and version_greater_or_equal("9.6")
+        merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+            - "nvme_core.io_timeout=240"
+      "x86_64 specific kernel options rhel-9.5 or below":
+        when: arch == "x86_64" and version_less_than("9.6")
+        merge:
+          kernel_options:
+            - ro
+            - loglevel=3
+            - console=tty1
+            - console=ttyS0
+            - earlyprintk=ttyS0
+            - rootdelay=300
+      "aarch64 specific kernel options rhel-9.5 or below":
+        when: arch == "aarch64" and version_less_than("9.6")
+        merge:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+      "rhel-9.6+ adds the dataloss warning":
+        when: distro_name == "rhel" and version_greater_or_equal("9.6")
+        merge:
+          # from CreateAzureDatalossWarningScriptAndUnit
+          files:
+            - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
+              mode: 0755
+              data: |
+                #!/bin/sh
+                # /usr/local/sbin/temp-disk-dataloss-warning
+                # Write dataloss warning file on mounted Azure resource disk
+
+                AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
+
+                MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
+                if [ -z "$MOUNTPATH" ]; then
+                    echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
+                    exit 0
+                fi
+
+                if [ "$MOUNTPATH" = "none" ]; then
+                    echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
+                    exit 1
+                fi
+
+                if ! mountpoint -q "$MOUNTPATH"; then
+                    echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
+                    exit 1
+                fi
+
+                echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+
+                cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+                WARNING: THIS IS A TEMPORARY DISK.
+
+                Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
+
+                Please do not use this disk for storing any personal or application data.
+
+                EOF
+          systemd_unit:
+            - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
+              "unit-type": "system"
+              "unit-path": "etc"
+              config:
+                "Unit":
+                  Description: "Azure temporary resource disk dataloss warning file creation"
+                  After: ["multi-user.target", "cloud-final.service"]
+                "Service":
+                  Type: "oneshot"
+                  ExecStart: [*dataloss_script]
+                  StandardOutput: "journal+console"
+                "Install":
+                  WantedBy: ["default.target"]
+          # XXX: de-duplicate with the above
+          enabled_services:
+            - "firewalld"
+            - "nm-cloud-setup.service"
+            - "nm-cloud-setup.timer"
+            - "sshd"
+            - "waagent"
+            - *dataloss_systemd_unit_filename
+          modprobe:
+            - filename: "blacklist-amdgpu.conf"
+              commands:
+                - command: blacklist
+                  modulename: "amdgpu"
+            - filename: "blacklist-intel-cstate.conf"
+              commands:
+                - command: blacklist
+                  modulename: "intel_cstate"
+            - filename: "blacklist-floppy.conf"
+              commands:
+                - command: blacklist
+                  modulename: "floppy"
+            - filename: "blacklist-nouveau.conf"
+              commands:
+                - command: blacklist
+                  modulename: "nouveau"
+                - command: blacklist
+                  modulename: "lbm-nouveau"
+            - filename: "blacklist-skylake-edac.conf"
+              commands:
+                - command: blacklist
+                  modulename: "skx_edac"
+            - filename: "blacklist-intel_uncore.conf"
+              commands:
+                - command: blacklist
+                  modulename: "intel_uncore"
+            - filename: "blacklist-acpi_cpufreq.conf"
+              commands:
+                - command: blacklist
+                  modulename: "acpi_cpufreq"
+          network_manager:
+            path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+            settings:
+              keyfile:
+                "unmanaged-devices":
+                  - "driver:mlx4_core"
+                  - "driver:mlx5_core"
+          waagent_config:
+            config:
+              "ResourceDisk.Format": false
+              "ResourceDisk.EnableSwap": false
+              "Provisioning.UseCloudInit": true
+              "Provisioning.Enabled": false
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -590,6 +906,24 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    image_config:
+      default_target: "multi-user.target"
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "no_timer_check"
+        - "net.ifnames=0"
+      conditions:
+        "tweak the rhsm config on rhel":
+          when: distro_name == "rhel"
+          merge:
+            rhsm_config:
+              "no-subscription":
+                dnf_plugin:
+                  product_id:
+                    enabled: false
+                  subscription_manager:
+                    enabled: false
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -660,9 +994,28 @@ image_types:
                   - "insights-client"
                   - "subscription-manager-cockpit"
 
-  oci: *qcow2
+  oci:
+    <<: *qcow2
 
   vhd: &vhd
+    # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+    image_config: &image_config_vhd
+      <<: *azure_image_config
+      cloud_init:
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -766,6 +1119,9 @@ image_types:
             - "rng-tools"
 
   vmdk: &vmdk
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -785,6 +1141,114 @@ image_types:
   ova: *vmdk
 
   ec2: &ec2
+    image_config: &ec2_image_config
+      locale: "en_US.UTF-8"
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.123"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        # empty string will remove any occurrences of the option
+        # from the configuration
+        leapsectz: ""
+      keyboard:
+        keymap: "us"
+        "x11-keymap":
+          layouts: ["us"]
+      enabled_services:
+        - "sshd"
+        - "NetworkManager"
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "cloud-init"
+        - "cloud-init-local"
+        - "cloud-config"
+        - "cloud-final"
+        - "reboot.target"
+        - "tuned"
+      default_target: "multi-user.target"
+      update_default_kernel: true
+      default_kernel: "kernel"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+        create_default_network_scripts: true
+      systemd_logind:
+        - filename: "00-getty-fixes.conf"
+          config:
+            login:
+              nautovts: 0
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "ec2-user"
+      modprobe:
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+      # COMPOSER-1807
+      dracut_conf:
+        - &sgdisk_dracut_conf
+          filename: "sgdisk.conf"
+          config:
+            install: ["sgdisk"]
+      systemd_dropin:
+        # RHBZ#1822863
+        - unit: "nm-cloud-setup.service"
+          dropin: "10-rh-enable-for-ec2.conf"
+          config:
+            service:
+              environment:
+                - key: "NM_CLOUD_SETUP_EC2"
+                  value: "yes"
+      auth_select:
+        profile: "sssd"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+      conditions: &ec2_image_config_cond
+        "we need dracut conf with nvme/xen on x86":
+          when: arch == "x86_64"
+          merge:
+            dracut_conf:
+              - *sgdisk_dracut_conf
+              - filename: "ec2.conf"
+                config:
+                  add_drivers:
+                    - "nvme"
+                    - "xen-blkfront"
+        "x86_64 specific kopts":
+          when: arch == "x86_64"
+          merge:
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # common
+              - "console=tty0"
+              - "console=ttyS0,115200n8"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+        "aarch64 specific kopts":
+          when: arch == "aarch64"
+          merge:
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # XXX: duplicated with above x86_64 kernel defaults
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # aarch64 specific
+              - "iommu.strict=0"
     partition_table:
       <<: *default_partition_tables
     partition_tables_override:
@@ -795,7 +1259,8 @@ image_types:
         - exclude:
             - "alsa-lib"
 
-  ami: *ec2
+  ami:
+    <<: *ec2
 
   "ec2-ha":
     <<: *ec2
@@ -811,6 +1276,25 @@ image_types:
 
   "ec2-sap":
     <<: *ec2
+    image_config:
+      <<: [*ec2_image_config, *sap_image_config]
+      conditions:
+        <<: *ec2_image_config_cond
+        # this needs to override the original ami key because
+        # we want everything from the ami config *except* the
+        # kernel comandline
+        "x86_64 specific kopts":
+          when: arch == "x86_64"
+          merge:
+            kernel_options:
+              # XXX: duplicated with ami.image_config.kernel_options :(
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # amiSapKernelOptions()
+              -  "processor.max_cstate=1"
+              - "intel_idle.max_cstate=1"
     package_sets:
       os:
         - *ec2_base_pkgset
@@ -822,6 +1306,19 @@ image_types:
             - "firewalld"
 
   wsl: &wsl
+    image_config:
+      cloud_init:
+        - filename: "99_wsl.cfg"
+          config:
+            datasource_list:
+              - "WSL"
+              - "None"
+            network:
+              config: "disabled"
+      locale: "en_US.UTF-8"
+      no_selinux: true
+      wsl_config:
+        boot_systemd: true
     package_sets:
       os:
         - include:
@@ -880,6 +1377,8 @@ image_types:
             - "rpm-plugin-systemd-inhibit"
 
   "image-installer":
+    image_config:
+      locale: "C.UTF-8"
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -977,6 +1476,9 @@ image_types:
             - "iwl3160-firmware"
 
   openstack:
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -993,7 +1495,36 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  "edge-commit":
+  "edge-commit": &edge_commit
+    image_config: &edge_commit_image_config
+      # dropin to disable grub-boot-success.timer if greenboot present
+      systemd_dropin:
+        - unit: "grub-boot-success.timer"
+          dropin: "10-disable-if-greenboot.conf"
+          unit-type: "global"
+          config:
+            # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
+            Unit:
+              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+      enabled_services: &enabled_services_edge
+        # XXX: shared with 9.2
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        - "fdo-client-linuxapp.service"
+        # only on rhel-9.2+ and centos
+        - "ignition-firstboot-complete.service"
+        - "coreos-ignition-write-issues.service"
+      conditions: &conditions_edge_commit_image_config
+        "rhel-9.1 and below do not have ignition":
+          when: version_less_than("9.2") and distro_name != "centos"
+          merge:
+            enabled_services:
+              # XXX: share with the above
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              - "fdo-client-linuxapp.service"
     package_sets:
       os:
         - &edge_commit_pkgset
@@ -1120,9 +1651,29 @@ image_types:
                   - "dnsmasq"
 
   "edge-container":
-    package_sets:
-      os:
-        - *edge_commit_pkgset
+    <<: *edge_commit
+
+  "edge-raw-image":
+    image_config:
+      <<: *edge_commit_image_config
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: &kernel_options_raw_image
+        - "modprobe.blacklist=vc4"
+        - "rw"
+        - "coreos.no_persist_ip"
+      ostree_conf_sysroot_readonly: true
+      ignition_platform: "metal"
+      conditions:
+        <<: *conditions_edge_commit_image_config
+        "rhel-9.1 and below is not using ignition":
+          when: version_less_than("9.2") and distro_name != "centos"
+          merge:
+            ostree_conf_sysroot_readonly: false
+            ignition_platform: ""
+            kernel_options: ["modprobe.blacklist=vc4"]
 
   # XXX: not a real pkgset but the "containerPkgsKey"
   "edge-container-pipeline-pkgset":
@@ -1132,12 +1683,22 @@ image_types:
             - "nginx"
 
   "edge-installer":
+    image_config:
+      enabled_services: *enabled_services_edge
+      locale: "en_US.UTF-8"
     package_sets:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
 
   "edge-simplified-installer":
+    image_config:
+      enabled_services: *enabled_services_edge
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: ["modprobe.blacklist=vc4"]
     package_sets:
       installer:
         - *installer_pkgset
