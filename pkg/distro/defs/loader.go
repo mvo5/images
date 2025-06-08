@@ -11,15 +11,12 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"sort"
 	"sync"
 	"text/template"
 
 	"github.com/gobwas/glob"
-	"github.com/hashicorp/go-version"
 	"go.starlark.net/starlark"
-	"golang.org/x/exp/maps"
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
