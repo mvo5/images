@@ -12,7 +12,7 @@ import (
 	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeCommitImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-commit",
 		"commit.tar",
@@ -26,23 +26,12 @@ func mkEdgeCommitImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-commit"}
 	it.RPMOSTree = true
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices,
-		SystemdDropin:   systemdUnits,
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.EnabledServices = append(
-			it.DefaultImageConfig.EnabledServices,
-			"ignition-firstboot-complete.service",
-			"coreos-ignition-write-issues.service",
-		)
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-commit")
 
 	return it
 }
 
-func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeOCIImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-container",
 		"container.tar",
@@ -56,23 +45,12 @@ func mkEdgeOCIImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-container"}
 	it.RPMOSTree = true
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		EnabledServices: edgeServices,
-		SystemdDropin:   systemdUnits,
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.EnabledServices = append(
-			it.DefaultImageConfig.EnabledServices,
-			"ignition-firstboot-complete.service",
-			"coreos-ignition-write-issues.service",
-		)
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-container")
 
 	return it
 }
 
-func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeRawImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-raw-image",
 		"image.raw.xz",
@@ -86,22 +64,7 @@ func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
 
 	it.NameAliases = []string{"rhel-edge-raw-image"}
 	it.Compression = "xz"
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Keyboard: &osbuild.KeymapStageOptions{
-			Keymap: "us",
-		},
-		Locale:        common.ToPtr("C.UTF-8"),
-		LockRootUser:  common.ToPtr(true),
-		KernelOptions: []string{"modprobe.blacklist=vc4"},
-	}
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.OSTreeConfSysrootReadOnly = common.ToPtr(true)
-		it.DefaultImageConfig.IgnitionPlatform = common.ToPtr("metal")
-	}
-
-	if common.VersionGreaterThanOrEqual(d.OsVersion(), "9.2") || !d.IsRHEL() {
-		it.DefaultImageConfig.KernelOptions = append(it.DefaultImageConfig.KernelOptions, "rw", "coreos.no_persist_ip")
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-raw-image")
 
 	it.DefaultSize = 10 * datasizes.GibiByte
 	it.RPMOSTree = true
@@ -112,7 +75,7 @@ func mkEdgeRawImgType(d *rhel.Distribution) *rhel.ImageType {
 	return it
 }
 
-func mkEdgeInstallerImgType() *rhel.ImageType {
+func mkEdgeInstallerImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-installer",
 		"installer.iso",
@@ -125,10 +88,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-installer"}
-	it.DefaultImageConfig = &distro.ImageConfig{
-		Locale:          common.ToPtr("en_US.UTF-8"),
-		EnabledServices: edgeServices,
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-installer")
 	it.DefaultInstallerConfig = &distro.InstallerConfig{
 		AdditionalDracutModules: []string{
 			"nvdimm", // non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
@@ -147,7 +107,7 @@ func mkEdgeInstallerImgType() *rhel.ImageType {
 	return it
 }
 
-func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
+func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"edge-simplified-installer",
 		"simplified-installer.iso",
@@ -167,6 +127,7 @@ func mkEdgeSimplifiedInstallerImgType(d *rhel.Distribution) *rhel.ImageType {
 	)
 
 	it.NameAliases = []string{"rhel-edge-simplified-installer"}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "edge-simplified-installer")
 	it.DefaultImageConfig = &distro.ImageConfig{
 		EnabledServices: edgeServices,
 		Keyboard: &osbuild.KeymapStageOptions{

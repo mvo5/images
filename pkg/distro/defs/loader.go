@@ -618,10 +618,6 @@ func ImageConfig(distroNameVer, archName, typeName string) (*distro.ImageConfig,
 		if err != nil {
 			return nil, err
 		}
-
-		if distroNameCnf, ok := cond.DistroName[id.Name]; ok {
-			imgConfig = distroNameCnf.InheritFrom(imgConfig)
-		}
 		if archCnf, ok := cond.Architecture[archName]; ok {
 			imgConfig = archCnf.InheritFrom(imgConfig)
 		}
@@ -631,6 +627,14 @@ func ImageConfig(distroNameVer, archName, typeName string) (*distro.ImageConfig,
 				imgConfig = ltOverrides.InheritFrom(imgConfig)
 			}
 		}
+		// XXX: order is important here, we need to load the distro defaults after
+		// the version defaults so that centos wins, because centos-9 is always
+		// version "9.0" so any version compare will pick the lowerst version for centos
+		// (which is wrong)
+		if distroNameCnf, ok := cond.DistroName[id.Name]; ok {
+			imgConfig = distroNameCnf.InheritFrom(imgConfig)
+		}
+
 	}
 
 	return imgConfig, nil

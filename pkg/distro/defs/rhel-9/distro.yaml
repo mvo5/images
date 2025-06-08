@@ -88,6 +88,68 @@
           include:
             - "system-reinstall-bootc"
 
+  sap_image_config: &sap_image_config
+    selinux_config:
+      state: "permissive"
+    tuned:
+      profiles: ["sap-hana"]
+    # RHBZ#1959979
+    tmpfilesd:
+      - filename: "sap.conf"
+        config:
+          - type: "x"
+            path: "/tmp/.sap*"
+          - type: "x"
+            path: "/tmp/.hdb*lock"
+          - type: "x"
+            path: "/tmp/.trex*lock"
+    # RHBZ#1959963
+    pam_limits_conf:
+      - filename: "99-sap.conf"
+        config:
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "hard"
+            item: "nofile"
+            value: 1048576
+          - domain: "@dba"
+            type: "soft"
+            item: "nofile"
+            value: 1048576
+          - domain: "@sapsys"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@sapsys"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "hard"
+            item: "nproc"
+            value: "unlimited"
+          - domain: "@dba"
+            type: "soft"
+            item: "nproc"
+            value: "unlimited"
+    # RHBZ#1959962
+    sysctld:
+      - filename: "sap.conf"
+        config:
+          - key: "kernel.pid_max"
+            value: "4194304"
+          - key: "vm.max_map_count"
+            value: "2147483647"
+    dnf_config:
+      set_release_ver_var: true
+
   sap_pkgset: &sap_pkgset
     include:
       # RHBZ#2076763
@@ -582,6 +644,23 @@ image_types:
                   - "subscription-manager-cockpit"
 
   qcow2: &qcow2
+    image_config:
+      default_target: "multi-user.target"
+      kernel_options:
+        - "console=tty0"
+        - "console=ttyS0,115200n8"
+        - "no_timer_check"
+        - "net.ifnames=0"
+      condition:
+        distro_name:
+          rhel:
+            rhsm_config:
+              "no-subscription":
+                dnf_plugin:
+                  product_id:
+                    enabled: false
+                  subscription_manager:
+                    enabled: false
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -651,7 +730,8 @@ image_types:
                   - "insights-client"
                   - "subscription-manager-cockpit"
 
-  oci: *qcow2
+  oci:
+    <<: *qcow2
 
   vhd: &vhd
     partition_table:
@@ -759,6 +839,9 @@ image_types:
             - "rng-tools"
 
   vmdk: &vmdk
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -778,6 +861,108 @@ image_types:
   ova: *vmdk
 
   ec2: &ec2
+    image_config: &ec2_image_config
+      locale: "en_US.UTF-8"
+      timezone: "UTC"
+      time_synchronization:
+        servers:
+          - hostname: "169.254.169.123"
+            prefer: true
+            iburst: true
+            minpoll: 4
+            maxpoll: 4
+        # empty string will remove any occurrences of the option
+        # from the configuration
+        leapsectz: ""
+      keyboard:
+        keymap: "us"
+        "x11-keymap":
+          layouts: ["us"]
+      enabled_services:
+        - "sshd"
+        - "NetworkManager"
+        - "nm-cloud-setup.service"
+        - "nm-cloud-setup.timer"
+        - "cloud-init"
+        - "cloud-init-local"
+        - "cloud-config"
+        - "cloud-final"
+        - "reboot.target"
+        - "tuned"
+      default_target: "multi-user.target"
+      update_default_kernel: true
+      default_kernel: "kernel"
+      sysconfig:
+        networking: true
+        no_zero_conf: true
+        create_default_network_scripts: true
+      systemd_logind:
+        - filename: "00-getty-fixes.conf"
+          config:
+            login:
+              nautovts: 0
+      cloud_init:
+        - filename: "00-rhel-default-user.cfg"
+          config:
+            system_info:
+              default_user:
+                name: "ec2-user"
+      modprobe:
+        - filename: "blacklist-nouveau.conf"
+          commands:
+            - command: blacklist
+              modulename: "nouveau"
+        - filename: "blacklist-amdgpu.conf"
+          commands:
+            - command: blacklist
+              modulename: "amdgpu"
+      # COMPOSER-1807
+      dracut_conf:
+        - &sgdisk_dracut_conf
+          filename: "sgdisk.conf"
+          config:
+            install: ["sgdisk"]
+      systemd_dropin:
+        # RHBZ#1822863
+        - unit: "nm-cloud-setup.service"
+          dropin: "10-rh-enable-for-ec2.conf"
+          config:
+            service:
+              environment:
+                - key: "NM_CLOUD_SETUP_EC2"
+                  value: "yes"
+      auth_select:
+        profile: "sssd"
+      sshd_config:
+        config:
+          PasswordAuthentication: false
+      condition:
+        architecture:
+          x86_64: &ec2_image_config_cond_x86_64
+            dracut_conf:
+              - *sgdisk_dracut_conf
+              - filename: "ec2.conf"
+                config:
+                  add_drivers:
+                    - "nvme"
+                    - "xen-blkfront"
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # common
+              - "console=tty0"
+              - "console=ttyS0,115200n8"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+          aarch64:
+            # TODO: move these to the EC2 environment
+            kernel_options:
+              # XXX: duplicated with above x86_64 kernel defaults
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              # aarch64 specific
+              - "iommu.strict=0"
     partition_table:
       <<: *default_partition_tables
     partition_tables_override:
@@ -788,7 +973,8 @@ image_types:
         - exclude:
             - "alsa-lib"
 
-  ami: *ec2
+  ami:
+    <<: *ec2
 
   "ec2-ha":
     <<: *ec2
@@ -804,6 +990,21 @@ image_types:
 
   "ec2-sap":
     <<: *ec2
+    image_config:
+      <<: [*ec2_image_config, *sap_image_config]
+      condition:
+        architecture:
+          x86_64:
+            # XXX: consider condition merging from
+            # https://github.com/osbuild/images/compare/main...mvo5:conditions-easier-merging?expand=1
+            <<: *ec2_image_config_cond_x86_64
+            kernel_options:
+              - "console=ttyS0,115200n8"
+              - "console=tty0"
+              - "net.ifnames=0"
+              - "nvme_core.io_timeout=4294967295"
+              -  "processor.max_cstate=1"
+              - "intel_idle.max_cstate=1"
     package_sets:
       os:
         - *ec2_base_pkgset
@@ -815,6 +1016,19 @@ image_types:
             - "firewalld"
 
   wsl: &wsl
+    image_config:
+      cloud_init:
+        - filename: "99_wsl.cfg"
+          config:
+            datasource_list:
+              - "WSL"
+              - "None"
+            network:
+              config: "disabled"
+      locale: "en_US.UTF-8"
+      no_selinux: true
+      wsl_config:
+        boot_systemd: true
     package_sets:
       os:
         - include:
@@ -873,6 +1087,8 @@ image_types:
             - "rpm-plugin-systemd-inhibit"
 
   "image-installer":
+    image_config:
+      locale: "C.UTF-8"
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -973,6 +1189,9 @@ image_types:
             - "iwl3160-firmware"
 
   openstack:
+    image_config:
+      locale: "en_US.UTF-8"
+      kernel_options: ["ro", "net.ifnames=0"]
     partition_table:
       <<: *default_partition_tables
     package_sets:
@@ -989,7 +1208,40 @@ image_types:
             - "dracut-config-rescue"
             - "rng-tools"
 
-  "edge-commit":
+  "edge-commit": &edge_commit
+    image_config: &edge_commit_image_config
+      # dropin to disable grub-boot-success.timer if greenboot present
+      systemd_dropin:
+        - unit: "grub-boot-success.timer"
+          dropin: "10-disable-if-greenboot.conf"
+          unit-type: "global"
+          config:
+            # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
+            Unit:
+              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+      enabled_services: &enabled_services_edge
+        # XXX: shared with 9.2
+        - "NetworkManager.service"
+        - "firewalld.service"
+        - "sshd.service"
+        - "fdo-client-linuxapp.service"
+        # only on rhel-9.2+ and centos
+        - "ignition-firstboot-complete.service"
+        - "coreos-ignition-write-issues.service"
+      condition: &edge_commit_image_config_cond
+        distro_name:
+          # XXX: we need to add centos here explicitly until we can handle centos-9 to be bigger than
+          # any minor version of rhel-9.x
+          centos:
+            enabled_services: *enabled_services_edge
+        version_less_than: &edge_commit_image_config_cond_lt
+          "9.2": &edge_commit_image_config_cond_lt_9_2
+            enabled_services:
+              # XXX: share with the above
+              - "NetworkManager.service"
+              - "firewalld.service"
+              - "sshd.service"
+              - "fdo-client-linuxapp.service"
     package_sets:
       os:
         - &edge_commit_pkgset
@@ -1118,9 +1370,37 @@ image_types:
                   - "dnsmasq"
 
   "edge-container":
-    package_sets:
-      os:
-        - *edge_commit_pkgset
+    <<: *edge_commit
+
+  "edge-raw-image":
+    image_config:
+      <<: *edge_commit_image_config
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: &kernel_options_raw_image
+        - "modprobe.blacklist=vc4"
+        - "rw"
+        - "coreos.no_persist_ip"
+      ostree_conf_sysroot_readonly: true
+      ignition_platform: "metal"
+      condition:
+        <<: *edge_commit_image_config_cond
+        distro_name:
+          centos:
+            # XXX: we need to undo the below << 9.2 condition
+            # because "9 <= 9.2", we really should fix this
+            # by ensuring that centos-9 is higher than anything 9.x
+            ostree_conf_sysroot_readonly: true
+            ignition_platform: "metal"
+            kernel_options: *kernel_options_raw_image
+        version_less_than:
+          "9.2":
+            <<: *edge_commit_image_config_cond_lt_9_2
+            ostree_conf_sysroot_readonly: false
+            ignition_platform: ""
+            kernel_options: ["modprobe.blacklist=vc4"]
 
   # XXX: not a real pkgset but the "containerPkgsKey"
   "edge-container-pipeline-pkgset":
@@ -1130,12 +1410,22 @@ image_types:
             - "nginx"
 
   "edge-installer":
+    image_config:
+      enabled_services: *enabled_services_edge
+      locale: "en_US.UTF-8"
     package_sets:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
 
   "edge-simplified-installer":
+    image_config:
+      enabled_services: *enabled_services_edge
+      keyboard:
+        keymap: "us"
+      locale: "C.UTF-8"
+      lock_root_user: true
+      kernel_options: ["modprobe.blacklist=vc4"]
     package_sets:
       installer:
         - *installer_pkgset

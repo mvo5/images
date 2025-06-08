@@ -1,13 +1,11 @@
 package rhel9
 
 import (
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/distro/rhel"
-	"github.com/osbuild/images/pkg/osbuild"
 )
 
-func mkWSLImgType() *rhel.ImageType {
+func mkWSLImgType(d *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 	it := rhel.NewImageType(
 		"wsl",
 		"disk.tar.gz",
@@ -18,28 +16,7 @@ func mkWSLImgType() *rhel.ImageType {
 		[]string{"os", "archive"},
 		[]string{"archive"},
 	)
-
-	it.DefaultImageConfig = &distro.ImageConfig{
-		CloudInit: []*osbuild.CloudInitStageOptions{
-			{
-				Filename: "99_wsl.cfg",
-				Config: osbuild.CloudInitConfigFile{
-					DatasourceList: []string{
-						"WSL",
-						"None",
-					},
-					Network: &osbuild.CloudInitConfigNetwork{
-						Config: "disabled",
-					},
-				},
-			},
-		},
-		Locale:    common.ToPtr("en_US.UTF-8"),
-		NoSElinux: common.ToPtr(true),
-		WSLConfig: &distro.WSLConfig{
-			BootSystemd: true,
-		},
-	}
+	it.DefaultImageConfig = imageConfig(d, a.String(), "wsl")
 
 	return it
 }
