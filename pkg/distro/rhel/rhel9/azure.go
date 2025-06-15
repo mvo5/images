@@ -25,8 +25,7 @@ func mkAzureImgType(rd *rhel.Distribution, a arch.Arch) *rhel.ImageType {
 
 	it.Bootable = true
 	it.DefaultSize = 4 * datasizes.GibiByte
-	it.DefaultImageConfig = defaultAzureImageConfig(rd)
-	it.DefaultImageConfig.KernelOptions = defaultAzureKernelOptions(rd, a)
+	it.DefaultImageConfig = imageConfig(rd, a.String(), "vhd")
 	it.BasePartitionTables = defaultBasePartitionTables
 
 	return it

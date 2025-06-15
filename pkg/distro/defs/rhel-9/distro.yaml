@@ -574,6 +574,222 @@
             s390x:
               <<: *default_partition_table_s390x
 
+  azure_image_config: &azure_image_config
+    # from CreateAzureDatalossWarningScriptAndUnit
+    files:
+      - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
+        mode: 0755
+        data: |
+          #!/bin/sh
+          # /usr/local/sbin/temp-disk-dataloss-warning
+          # Write dataloss warning file on mounted Azure resource disk
+
+          AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
+
+          MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
+          if [ -z "$MOUNTPATH" ]; then
+              echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
+              exit 0
+          fi
+
+          if [ "$MOUNTPATH" = "none" ]; then
+              echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
+              exit 1
+          fi
+
+          if ! mountpoint -q "$MOUNTPATH"; then
+              echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
+              exit 1
+          fi
+
+          echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+
+          cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
+          WARNING: THIS IS A TEMPORARY DISK.
+
+          Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
+
+          Please do not use this disk for storing any personal or application data.
+
+          EOF
+    systemd_unit:
+      - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
+        "unit-type": "system"
+        "unit-path": "etc"
+        config:
+          "Unit":
+            Description: "Azure temporary resource disk dataloss warning file creation"
+            After: ["multi-user.target", "cloud-final.service"]
+          "Service":
+            Type: "oneshot"
+            ExecStart: [*dataloss_script]
+            StandardOutput: "journal+console"
+          "Install":
+            WantedBy: ["default.target"]
+    timezone: "Etc/UTC"
+    locale: "en_US.UTF-8"
+    keyboard:
+      keymap: "us"
+      "x11-keymap":
+        layouts: ["us"]
+    update_default_kernel: true
+    default_kernel: "kernel-core"
+    sysconfig:
+      networking: true
+      no_zero_conf: true
+    enabled_services:
+      - "firewalld"
+      - "nm-cloud-setup.service"
+      - "nm-cloud-setup.timer"
+      - "sshd"
+      - "waagent"
+      - *dataloss_systemd_unit_filename
+    sshd_config:
+      config:
+        ClientAliveInterval: 180
+    modprobe:
+      - filename: "blacklist-amdgpu.conf"
+        commands:
+          - command: blacklist
+            modulename: "amdgpu"
+      - filename: "blacklist-intel-cstate.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_cstate"
+      - filename: "blacklist-floppy.conf"
+        commands:
+          - command: blacklist
+            modulename: "floppy"
+      - filename: "blacklist-nouveau.conf"
+        commands:
+          - command: blacklist
+            modulename: "nouveau"
+          - command: blacklist
+            modulename: "lbm-nouveau"
+      - filename: "blacklist-skylake-edac.conf"
+        commands:
+          - command: blacklist
+            modulename: "skx_edac"
+      - filename: "blacklist-intel_uncore.conf"
+        commands:
+          - command: blacklist
+            modulename: "intel_uncore"
+      - filename: "blacklist-acpi_cpufreq.conf"
+        commands:
+          - command: blacklist
+            modulename: "acpi_cpufreq"
+    pwquality:
+      config:
+        minlen: 6
+        minclass: 3
+        dcredit: 0
+        ucredit: 0
+        lcredit: 0
+        ocredit: 0
+    waagent_config:
+      config:
+        "ResourceDisk.Format": false
+        "ResourceDisk.EnableSwap": false
+        "Provisioning.UseCloudInit": true
+        "Provisioning.Enabled": false
+    grub2_config:
+      disable_recovery: true
+      disable_submenu: true
+      distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
+      terminal: ["serial", "console"]
+      serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+      timeout: 10
+      timeout_style: "countdown"
+    udev_rules:
+      filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+      rules:
+        - comment:
+            - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
+            - "This interface is transparently bonded to the synthetic interface,"
+            - "so NetworkManager should just ignore any SRIOV interfaces."
+        - rule:
+            - K: "SUBSYSTEM"
+              O: "=="
+              V: "net"
+            - K: "DRIVERS"
+              O: "=="
+              V: "hv_pci"
+            - K: "ACTION"
+              O: "=="
+              V: "add"
+            - K: "ENV"
+              A: "NM_UNMANAGED"
+              O: "="
+              V: "1"
+    systemd_dropin:
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-azure.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_AZURE"
+                value: "yes"
+    default_target: "multi-user.target"
+    network_manager:
+      path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+      settings:
+        keyfile:
+          "unmanaged-devices":
+            - "driver:mlx4_core"
+            - "driver:mlx5_core"
+    conditions:
+      "add rhel gpg keys on rhel images":
+        condition:
+          distro_name: rhel
+        image_config:
+          gpgkey_files:
+            - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+      "x86 kernel options for rhel 9.6+":
+        condition-and:
+          architecture: x86_64
+          version_greater_or_equal: "9.6"
+        image_config:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=tty1"
+            -  "console=ttyS0"
+            - "earlyprintk=ttyS0"
+            - "rootdelay=300"
+            - "nvme_core.io_timeout=240"
+      "aarch64 kernel options for rhel 9.6+":
+        condition-and:
+          architecture: aarch64
+          version_greater_or_equal: "9.6"
+        image_config:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+            - "nvme_core.io_timeout=240"
+      "on x86_64 for <9.6 adjust kopts":
+        condition-and:
+          architecture: x86_64
+          version_less_than: "9.6"
+        image_config:
+          kernel_options:
+            - ro
+            - loglevel=3
+            - console=tty1
+            - console=ttyS0
+            - earlyprintk=ttyS0
+            - rootdelay=300
+      "on aarch64 for < 9.6 adjust kopts":
+        condition-and:
+          architecture: aarch64
+          version_less_than: "9.6"
+        image_config:
+          kernel_options:
+            - "ro"
+            - "loglevel=3"
+            - "console=ttyAMA0"
+            - "nvme_core.io_timeout=240"
+
 image_config:
   default:
     default_kernel: "kernel"
@@ -734,6 +950,32 @@ image_types:
     <<: *qcow2
 
   vhd: &vhd
+    # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
+    image_config: &image_config_vhd
+      <<: *azure_image_config
+      time_synchronization:
+        refclocks:
+          - driver:
+              name: "PHC"
+              path: "/dev/ptp_hyperv"
+            poll: 3
+            dpoll: -2
+            offset: 0.0
+      cloud_init:
+        - filename: "10-azure-kvp.cfg"
+          config:
+            reporting:
+              logging:
+                type: "log"
+              telemetry:
+                type: "hyperv"
+        - filename: "91-azure_datasource.cfg"
+          config:
+            datasource:
+              azure:
+                apply_network_config: false
+            datasource_list:
+              - "Azure"
     partition_table:
       <<: *default_partition_tables
     package_sets:
