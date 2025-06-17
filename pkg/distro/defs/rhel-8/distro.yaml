@@ -212,9 +212,10 @@
     sshd_config:
       config:
         PasswordAuthentication: false
-    condition: &ami_image_config_condition
-      architecture:
-        x86_64: &ami_image_config_cond_x86_64
+    conditions: &conditions_ami_image_config
+      "x86_64 specific dracut conf":
+        when: arch == "x86_64"
+        merge: &ami_image_config_cond_x86_64
           dracut_conf:
             - *sgdisk_dracut_conf
             - filename: "ec2.conf"
@@ -222,6 +223,9 @@
                 add_drivers:
                   - "nvme"
                   - "xen-blkfront"
+      "x86_64 specific kopts":
+        when: arch == "x86_64"
+        merge:
           # TODO: move these to the EC2 environment?
           kernel_options:
             - "console=tty0"
@@ -230,7 +234,9 @@
             - "rd.blacklist=nouveau"
             - "nvme_core.io_timeout=4294967295"
             - "crashkernel=auto"
-        aarch64:
+      "aarch64 specific kopts":
+        when: arch == "aarch64"
+        merge:
           # TODO: move these to the EC2 environment?
           kernel_options:
             # XXX: duplicated with above x86_64 kernel defaults
@@ -246,12 +252,13 @@
 
   ec2_image_config: &ec2_image_config
     <<: *ami_image_config
-    condition: &ec2_image_config_condition
-      <<: *ami_image_config_condition
-      version_less_than: &ec2_image_config_cond_version_lt
+    conditions: &conditions_ec2_image_config
+      <<: *conditions_ami_image_config
+      "no rhsm for rhel-8.7+":
         # The RHSM configuration should not be applied since 8.7, but it is instead done by installing the
         # redhat-cloud-client-configuration package. See COMPOSER-1804 for more information.
-        "8.7":
+        when: version_less_than("8.7")
+        merge:
           rhsm_config:
             "no-subscription":
               # RHBZ#1932802
@@ -342,9 +349,10 @@
             value: "2147483647"
     dnf_config:
       set_release_ver_var: false
-    condition: &sap_image_config_cond
-      version_less_than: &sap_image_config_cond_version_lt
-        "8.10":
+    conditions: &conditions_sap_image_config
+      "rhel-8.9 and below needs to set the release ver in dnf config":
+        when: version_less_than("8.10")
+        merge:
           dnf_config:
             # E4S/EUS
             set_release_ver_var: true
@@ -978,7 +986,7 @@
               - *default_partition_table_part_bios
               - *ec2_partition_table_part_root
           aarch64:
-            <<: *ec2_partition_table_aarch64
+            <<: *ec2_partition_table_aarch64_8_9
 
   azure_rhui_partition_tables: &azure_rhui_partition_tables
     x86_64:
@@ -1187,19 +1195,14 @@ image_types:
 
   "ec2-sap":
     <<: *ec2
-    # XXX: this is ugly, YAML only supports shallow merging of maps so
-    # we we want to merge e.g. the version conditions that sap and ec2
-    # have we need to manually "unroll" it. we need to think of a better
-    # way here.
     image_config:
       <<: [*ec2_image_config, *sap_image_config]
-      condition:
-        <<: [*ec2_image_config_condition, *sap_image_config_cond]
-        version_less_than:
-          <<: [*ec2_image_config_cond_version_lt, *sap_image_config_cond_version_lt]
-        architecture:
-          x86_64:
-            <<: *ami_image_config_cond_x86_64
+      conditions:
+        <<: [*conditions_ec2_image_config, *conditions_sap_image_config]
+        # override ec2 kopts
+        "x86_64 specific kopts":
+          when: arch == "x86_64"
+          merge:
             kernel_options:
               # amiSapKernelOptions()
               # common AMI kernel options
@@ -1238,9 +1241,10 @@ image_types:
         - "no_timer_check"
         - "net.ifnames=0"
         - "crashkernel=auto"
-      condition:
-        distro_name:
-          rhel:
+      conditions:
+        "tweak the rhsm config on rhel":
+          when: distro_name == "rhel"
+          merge:
             rhsm_config:
               "no-subscription":
                 dnf_plugin:
@@ -1377,12 +1381,14 @@ image_types:
         - "console=ttyS0"
         - "earlyprintk=ttyS0"
         - "rootdelay=300"
-      condition:
-        architecture:
-          x86_64: &vhd_image_config_cond_x86_64
+      conditions:
+        "x86_64 specific kernel options":
+          when: arch == "x86_64"
+          merge:
             kernel_options: *vhd_image_config_kernel_options
-        distro_name:
-          rhel:
+        "rhel needs the rhel release rpm gpg key":
+          when: distro_name == "rhel"
+          merge:
             gpgkey_files:
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
     partition_table:
@@ -1415,9 +1421,10 @@ image_types:
               auto_registration: true
               # do not disable the redhat.repo management if the user
               # explicitly request the system to be subscribed
-      condition: &azure_rhui_image_config_cond
-        distro_name: &azure_rhui_image_config_distro_name
-          rhel:
+      conditions: &conditions_azure_rhui_image_config
+        "rhel needs rh and ms gpg keys":
+          when: distro_name == "rhel"
+          merge:
             gpgkey_files:
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"
               - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
@@ -1436,8 +1443,8 @@ image_types:
     <<: *azure_rhui
     image_config:
       <<: [*azure_rhui_image_config, *sap_image_config]
-      condition:
-        <<: [*azure_rhui_image_config_cond, *sap_image_config_cond]
+      conditions:
+        <<: [*conditions_azure_rhui_image_config, *conditions_sap_image_config]
     package_sets:
       os:
         - *azure_common_pkgset
@@ -1521,14 +1528,17 @@ image_types:
         - filename: "40-fips.conf"
           config:
             add_dracutmodules: ["fips"]
-      condition:
-        version_less_than: &edge_commit_image_config_cond_lt
-          "8.6":
+      conditions:
+        "rhel-8.5 has no fdo":
+          when: distro_version == "8.5"
+          merge:
             enabled_services:
               - "NetworkManager.service"
               - "firewalld.service"
               - "sshd.service"
-          "8.5":
+        "rhel-8.4 and below use greenboot":
+          when: version_less_than("8.5")
+          merge:
             enabled_services:
               # same as 8.6
               - "NetworkManager.service"
@@ -1862,12 +1872,13 @@ image_types:
           "InstanceSetup":
             set_boto_config: false
       kernel_options: ["net.ifnames=0", "biosdevname=0", "scsi_mod.use_blk_mq=Y", "crashkernel=auto", "console=ttyS0,38400n8d"]
-      condition:
-        version_equal:
+      conditions:
+        "rhel-8.4 needs special handling":
           # NOTE(akoutsou): these are enabled in the package preset, but for
           # some reason do not get enabled on 8.4.
           # the reason is unknown and deeply mysterious
-          "8.4":
+          when: distro_version == "8.4"
+          merge:
             enabled_services:
               - "sshd"
               - "rngd"
