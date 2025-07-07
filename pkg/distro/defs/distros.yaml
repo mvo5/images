@@ -59,3 +59,14 @@ distros:
       # XXX: remove once fedora containers are part of the upstream
       # fedora registry (and can be validated via tls)
       riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
+
+  # XXX: this should all be done by introspecting the bootc container
+  - name: fedora-bootc-42
+    os_version: 42
+    release_version: 42
+    module_platform_id: platform:f43
+    product: "Fedora"
+    default_fs_type: "ext4"
+    defs_path: fedora-bootc
+    runner:
+      name: org.osbuild.linux
