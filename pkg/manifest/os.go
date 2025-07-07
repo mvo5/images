@@ -86,7 +86,8 @@ type OSCustomizations struct {
 
 	// SELinux policy, when set it enables the labeling of the tree with the
 	// selected profile
-	SElinux string
+	SElinux      string
+	BuildSElinux string
 
 	SELinuxForceRelabel *bool
 
