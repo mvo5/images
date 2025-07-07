@@ -608,6 +608,7 @@ func iotCommitImage(workload workload.Workload,
 	return img, nil
 }
 
+// XXX: this probably can be deprecated
 func bootableContainerImage(workload workload.Workload,
 	t *imageType,
 	bp *blueprint.Blueprint,
@@ -644,6 +645,72 @@ func bootableContainerImage(workload workload.Workload,
 		Filename:           fmt.Sprintf("20-%s.toml", id.Name),
 		RootFilesystemType: "ext4",
 	}
+
+	return img, nil
+}
+
+func bootcDiskImage(workload workload.Workload,
+	t *imageType,
+	bp *blueprint.Blueprint,
+	options distro.ImageOptions,
+	packageSets map[string]rpmmd.PackageSet,
+	containers []container.SourceSpec,
+	rng *rand.Rand) (image.ImageKind, error) {
+
+	if options.BootcImgref == nil {
+		return nil, fmt.Errorf("no base image defined")
+	}
+	containerSource := container.SourceSpec{
+		Source: *options.BootcImgref,
+		Name:   *options.BootcImgref,
+		Local:  true,
+	}
+	buildContainerSource := containerSource
+	if options.BootcBuildImgref != nil {
+		buildContainerSource = container.SourceSpec{
+			Source: *options.BootcBuildImgref,
+			Name:   *options.BootcBuildImgref,
+			Local:  true,
+		}
+	}
+	img := image.NewBootcDiskImage(containerSource, buildContainerSource)
+	img.Platform = t.platform
+
+	// XXX: move into DistroTypeYAML too?
+	img.OSCustomizations.KernelOptionsAppend = []string{
+		"rw",
+		// TODO: Drop this as we expect kargs to come from the container image,
+		// xref https://github.com/CentOS/centos-bootc-layered/blob/main/cloud/usr/lib/bootc/install/05-cloud-kargs.toml
+		"console=tty0",
+		"console=ttyS0",
+	}
+
+	var err error
+	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], containers, bp.Customizations)
+	if err != nil {
+		return nil, err
+	}
+
+	// XXX: read from DistroTypeYAML, populate by higher levels
+	// like bib/ibcli via new ImageTypeYAMLFromBootcRef() or
+	// something along the lines
+	// -> this will also allow the bootc containers to define
+	//    (parts of) their own API
+	/*
+		img.SELinux = c.SourceInfo.SELinuxPolicy
+		img.BuildSELinux = img.SELinux
+		if c.BuildSourceInfo != nil {
+			img.BuildSELinux = c.BuildSourceInfo.SELinuxPolicy
+		}
+	*/
+
+	img.Compression = t.ImageTypeYAML.Compression
+	pt, err := t.getPartitionTable(bp.Customizations, options, rng)
+	if err != nil {
+		return nil, err
+	}
+	img.PartitionTable = pt
+	img.Filename = t.Filename()
 
 	return img, nil
 }

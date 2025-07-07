@@ -50,6 +50,10 @@ type bootcDiskImageTestOpts struct {
 }
 
 func makeFakePlatform(opts *bootcDiskImageTestOpts) platform.Platform {
+	if opts.ImageFormat == platform.FORMAT_UNSET {
+		opts.ImageFormat = platform.FORMAT_QCOW2
+	}
+
 	return &platform.X86{
 		BasePlatform: platform.BasePlatform{
 			ImageFormat: opts.ImageFormat,
@@ -60,9 +64,7 @@ func makeFakePlatform(opts *bootcDiskImageTestOpts) platform.Platform {
 
 func makeBootcDiskImageOsbuildManifest(t *testing.T, opts *bootcDiskImageTestOpts) manifest.OSBuildManifest {
 	if opts == nil {
-		opts = &bootcDiskImageTestOpts{
-			ImageFormat: platform.FORMAT_QCOW2,
-		}
+		opts = &bootcDiskImageTestOpts{}
 	}
 
 	containerSource := container.SourceSpec{
@@ -85,7 +87,7 @@ func makeBootcDiskImageOsbuildManifest(t *testing.T, opts *bootcDiskImageTestOpt
 
 	m := &manifest.Manifest{}
 	runi := &runner.Fedora{}
-	err := img.InstantiateManifestFromContainers(m, containers, runi, nil)
+	_, err := img.InstantiateManifestFromContainers(m, containers, runi, nil)
 	require.Nil(t, err)
 
 	fakeSourceSpecs := map[string][]container.Spec{
@@ -136,7 +138,8 @@ func TestBootcDiskImageInstantiateNoBuildpipelineForQcow2(t *testing.T) {
 }
 
 func TestBootcDiskImageInstantiateNoBuildpipelineForVpc(t *testing.T) {
-	osbuildManifest := makeBootcDiskImageOsbuildManifest(t, nil)
+	opts := &bootcDiskImageTestOpts{ImageFormat: platform.FORMAT_VHD}
+	osbuildManifest := makeBootcDiskImageOsbuildManifest(t, opts)
 
 	vpcPipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "vpc")
 	require.NotNil(t, vpcPipeline)
@@ -171,7 +174,7 @@ func TestBootcDiskImageUsesBootcInstallToFs(t *testing.T) {
 	devicesDiskOpts := devicesDisk["options"].(map[string]interface{})
 	expectedDiskOpts := map[string]interface{}{
 		"partscan": true,
-		"filename": "fake-disk.raw",
+		"filename": "disk.img",
 	}
 	assert.Equal(t, expectedDiskOpts, devicesDiskOpts)
 
@@ -180,6 +183,8 @@ func TestBootcDiskImageUsesBootcInstallToFs(t *testing.T) {
 	assert.Equal(t, []interface{}{"karg1", "karg2"}, bootcOpts["kernel-args"])
 }
 
+/* XXX: we only export a single pipeline for now to be similar to
+ * what the rest of the "images" library is doing
 func TestBootcDiskImageExportPipelines(t *testing.T) {
 	require := require.New(t)
 
@@ -210,7 +215,8 @@ func TestBootcDiskImageExportPipelines(t *testing.T) {
 	// gce pipeline
 	gcePipeline := findPipelineFromOsbuildManifest(t, osbuildManifest, "gce")
 	require.NotNil(gcePipeline)
-}
+        }
+*/
 
 func TestBootcDiskImageInstantiateUsers(t *testing.T) {
 	for _, withUsers := range []bool{true, false} {

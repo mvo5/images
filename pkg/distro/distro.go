@@ -133,8 +133,13 @@ type ImageType interface {
 
 // The ImageOptions specify options for a specific image build
 type ImageOptions struct {
-	Size             uint64                     `json:"size"`
-	OSTree           *ostree.ImageOptions       `json:"ostree,omitempty"`
+	Size   uint64               `json:"size"`
+	OSTree *ostree.ImageOptions `json:"ostree,omitempty"`
+
+	// XXX: move into bootc package
+	BootcImgref      *string `json:"bootc_imgref,omitempty"`
+	BootcBuildImgref *string `json:"bootc_build_imgref,omitempty"`
+
 	Subscription     *subscription.ImageOptions `json:"subscription,omitempty"`
 	Facts            *facts.ImageOptions        `json:"facts,omitempty"`
 	PartitioningMode disk.PartitioningMode      `json:"partitioning-mode,omitempty"`

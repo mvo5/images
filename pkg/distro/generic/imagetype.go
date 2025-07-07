@@ -24,6 +24,7 @@ import (
 	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/policies"
 	"github.com/osbuild/images/pkg/rpmmd"
+	"github.com/osbuild/images/pkg/runner"
 )
 
 type imageFunc func(workload workload.Workload, t *imageType, bp *blueprint.Blueprint, options distro.ImageOptions, packageSets map[string]rpmmd.PackageSet, containers []container.SourceSpec, rng *rand.Rand) (image.ImageKind, error)
@@ -303,13 +304,31 @@ func (t *imageType) Manifest(bp *blueprint.Blueprint,
 		return nil, nil, err
 	}
 	mf := manifest.New()
-	mf.Distro = manifest.DISTRO_FEDORA
-	if options.UseBootstrapContainer {
-		mf.DistroBootstrapRef = bootstrapContainerFor(t)
-	}
-	_, err = img.InstantiateManifest(&mf, repos, &t.arch.distro.DistroYAML.Runner, rng)
-	if err != nil {
-		return nil, nil, err
+	if options.BootcImgref != nil && *options.BootcImgref != "" {
+		containerSource := container.SourceSpec{
+			Source: *options.BootcImgref,
+			Name:   *options.BootcImgref,
+			Local:  true,
+		}
+
+		mf.Distro = manifest.DISTRO_NULL
+		runner := &runner.Linux{}
+		// XXX: this is incorrect, this can also be an
+		// installer and then its a "normal" iso and we don't
+		// run manifestFromContainer
+		if _, err := img.(*image.BootcDiskImage).InstantiateManifestFromContainers(&mf, []container.SourceSpec{containerSource}, runner, rng); err != nil {
+			return nil, nil, err
+		}
+	} else {
+		mf.Distro = manifest.DISTRO_FEDORA
+		if options.UseBootstrapContainer {
+			mf.DistroBootstrapRef = bootstrapContainerFor(t)
+		}
+		//XXX: bootc image types need InstantiateManifestFromContainer()
+		_, err = img.InstantiateManifest(&mf, repos, &t.arch.distro.DistroYAML.Runner, rng)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return &mf, warnings, err

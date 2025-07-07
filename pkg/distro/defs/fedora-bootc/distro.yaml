@@ -1,0 +1,44 @@
+image_types:
+  "qcow2":
+    filename: "disk.qcow2"
+    mime_type: "application/x-qemu-disk"
+    bootable: true
+    default_size: "10 GiB"
+    image_func: "bootc_disk"
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "image", "qcow2"]
+    exports: ["qcow2"]
+    required_partition_sizes: *default_required_dir_sizes
+    image_config: &image_config_qcow2
+      default_target: "multi-user.target"
+      kernel_options: *cloud_kernel_options
+      conditions:
+        "f42 and below cloud init service names":
+          when:
+            version_less_than: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services
+        "f43 and above new cloud init service names":
+          when:
+            version_greater_or_equal: "43"
+          shallow_merge:
+            enabled_services:
+              *cloud_init_services_f43plus
+    partition_table:
+      <<: *default_partition_tables
+    package_sets:
+      os:
+        - *cloud_base_pkgset
+        - include:
+            - "qemu-guest-agent"
+    platforms:
+      - <<: *x86_64_bios_platform
+        image_format: "qcow2"
+      - <<: *aarch64_platform
+        image_format: "qcow2"
+      - <<: *ppc64le_bios_platform
+        image_format: "qcow2"
+      - <<: *s390x_zipl_platform
+        image_format: "qcow2"
+    

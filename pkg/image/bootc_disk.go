@@ -3,13 +3,17 @@ package image
 import (
 	"fmt"
 	"math/rand"
+	"path/filepath"
+	"strings"
 
+	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/platform"
+	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
@@ -19,7 +23,11 @@ type BootcDiskImage struct {
 	Platform       platform.Platform
 	PartitionTable *disk.PartitionTable
 
-	Filename string
+	Filename    string
+	Compression string
+
+	// Control the VPC subformat use of force_size
+	VPCForceSize *bool
 
 	ContainerSource      *container.SourceSpec
 	BuildContainerSource *container.SourceSpec
@@ -36,10 +44,18 @@ func NewBootcDiskImage(container container.SourceSpec, buildContainer container.
 	}
 }
 
+func (img *BootcDiskImage) InstantiateManifest(m *manifest.Manifest,
+	repos []rpmmd.RepoConfig,
+	runner runner.Runner,
+	rng *rand.Rand) (*artifact.Artifact, error) {
+
+	return nil, fmt.Errorf("internal error: BootcDiskImage  only supported InstantiateManifestFromContainers")
+}
+
 func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifest,
 	containers []container.SourceSpec,
 	runner runner.Runner,
-	rng *rand.Rand) error {
+	rng *rand.Rand) (*artifact.Artifact, error) {
 
 	policy := img.OSCustomizations.SElinux
 	if img.OSCustomizations.BuildSElinux != "" {
@@ -68,7 +84,7 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 			// Note: Mode/User/Group must be nil here to make  GenDirectoryNodesStages use dirExistOk
 			dir, err := fsnode.NewDirectory(path, nil, nil, nil, true)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			ensureDirs = append(ensureDirs, dir)
 		}
@@ -97,48 +113,71 @@ func (img *BootcDiskImage) InstantiateManifestFromContainers(m *manifest.Manifes
 
 	// In the bootc flow, we reuse the host container context for tools;
 	// this is signified by passing nil to the below pipelines.
+	// The reason is that we use the bootc container as the buildroot
+	// and because it is bootc we cannot install extra build tools.
 	var hostPipeline manifest.Build
 
-	rawImage := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
-	rawImage.PartitionTable = img.PartitionTable
-	rawImage.Users = img.OSCustomizations.Users
-	rawImage.Groups = img.OSCustomizations.Groups
-	rawImage.Files = img.OSCustomizations.Files
-	rawImage.Directories = img.OSCustomizations.Directories
-	rawImage.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
-	rawImage.SELinux = img.OSCustomizations.SElinux
-	rawImage.MountUnits = true // always use mount units for bootc disk images
+	rawImagePipeline := manifest.NewRawBootcImage(buildPipeline, containers, img.Platform)
+	rawImagePipeline.PartitionTable = img.PartitionTable
+	rawImagePipeline.Users = img.OSCustomizations.Users
+	rawImagePipeline.Groups = img.OSCustomizations.Groups
+	rawImagePipeline.Files = img.OSCustomizations.Files
+	rawImagePipeline.Directories = img.OSCustomizations.Directories
+	rawImagePipeline.KernelOptionsAppend = img.OSCustomizations.KernelOptionsAppend
+	rawImagePipeline.SELinux = img.OSCustomizations.SElinux
+	rawImagePipeline.MountUnits = true // always use mount units for bootc disk images
 
-	// In BIB, we export multiple images from the same pipeline so we use the
-	// filename as the basename for each export and set the extensions based on
-	// each file format.
-	fileBasename := img.Filename
-	rawImage.SetFilename(fmt.Sprintf("%s.raw", fileBasename))
+	// XXX: duplicated with disk.go, ostree_disk.go, etc
+	var imagePipeline manifest.FilePipeline
+	switch img.Platform.GetImageFormat() {
+	case platform.FORMAT_RAW:
+		imagePipeline = rawImagePipeline
+	case platform.FORMAT_QCOW2:
+		qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImagePipeline)
+		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
+		imagePipeline = qcow2Pipeline
+	case platform.FORMAT_VAGRANT_LIBVIRT:
+		qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImagePipeline)
+		qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
 
-	qcow2Pipeline := manifest.NewQCOW2(hostPipeline, rawImage)
-	qcow2Pipeline.Compat = img.Platform.GetQCOW2Compat()
-	qcow2Pipeline.SetFilename(fmt.Sprintf("%s.qcow2", fileBasename))
+		vagrantPipeline := manifest.NewVagrant(hostPipeline, qcow2Pipeline)
 
-	vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImage)
-	vmdkPipeline.SetFilename(fmt.Sprintf("%s.vmdk", fileBasename))
+		tarPipeline := manifest.NewTar(hostPipeline, vagrantPipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatUstar
 
-	vhdPipeline := manifest.NewVPC(hostPipeline, rawImage)
-	vhdPipeline.SetFilename(fmt.Sprintf("%s.vhd", fileBasename))
-
-	ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
-	tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
-	tarPipeline.Format = osbuild.TarArchiveFormatUstar
-	tarPipeline.SetFilename(fmt.Sprintf("%s.tar", fileBasename))
-	// The .ovf descriptor needs to be the first file in the archive
-	tarPipeline.Paths = []string{
-		fmt.Sprintf("%s.ovf", fileBasename),
-		fmt.Sprintf("%s.mf", fileBasename),
-		fmt.Sprintf("%s.vmdk", fileBasename),
-		fmt.Sprintf("%s.vhd", fileBasename),
+		imagePipeline = tarPipeline
+	case platform.FORMAT_VHD:
+		vpcPipeline := manifest.NewVPC(hostPipeline, rawImagePipeline)
+		vpcPipeline.ForceSize = img.VPCForceSize
+		imagePipeline = vpcPipeline
+	case platform.FORMAT_VMDK:
+		imagePipeline = manifest.NewVMDK(hostPipeline, rawImagePipeline)
+	case platform.FORMAT_OVA:
+		vmdkPipeline := manifest.NewVMDK(hostPipeline, rawImagePipeline)
+		ovfPipeline := manifest.NewOVF(hostPipeline, vmdkPipeline)
+		tarPipeline := manifest.NewTar(hostPipeline, ovfPipeline, "archive")
+		tarPipeline.Format = osbuild.TarArchiveFormatUstar
+		tarPipeline.SetFilename(img.Filename)
+		extLess := strings.TrimSuffix(img.Filename, filepath.Ext(img.Filename))
+		// The .ovf descriptor needs to be the first file in the archive
+		tarPipeline.Paths = []string{
+			fmt.Sprintf("%s.ovf", extLess),
+			fmt.Sprintf("%s.mf", extLess),
+			fmt.Sprintf("%s.vmdk", extLess),
+		}
+		imagePipeline = tarPipeline
+	case platform.FORMAT_GCE:
+		// NOTE(akoutsou): temporary workaround; filename required for GCP
+		// TODO: define internal raw filename on image type
+		rawImagePipeline.SetFilename("disk.raw")
+		tarPipeline := newGCETarPipelineForImg(buildPipeline, rawImagePipeline, "archive")
+		imagePipeline = tarPipeline
+	default:
+		panic(fmt.Errorf("invalid image format %q for image kind", img.Platform.GetImageFormat()))
 	}
 
-	gcePipeline := newGCETarPipelineForImg(buildPipeline, rawImage, "gce")
-	gcePipeline.SetFilename("image.tar.gz")
+	compressionPipeline := GetCompressionPipeline(img.Compression, hostPipeline, imagePipeline)
+	compressionPipeline.SetFilename(img.Filename)
 
-	return nil
+	return compressionPipeline.Export(), nil
 }
