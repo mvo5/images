@@ -104,22 +104,22 @@ func InstallerConfig(distroNameVer, archName, typeName string) (*distro.Installe
 // the distro will do a single load/parse of all image types and
 // just reuse them and this can go.
 type imageTypesCache struct {
-	cache map[string]*imageTypesYAML
+	cache map[string]*ImageTypesYAML
 	mu    sync.Mutex
 }
 
 func newImageTypesCache() *imageTypesCache {
-	return &imageTypesCache{cache: make(map[string]*imageTypesYAML)}
+	return &imageTypesCache{cache: make(map[string]*ImageTypesYAML)}
 }
 
-func (i *imageTypesCache) Get(hash string) *imageTypesYAML {
+func (i *imageTypesCache) Get(hash string) *ImageTypesYAML {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
 	return i.cache[hash]
 }
 
-func (i *imageTypesCache) Set(hash string, ity *imageTypesYAML) {
+func (i *imageTypesCache) Set(hash string, ity *ImageTypesYAML) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -130,7 +130,7 @@ var (
 	itCache = newImageTypesCache()
 )
 
-func load(distroNameVer string) (*imageTypesYAML, error) {
+func load(distroNameVer string) (*ImageTypesYAML, error) {
 	id, err := distro.ParseID(distroNameVer)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func load(distroNameVer string) (*imageTypesYAML, error) {
 		return cached, nil
 	}
 
-	var toplevel imageTypesYAML
+	var toplevel ImageTypesYAML
 	decoder := yaml.NewDecoder(&buf)
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&toplevel); err != nil {
