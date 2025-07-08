@@ -206,6 +206,14 @@ func (f FSType) String() string {
 	}
 }
 
+func (t FSType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.String())
+}
+
+func (t FSType) MarshalYAML() (interface{}, error) {
+	return t.String(), nil
+}
+
 func (f *FSType) UnmarshalJSON(data []byte) error {
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
