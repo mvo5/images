@@ -195,7 +195,7 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	}
 	defer f.Close()
 
-	var toplevel imageTypesYAML
+	var toplevel ImageTypesYAML
 	decoder = yaml.NewDecoder(f)
 	decoder.KnownFields(true)
 	if err := decoder.Decode(&toplevel); err != nil {
@@ -217,10 +217,10 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	return foundDistro, nil
 }
 
-// imageTypesYAML describes the image types for a given distribution
+// ImageTypesYAML describes the image types for a given distribution
 // family. Note that multiple distros may use the same image types,
 // e.g. centos/rhel
-type imageTypesYAML struct {
+type ImageTypesYAML struct {
 	ImageConfig distroImageConfig        `yaml:"image_config,omitempty"`
 	ImageTypes  map[string]ImageTypeYAML `yaml:"image_types"`
 	Common      map[string]any           `yaml:".common,omitempty"`
