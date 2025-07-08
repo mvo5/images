@@ -129,9 +129,9 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, containers []
 		osc.ChronyConfig = imageConfig.TimeSynchronization
 	}
 
-	// Relabel the tree, unless the `NoSElinux` flag is explicitly set to `true`
-	if imageConfig.NoSElinux == nil || imageConfig.NoSElinux != nil && !*imageConfig.NoSElinux {
-		osc.SElinux = "targeted"
+	// Relabel the tree, unless the `NoSElDlinux` flag is explicitly set to `true`
+	if imageConfig.NoSELinux == nil || imageConfig.NoSELinux != nil && !*imageConfig.NoSELinux {
+		osc.SELinux = "targeted"
 	}
 
 	var err error
