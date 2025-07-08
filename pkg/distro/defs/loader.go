@@ -53,8 +53,8 @@ func dataFS() fs.FS {
 	return dataFS
 }
 
-// distrosYAML defines all supported YAML based distributions
-type distrosYAML struct {
+// DistrosYAML defines all supported YAML based distributions
+type DistrosYAML struct {
 	Distros []DistroYAML
 }
 
@@ -171,7 +171,7 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	decoder := yaml.NewDecoder(f)
 	decoder.KnownFields(true)
 
-	var distros distrosYAML
+	var distros DistrosYAML
 	if err := decoder.Decode(&distros); err != nil {
 		return nil, err
 	}
