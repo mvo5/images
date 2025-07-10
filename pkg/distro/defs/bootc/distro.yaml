@@ -73,8 +73,7 @@
 
 image_types:
   "qcow2":
-    # XXX: images hardcodes adding +".qcow2"
-    filename: "disk"
+    filename: "disk.qcow2"
     mime_type: "application/x-qemu-disk"
     bootable: true
     default_size: 10_737_418_240  # 10 GiB
