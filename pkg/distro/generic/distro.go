@@ -72,6 +72,25 @@ func (d *distribution) getISOLabelFunc(isoLabel string) isoLabelFunc {
 	}
 }
 
+// XXX: wrong layer
+func NewDistroForBootc(nameVer, defsPath string) (distro.Distro, error) {
+	rd := &distribution{
+		DistroYAML: defs.DistroYAML{
+			Name:     nameVer,
+			DefsPath: defsPath,
+		},
+		arches: make(map[string]*architecture),
+	}
+	if err := rd.DistroYAML.LoadImageTypes(); err != nil {
+		return nil, err
+	}
+	if err := rd.populateArchitectures(); err != nil {
+		return nil, err
+	}
+
+	return rd, nil
+}
+
 func newDistro(nameVer string) (distro.Distro, error) {
 	distroYAML, err := defs.NewDistroYAML(nameVer)
 	if err != nil {
@@ -87,8 +106,14 @@ func newDistro(nameVer string) (distro.Distro, error) {
 		defaultImageConfig: distroYAML.ImageConfig(),
 		arches:             make(map[string]*architecture),
 	}
+	if err := rd.populateArchitectures(); err != nil {
+		return nil, err
+	}
+	return rd, nil
+}
 
-	for _, imgTypeYAML := range distroYAML.ImageTypes() {
+func (rd *distribution) populateArchitectures() error {
+	for _, imgTypeYAML := range rd.DistroYAML.ImageTypes() {
 		// use as marker for images that are not converted to
 		// YAML yet
 		if imgTypeYAML.Filename == "" {
@@ -102,12 +127,12 @@ func newDistro(nameVer string) (distro.Distro, error) {
 			}
 			it := newImageTypeFrom(rd, ar, imgTypeYAML)
 			if err := ar.addImageType(&pl, it); err != nil {
-				return nil, err
+				return err
 			}
 		}
 	}
 
-	return rd, nil
+	return nil
 }
 
 func (d *distribution) Name() string {

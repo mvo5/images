@@ -59,3 +59,10 @@ distros:
       # XXX: remove once fedora containers are part of the upstream
       # fedora registry (and can be validated via tls)
       riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
+
+  # XXX: this is a stub distro that will go away just so that we
+  # can test bootc via images
+  - name: bootc-1
+    defs_path: ./bootc
+    runner:
+      name: org.osbuild.linux
