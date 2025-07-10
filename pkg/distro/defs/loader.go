@@ -9,7 +9,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"sort"
 	"text/template"
 
@@ -200,39 +199,41 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 		return nil, nil
 	}
 
-	// load imageTypes
-	f, err = dataFS().Open(filepath.Join(foundDistro.DefsPath, "distro.yaml"))
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var toplevel ImageTypesYAML
-	decoder = yaml.NewDecoder(f)
-	decoder.KnownFields(true)
-	if err := decoder.Decode(&toplevel); err != nil {
-		return nil, err
-	}
-	if len(toplevel.ImageTypes) > 0 {
-		foundDistro.imageTypes = make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
-		for name := range toplevel.ImageTypes {
-			if slices.Contains(foundDistro.IgnoreImageTypes, name) {
-				continue
-			}
-			v := toplevel.ImageTypes[name]
-			v.name = name
-			if err := v.runTemplates(foundDistro); err != nil {
-				return nil, err
-			}
-			foundDistro.imageTypes[name] = v
-		}
-	}
-	foundDistro.imageConfig, err = toplevel.ImageConfig.For(nameVer)
-	if err != nil {
+	if err := foundDistro.LoadImageTypes(); err != nil {
 		return nil, err
 	}
 
 	return foundDistro, nil
+}
+
+func (d *DistroYAML) LoadImageTypes() error {
+	f, err := dataFS().Open(filepath.Join(d.DefsPath, "distro.yaml"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	decoder := yaml.NewDecoder(f)
+	decoder.KnownFields(true)
+
+	var toplevel ImageTypesYAML
+	if err := decoder.Decode(&toplevel); err != nil {
+		return err
+	}
+	if len(toplevel.ImageTypes) > 0 {
+		d.imageTypes = make(map[string]ImageTypeYAML, len(toplevel.ImageTypes))
+		for name := range toplevel.ImageTypes {
+			v := toplevel.ImageTypes[name]
+			v.name = name
+			d.imageTypes[name] = v
+		}
+	}
+	d.imageConfig, err = toplevel.ImageConfig.For(d.Name)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ImageTypesYAML describes the image types for a given distribution

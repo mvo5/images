@@ -171,3 +171,10 @@ distros:
         # https://github.com/osbuild/osbuild/blob/ea8261cad6c5c606c00c0f2824c3f483c01a0cc9/runners/org.osbuild.rhel82#L61
         # Install python36 explicitly for RHEL 8.
         - "python36"
+
+  # XXX: this is a stub distro that will go away just so that we
+  # can test bootc via images
+  - name: bootc-1
+    defs_path: ./bootc
+    runner:
+      name: org.osbuild.linux
