@@ -1,3 +1,4 @@
+// buildconfig is used by the internal tools gen-manifests, build only currently
 package buildconfig
 
 import (
@@ -16,6 +17,16 @@ type BuildConfig struct {
 	Depends   interface{}          `json:"depends,omitempty"` // ignored
 }
 
+func tryDecode(dec *json.Decoder, path string, data any) error {
+	if err := dec.Decode(&data); err != nil {
+		return err
+	}
+	if dec.More() {
+		return fmt.Errorf("multiple configuration objects or extra data found in %q", path)
+	}
+	return nil
+}
+
 func New(path string) (*BuildConfig, error) {
 	fp, err := os.Open(path)
 	if err != nil {
@@ -26,12 +37,13 @@ func New(path string) (*BuildConfig, error) {
 	dec := json.NewDecoder(fp)
 	dec.DisallowUnknownFields()
 	var conf BuildConfig
-
-	if err := dec.Decode(&conf); err != nil {
+	if err := tryDecode(dec, path, &conf); err != nil {
+		fmt.Fprintf(os.Stderr, "WARNING: strict decoding failed, trying non-strict: %s", err)
+	}
+	dec = json.NewDecoder(fp)
+	if err := tryDecode(dec, path, &conf); err != nil {
 		return nil, err
 	}
-	if dec.More() {
-		return nil, fmt.Errorf("multiple configuration objects or extra data found in %q", path)
-	}
+
 	return &conf, nil
 }
