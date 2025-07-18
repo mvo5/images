@@ -42,8 +42,7 @@ distros:
     # before.
   - &fedora_stable
     <<: *fedora_rawhide
-    name: "fedora-{{.MajorVersion}}"
-    match: "fedora-[0-9][0-9]{,[0-9]}"
+    name: '(?<name>fedora)-(?P<major>[0-9][0-9]+)'
     preview: false
     os_version: "{{.MajorVersion}}"
     release_version: "{{.MajorVersion}}"
@@ -62,8 +61,7 @@ distros:
       riscv64: "ghcr.io/mvo5/fedora-buildroot:{{.MajorVersion}}"
 
   - &rhel10
-    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-10.[0-9]{,[0-9]}"
+    name: '(?P<name>rhel)-(?P<major>10)\.(?P<minor>[0-9]+)'
     distro_like: rhel-10
     product: "Red Hat Enterprise Linux"
     os_version: "10.{{.MinorVersion}}"
@@ -114,8 +112,7 @@ distros:
       - "xccdf_org.ssgproject.content_profile_stig_gui"
 
   - <<: *rhel10
-    name: "almalinux-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "almalinux-10.[0-9]{,[0-9]}"
+    name: '(?P<name>almalinux)-(?P<major>8)(?P<minor>[0-9]+)'
     product: "AlmaLinux"
     vendor: "almalinux"
     ostree_ref_tmpl: "almalinux/10/%%s/edge"
@@ -153,10 +150,7 @@ distros:
     ostree_ref_tmpl: "almalinux/10/%s/edge"
 
   - &rhel8
-    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-8.[0-9]{,[0-9]}"
-    # rhel8 support being named "rhel-81" for "rhel-8.1" or "rhel-810" for "rhel-8.10" etc
-    transform_re: "^(?P<name>rhel)-(?P<major>8)(?P<minor>[0-9]{1,2})$"
+    name: '(?P<name>rhel)-(?P<major>8)(?P<minor>[0-9]+)'
     distro_like: rhel-8
     product: "Red Hat Enterprise Linux"
     os_version: "8.{{.MinorVersion}}"
@@ -215,8 +209,7 @@ distros:
     oscap_profiles_allowlist: *oscap_profile_allowlist_rhel
 
   - &rhel7
-    name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-7.[0-9]{,[0-9]}"
+    name: '(?P<name>rhel)-(?P<major>7)(?P<minor>[0-9]+)'
     distro_like: rhel-7
     product: "Red Hat Enterprise Linux"
     codename: "Maipo"

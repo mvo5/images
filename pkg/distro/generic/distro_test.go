@@ -16,7 +16,7 @@ func TestISOLabel(t *testing.T) {
 	}
 	d := &distribution{
 		DistroYAML: defs.DistroYAML{
-			Name:         "rhel-9.1",
+			InternalName: "rhel-9.1",
 			Product:      "some-product",
 			ISOLabelTmpl: "name:{{.Distro.Name}},major:{{.Distro.MajorVersion}},minor:{{.Distro.MinorVersion}},product:{{.Product}},arch:{{.Arch}},iso-label:{{.ISOLabel}}",
 		},

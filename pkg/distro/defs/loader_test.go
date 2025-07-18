@@ -678,6 +678,7 @@ distros:
 
 	distro, err := defs.NewDistroYAML("test-distro-1")
 	require.NoError(t, err)
+	require.NotNil(t, distro)
 
 	imgTypes := distro.ImageTypes()
 	assert.Len(t, imgTypes, 1)
@@ -889,8 +890,7 @@ distros:
 
   - &fedora_stable
     <<: *fedora_rawhide
-    name: "fedora-{{.MajorVersion}}"
-    match: "fedora-[0-9]*"
+    name: '(?<name>fedora)-(?P<major>[0-9][0-9]+)'
     preview: false
     os_version: "{{.MajorVersion}}"
     release_version: "{{.MajorVersion}}"
@@ -912,8 +912,7 @@ distros:
     default_fs_type: "xfs"
     defs_path: rhel-10
 
-  - name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-10.*"
+  - name: '(?P<name>rhel)-(?P<major>10)\.(?P<minor>[0-9]+)'
     product: "Red Hat Enterprise Linux"
     os_version: "{{.MajorVersion}}.{{.MinorVersion}}"
     release_version: "{{.MajorVersion}}"
@@ -931,8 +930,9 @@ func TestDistrosLoadingExact(t *testing.T) {
 
 	distro, err := defs.NewDistroYAML("fedora-43")
 	require.NoError(t, err)
+	assert.Equal(t, "fedora-43", distro.Name())
 	assert.Equal(t, &defs.DistroYAML{
-		Name:             "fedora-43",
+		InternalName:     "fedora-43",
 		Preview:          true,
 		OsVersion:        "43",
 		ReleaseVersion:   "43",
@@ -956,7 +956,7 @@ func TestDistrosLoadingExact(t *testing.T) {
 	distro, err = defs.NewDistroYAML("centos-10")
 	require.NoError(t, err)
 	assert.Equal(t, &defs.DistroYAML{
-		Name:             "centos-10",
+		InternalName:     "centos-10",
 		Vendor:           "centos",
 		OsVersion:        "10-stream",
 		ReleaseVersion:   "10",
@@ -976,8 +976,7 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 	distro, err := defs.NewDistroYAML("rhel-10.1")
 	require.NoError(t, err)
 	assert.Equal(t, &defs.DistroYAML{
-		Name:             "rhel-10.1",
-		Match:            "rhel-10.*",
+		InternalName:     "(?P<name>rhel)-(?P<major>10)\\.(?P<minor>[0-9]+)",
 		Vendor:           "redhat",
 		OsVersion:        "10.1",
 		ReleaseVersion:   "10",
@@ -991,8 +990,7 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 	distro, err = defs.NewDistroYAML("fedora-40")
 	require.NoError(t, err)
 	assert.Equal(t, &defs.DistroYAML{
-		Name:             "fedora-40",
-		Match:            "fedora-[0-9]*",
+		InternalName:     "(?<name>fedora)-(?P<major>[0-9][0-9]+)",
 		OsVersion:        "40",
 		ReleaseVersion:   "40",
 		ModulePlatformID: "platform:f40",
@@ -1203,9 +1201,7 @@ distros:
 func TestDistrosLoadingTransformRE(t *testing.T) {
 	fakeDistrosYAML := `
 distros:
-  - name: "rhel-{{.MajorVersion}}.{{.MinorVersion}}"
-    match: "rhel-8.*"
-    transform_re: "(?P<name>rhel)-(?P<major>8)(?P<minor>[0-9]+)"
+  - name: '(?P<name>rhel)-(?P<major>8)\.?(?P<minor>[0-9]+)'
     os_version: "{{.MajorVersion}}.{{.MinorVersion}}"
     release_version: "{{.MajorVersion}}"
     module_platform_id: "platform:el{{.MajorVersion}}"
@@ -1229,9 +1225,7 @@ distros:
 		distro, err := defs.NewDistroYAML(tc.nameVer)
 		require.NoError(t, err)
 		assert.Equal(t, &defs.DistroYAML{
-			Name:             tc.expectedDistroNameVer,
-			Match:            "rhel-8.*",
-			TransformRE:      "(?P<name>rhel)-(?P<major>8)(?P<minor>[0-9]+)",
+			InternalName:     `(?P<name>rhel)-(?P<major>8)\.?(?P<minor>[0-9]+)`,
 			OsVersion:        tc.expectedOsVersion,
 			ReleaseVersion:   "8",
 			ModulePlatformID: "platform:el8",

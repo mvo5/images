@@ -13,7 +13,6 @@ import (
 	"sort"
 	"text/template"
 
-	"github.com/gobwas/glob"
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
@@ -59,21 +58,18 @@ type distrosYAML struct {
 }
 
 type DistroYAML struct {
-	// Match can be used to match multiple versions via a
-	// fnmatch/glob style expression.
-	Match string `yaml:"match"`
-
-	// TransformRE can be used to transform a given name
-	// into the canonical <distro>-<major>{,.<minor>} form.
+	// The YAML "name" can either be the distro name or a regexp
+	// to match/transform from the regexp to the canonical
+	// distro name form <distro>-<major>{,.<minor>} form.
 	// E.g.
 	//   (?P<distro>rhel)-(?P<major>8)(?P<minor>[0-9]+)
 	// will support a format like e.g. rhel-810
-	TransformRE string `yaml:"transform_re"`
+	InternalName string `yaml:"name"`
+	name         string
 
 	// The distro metadata, can contain go text template strings
 	// for {{.Major}}, {{.Minor}} which will be expanded by the
 	// upper layers.
-	Name             string            `yaml:"name"`
 	Codename         string            `yaml:"codename"`
 	Vendor           string            `yaml:"vendor"`
 	Preview          bool              `yaml:"preview"`
@@ -112,6 +108,10 @@ type DistroYAML struct {
 	DistroLike manifest.Distro `yaml:"distro_like"`
 }
 
+func (d *DistroYAML) Name() string {
+	return d.name
+}
+
 func (d *DistroYAML) ImageTypes() map[string]ImageTypeYAML {
 	return d.imageTypes
 }
@@ -124,7 +124,7 @@ func (d *DistroYAML) ImageConfig() *distro.ImageConfig {
 }
 
 func (d *DistroYAML) SkipImageType(imgTypeName, archName string) bool {
-	id := common.Must(distro.ParseID(d.Name))
+	id := common.Must(distro.ParseID(d.name))
 
 	for _, cond := range d.Conditions {
 		if cond.When.Eval(id, archName) && slices.Contains(cond.IgnoreImageTypes, imgTypeName) {
@@ -155,7 +155,6 @@ func (d *DistroYAML) runTemplates(nameVer string) error {
 		}
 		return buf.String()
 	}
-	d.Name = subs(d.Name)
 	d.OsVersion = subs(d.OsVersion)
 	d.ReleaseVersion = subs(d.ReleaseVersion)
 	d.OSTreeRefTmpl = subs(d.OSTreeRefTmpl)
@@ -194,40 +193,17 @@ func loadDistros() (*distrosYAML, error) {
 // with the way distrofactory/reporegistry work which is by defining
 // distros via repository files.
 func NewDistroYAML(nameVer string) (*DistroYAML, error) {
-	distros, err := loadDistros()
+	foundDistro, id, err := distroAndIDFor(nameVer)
 	if err != nil {
 		return nil, err
-	}
-
-	// ParseID will also canonicalize the name
-	if id, err := ParseID(nameVer); err == nil && id != nil {
-		nameVer = id.String()
-	}
-
-	var foundDistro *DistroYAML
-	for _, distro := range distros.Distros {
-		if distro.Name == nameVer {
-			foundDistro = &distro
-			break
-		}
-
-		pat, err := glob.Compile(distro.Match)
-		if err != nil {
-			return nil, err
-		}
-
-		if pat.Match(nameVer) {
-			if err := distro.runTemplates(nameVer); err != nil {
-				return nil, err
-			}
-
-			foundDistro = &distro
-			break
-		}
 	}
 	if foundDistro == nil {
 		return nil, nil
 	}
+	// canonicalize the nameVer
+	nameVer = id.String()
+	foundDistro.name = nameVer
+	foundDistro.runTemplates(nameVer)
 
 	// load imageTypes
 	f, err := dataFS().Open(filepath.Join(foundDistro.DefsPath, "distro.yaml"))

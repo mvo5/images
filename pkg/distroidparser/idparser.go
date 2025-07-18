@@ -1,6 +1,8 @@
 package distroidparser
 
 import (
+	"fmt"
+
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/defs"
 	"github.com/osbuild/images/pkg/distro/rhel/rhel9"
@@ -33,7 +35,7 @@ func (p *Parser) Parse(idStr string) (*distro.ID, error) {
 	for _, f := range p.parsers {
 		if d, err := f(idStr); err == nil {
 			if match != nil {
-				panic("distro ID was matched by multiple parsers")
+				panic(fmt.Errorf("distro ID %q was matched by multiple parsers", idStr))
 			}
 			match = d
 		}

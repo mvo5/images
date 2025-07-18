@@ -120,7 +120,7 @@ func newDistro(nameVer string) (distro.Distro, error) {
 }
 
 func (d *distribution) Name() string {
-	return d.DistroYAML.Name
+	return d.DistroYAML.Name()
 }
 
 func (d *distribution) Codename() string {
