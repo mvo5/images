@@ -484,15 +484,16 @@ func (pt *PartitionTable) applyCustomization(mountpoints []blueprint.FilesystemC
 // root partition if there is any empty space. Returns the updated start point.
 func (pt *PartitionTable) relayout(size uint64) uint64 {
 	// always reserve one extra sector for the GPT header
-	header := pt.HeaderSize()
+	headerSize := pt.HeaderSize()
 	footer := uint64(0)
 
 	// The GPT header is also at the end of the partition table
+	alignedHeaderSize := pt.AlignUp(headerSize)
 	if pt.Type == PT_GPT {
-		footer = header
+		footer = alignedHeaderSize
 	}
 
-	start := pt.AlignUp(header)
+	start := alignedHeaderSize
 	start += pt.StartOffset
 	size = pt.AlignUp(size)
 
