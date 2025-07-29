@@ -19,10 +19,6 @@ func newFakeResult(t *testing.T, resultSpec string) imagefilter.Result {
 	l := strings.Split(resultSpec, ":")
 	require.Equal(t, len(l), 3)
 
-	// XXX: it would be nice if TestDistro would support constructing
-	// like GetDistro("rhel-8.1:i386,amd64:ami,qcow2") that then
-	// creates test distro/type/arch on the fly instead of the current
-	// very static setup
 	di := fac.GetDistro(l[0])
 	require.NotNil(t, di)
 	ar, err := di.GetArch(l[2])
@@ -41,56 +37,56 @@ func TestResultsFormatter(t *testing.T) {
 	}{
 		{
 			"",
-			[]string{"test-distro-1:qcow2:test_arch3"},
-			"test-distro-1 type:qcow2 arch:test_arch3\n",
+			[]string{"test-distro-1:qcow2:s390x"},
+			"test-distro-1 type:qcow2 arch:s390x\n",
 		},
 		{
 			"text",
-			[]string{"test-distro-1:qcow2:test_arch3"},
-			"test-distro-1 type:qcow2 arch:test_arch3\n",
+			[]string{"test-distro-1:qcow2:s390x"},
+			"test-distro-1 type:qcow2 arch:s390x\n",
 		},
 		{
 			"text",
 			[]string{
-				"test-distro-1:qcow2:test_arch3",
-				"test-distro-1:test_type:test_arch",
+				"test-distro-1:qcow2:s390x",
+				"test-distro-1:test_type:x86_64",
 			},
-			"test-distro-1 type:qcow2 arch:test_arch3\n" +
-				"test-distro-1 type:test_type arch:test_arch\n",
+			"test-distro-1 type:qcow2 arch:s390x\n" +
+				"test-distro-1 type:test_type arch:x86_64\n",
 		},
 		{
 			"json",
 			[]string{
-				"test-distro-1:qcow2:test_arch3",
-				"test-distro-1:test_type:test_arch",
+				"test-distro-1:qcow2:s390x",
+				"test-distro-1:test_type:x86_64",
 			},
-			`[{"distro":{"name":"test-distro-1"},"arch":{"name":"test_arch3"},"image_type":{"name":"qcow2"}},{"distro":{"name":"test-distro-1"},"arch":{"name":"test_arch"},"image_type":{"name":"test_type"}}]` + "\n",
+			`[{"distro":{"name":"test-distro-1"},"arch":{"name":"s390x"},"image_type":{"name":"qcow2"}},{"distro":{"name":"test-distro-1"},"arch":{"name":"x86_64"},"image_type":{"name":"test_type"}}]` + "\n",
 		},
 		{
 			"shell",
-			[]string{"test-distro-1:qcow2:test_arch3"},
-			"qcow2 --distro test-distro-1 --arch test_arch3\n",
+			[]string{"test-distro-1:qcow2:s390x"},
+			"qcow2 --distro test-distro-1 --arch s390x\n",
 		},
 		{
 			"short",
-			[]string{"test-distro-1:qcow2:test_arch3"},
-			"test-distro-1\n  qcow2: test_arch3\n",
-		},
-		{
-			"short",
-			[]string{
-				"test-distro-9:qcow2:test_arch3",
-				"test-distro-10:qcow2:test_arch3",
-			},
-			"test-distro-9\n  qcow2: test_arch3\ntest-distro-10\n  qcow2: test_arch3\n",
+			[]string{"test-distro-1:qcow2:s390x"},
+			"test-distro-1\n  qcow2: s390x\n",
 		},
 		{
 			"short",
 			[]string{
-				"test-distro-1:test_type:test_arch",
-				"test-distro-1:test_type:test_arch2",
+				"test-distro-9:qcow2:s390x",
+				"test-distro-10:qcow2:s390x",
 			},
-			"test-distro-1\n  test_type: test_arch, test_arch2\n",
+			"test-distro-9\n  qcow2: s390x\ntest-distro-10\n  qcow2: s390x\n",
+		},
+		{
+			"short",
+			[]string{
+				"test-distro-1:test_type:x86_64",
+				"test-distro-1:test_type:aarch64",
+			},
+			"test-distro-1\n  test_type: aarch64, x86_64\n",
 		},
 	} {
 		res := make([]imagefilter.Result, len(tc.fakeResults))

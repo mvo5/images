@@ -18,32 +18,32 @@ func TestImageFilterFilter(t *testing.T) {
 		expectsMatch          bool
 	}{
 		// no prefix is a "fuzzy" filter and will check distro/arch/imgType
-		{[]string{"foo"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"test-distro-1"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"test-distro*"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"test_arch3"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"qcow2"}, "test-distro-1", "test_arch3", "qcow2", true},
+		{[]string{"foo"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"test-distro-1"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"test-distro*"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"s390x"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"qcow2"}, "test-distro-1", "s390x", "qcow2", true},
 		// distro: prefix (exact matches only)
-		{[]string{"distro:bar"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"distro:test-distro-1"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"distro:test-distro"}, "test-distro-1", "test_arch3", "qcow2", false},
+		{[]string{"distro:bar"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"distro:test-distro-1"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"distro:test-distro"}, "test-distro-1", "s390x", "qcow2", false},
 		// arch: prefix
-		{[]string{"arch:amd64"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"arch:test_arch3"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"arch:test_ar"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"arch:test_ar*"}, "test-distro-1", "test_arch3", "qcow2", true},
+		{[]string{"arch:amd64"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"arch:s390x"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"arch:s390"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"arch:s390*"}, "test-distro-1", "s390x", "qcow2", true},
 		// type: prefix
-		{[]string{"type:ami"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"type:qcow2"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"type:qcow"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"type:qcow?"}, "test-distro-1", "test_arch3", "qcow2", true},
+		{[]string{"type:ami"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"type:qcow2"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"type:qcow"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"type:qcow?"}, "test-distro-1", "s390x", "qcow2", true},
 		// bootmode: prefix
-		{[]string{"bootmode:uefi"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"bootmode:hybrid"}, "test-distro-1", "test_arch3", "qcow2", true},
+		{[]string{"bootmode:uefi"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"bootmode:hybrid"}, "centos-9", "x86_64", "qcow2", true},
 		// multiple filters are AND
-		{[]string{"distro:test-distro-1", "type:ami"}, "test-distro-1", "test_arch3", "qcow2", false},
-		{[]string{"distro:test-distro-1", "type:qcow2"}, "test-distro-1", "test_arch3", "qcow2", true},
-		{[]string{"distro:test-distro-1", "arch:amd64", "type:qcow2"}, "test-distro-1", "test_arch3", "qcow2", false},
+		{[]string{"distro:test-distro-1", "type:ami"}, "test-distro-1", "s390x", "qcow2", false},
+		{[]string{"distro:test-distro-1", "type:qcow2"}, "test-distro-1", "s390x", "qcow2", true},
+		{[]string{"distro:test-distro-1", "arch:amd64", "type:qcow2"}, "test-distro-1", "s390x", "qcow2", false},
 	} {
 		// XXX: it would be nice if TestDistro would support constructing
 		// like GetDistro("rhel-8.1:i386,amd64:ami,qcow2") instead of

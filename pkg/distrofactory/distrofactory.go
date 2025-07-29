@@ -6,7 +6,6 @@ import (
 
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/generic"
-	"github.com/osbuild/images/pkg/distro/test_distro"
 )
 
 // FactoryFunc is a function that returns a distro.Distro for a given distro
@@ -109,9 +108,5 @@ func NewDefault() *Factory {
 	)
 }
 
-// NewTestDefault returns a Factory of distro.Distro factory for the test_distro.
-func NewTestDefault() *Factory {
-	return New(
-		test_distro.DistroFactory,
-	)
-}
+// XXX: sucks a bit
+var NewTestDefault = NewDefault

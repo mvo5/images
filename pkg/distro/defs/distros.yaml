@@ -322,3 +322,8 @@ distros:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ub i:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - name: "test-distro-{{.MajorVersion}}"
+    match: 'test-distro-[0-9][0-9]?'
+    distro_like: fedora
+    defs_path: ./test-distro-1

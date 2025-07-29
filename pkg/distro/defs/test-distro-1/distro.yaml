@@ -1,0 +1,23 @@
+image_types:
+  test_type: &test_type
+    filename: test.img
+    mime_type: "application/x-test"
+    image_func: disk
+    platforms:
+      - arch: x86_64
+        bios_platform: "test-platform"
+        uefi_vendor: "test-vendor"
+      - arch: aarch64
+      - arch: s390x
+  test_type2:
+    <<: *test_type
+  qcow2:
+    <<: *test_type
+  edge_commit: &edge_commit
+    rpm_ostree: true
+    ostree:
+      name: "test-ostree"
+  edge_installer:
+    <<: *edge_commit
+  test_ostree_type:
+    <<: *edge_commit

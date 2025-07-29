@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -78,9 +77,7 @@ func TestLoadRepositoriesExisting(t *testing.T) {
 					gotNames = append(gotNames, r.Name)
 				}
 
-				if !reflect.DeepEqual(gotNames, wantRepos) {
-					t.Errorf("LoadRepositories() for %s/%s =\n got: %#v\n want: %#v", tt.args.distro, wantArch, gotNames, wantRepos)
-				}
+				assert.Equal(t, gotNames, wantRepos)
 			}
 
 		})
@@ -100,13 +97,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "fedora-33-p1",
-					BaseURLs: []string{"https://example.com/fedora-33-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/fedora-33-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "updates-33-p1",
-					BaseURLs: []string{"https://example.com/updates-33-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/updates-33-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -114,13 +111,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "fedora-33-p1",
-					BaseURLs: []string{"https://example.com/fedora-33-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/fedora-33-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "updates-33-p1",
-					BaseURLs: []string{"https://example.com/updates-33-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/updates-33-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -130,13 +127,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "fedora-34-p2",
-					BaseURLs: []string{"https://example.com/fedora-34-p2/test_arch"},
+					BaseURLs: []string{"https://example.com/fedora-34-p2/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "updates-34-p2",
-					BaseURLs: []string{"https://example.com/updates-34-p2/test_arch"},
+					BaseURLs: []string{"https://example.com/updates-34-p2/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -144,13 +141,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "fedora-34-p2",
-					BaseURLs: []string{"https://example.com/fedora-34-p2/test_arch2"},
+					BaseURLs: []string{"https://example.com/fedora-34-p2/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "updates-34-p2",
-					BaseURLs: []string{"https://example.com/updates-34-p2/test_arch2"},
+					BaseURLs: []string{"https://example.com/updates-34-p2/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -160,13 +157,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "rhel-8.7-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.7-baseos-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.7-baseos-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.7-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.7-appstream-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.7-appstream-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -174,13 +171,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "rhel-8.7-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.7-baseos-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.7-baseos-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.7-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.7-appstream-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.7-appstream-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -190,13 +187,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "rhel-8.8-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.8-baseos-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.8-baseos-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.8-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.8-appstream-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.8-appstream-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -204,13 +201,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "rhel-8.8-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.8-baseos-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.8-baseos-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.8-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.8-appstream-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.8-appstream-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -220,13 +217,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "rhel-8.9-baseos-p2",
-					BaseURLs: []string{"https://example.com/rhel-8.9-baseos-p2/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.9-baseos-p2/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.9-appstream-p2",
-					BaseURLs: []string{"https://example.com/rhel-8.9-appstream-p2/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.9-appstream-p2/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -234,13 +231,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "rhel-8.9-baseos-p2",
-					BaseURLs: []string{"https://example.com/rhel-8.9-baseos-p2/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.9-baseos-p2/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.9-appstream-p2",
-					BaseURLs: []string{"https://example.com/rhel-8.9-appstream-p2/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.9-appstream-p2/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -250,13 +247,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArchName: {
 				{
 					Name:     "rhel-8.10-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.10-baseos-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.10-baseos-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.10-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.10-appstream-p1/test_arch"},
+					BaseURLs: []string{"https://example.com/rhel-8.10-appstream-p1/x86_64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -264,13 +261,13 @@ func Test_LoadAllRepositories(t *testing.T) {
 			test_distro.TestArch2Name: {
 				{
 					Name:     "rhel-8.10-baseos-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.10-baseos-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.10-baseos-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
 				{
 					Name:     "rhel-8.10-appstream-p1",
-					BaseURLs: []string{"https://example.com/rhel-8.10-appstream-p1/test_arch2"},
+					BaseURLs: []string{"https://example.com/rhel-8.10-appstream-p1/aarch64"},
 					GPGKeys:  []string{"FAKE-GPG-KEY"},
 					CheckGPG: common.ToPtr(true),
 				},
@@ -294,9 +291,7 @@ func Test_LoadAllRepositories(t *testing.T) {
 			for expectedArch, expectedRepos := range expectedDistroArchRepos {
 				repos, exists := distroArchRepos[expectedArch]
 				assert.True(t, exists)
-				if !reflect.DeepEqual(repos, expectedRepos) {
-					t.Errorf("LoadAllRepositories() for %s/%s =\n got: %#v\n want: %#v", expectedDistroName, expectedArch, repos, expectedRepos)
-				}
+				assert.Equal(t, repos, expectedRepos)
 			}
 		})
 	}

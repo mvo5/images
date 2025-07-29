@@ -7,12 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/pkg/distro"
+	"github.com/osbuild/images/pkg/distro/generic"
 	"github.com/osbuild/images/pkg/distro/test_distro"
 	"github.com/osbuild/images/pkg/rpmmd"
 )
 
 func getTestingRepoRegistry() *RepoRegistry {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := generic.DistroFactory(test_distro.TestDistro1Name)
 	return &RepoRegistry{
 		map[string]map[string][]rpmmd.RepoConfig{
 			testDistro.Name(): {
@@ -54,7 +55,7 @@ func getTestingRepoRegistry() *RepoRegistry {
 
 func TestReposByImageType_reposByImageTypeName(t *testing.T) {
 	rr := getTestingRepoRegistry()
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := generic.DistroFactory(test_distro.TestDistro1Name)
 
 	ta, _ := testDistro.GetArch(test_distro.TestArchName)
 	ta2, _ := testDistro.GetArch(test_distro.TestArch2Name)
@@ -113,7 +114,7 @@ func TestReposByImageType_reposByImageTypeName(t *testing.T) {
 // TestInvalidreposByImageTypeName tests return values from reposByImageTypeName
 // for invalid distro name, arch and image type
 func TestInvalidreposByImageTypeName(t *testing.T) {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := generic.DistroFactory(test_distro.TestDistro1Name)
 	rr := getTestingRepoRegistry()
 
 	type args struct {
@@ -207,7 +208,7 @@ func TestInvalidreposByImageTypeName(t *testing.T) {
 
 func TestReposByArch(t *testing.T) {
 	rr := getTestingRepoRegistry()
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := generic.DistroFactory(test_distro.TestDistro1Name)
 
 	ta, _ := testDistro.GetArch(test_distro.TestArchName)
 	ta2, _ := testDistro.GetArch(test_distro.TestArch2Name)
@@ -275,14 +276,11 @@ func TestReposByArch(t *testing.T) {
 func TestInvalidReposByArch(t *testing.T) {
 	rr := getTestingRepoRegistry()
 
-	ta := test_distro.TestArch{}
-	td := test_distro.TestDistro{}
-
-	repos, err := rr.ReposByArchName(td.Name(), ta.Name(), false)
+	repos, err := rr.ReposByArchName("invalid-distro", "invalid-arch", false)
 	assert.Nil(t, repos)
 	assert.NotNil(t, err)
 
-	repos, err = rr.ReposByArchName(td.Name(), ta.Name(), false)
+	repos, err = rr.ReposByArchName("invalid-distro", "invalid-arch", false)
 	assert.Nil(t, repos)
 	assert.NotNil(t, err)
 }
@@ -290,7 +288,7 @@ func TestInvalidReposByArch(t *testing.T) {
 // TestInvalidReposByArchName tests return values from ReposByArchName
 // for invalid distro name and arch
 func TestInvalidReposByArchName(t *testing.T) {
-	testDistro := test_distro.DistroFactory(test_distro.TestDistro1Name)
+	testDistro := generic.DistroFactory(test_distro.TestDistro1Name)
 	rr := getTestingRepoRegistry()
 
 	type args struct {
