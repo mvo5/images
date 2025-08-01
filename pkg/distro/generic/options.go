@@ -407,7 +407,7 @@ func checkOptionsRhel8(t *imageType, bp *blueprint.Blueprint, options distro.Ima
 	}
 
 	if osc := customizations.GetOpenSCAP(); osc != nil {
-		if t.Arch().Distro().OsVersion() == "9.0" {
+		if t.Arch().Distro().OsVersion() == "8.0" {
 			return warnings, fmt.Errorf("OpenSCAP unsupported os version: %s", t.Arch().Distro().OsVersion())
 		}
 		if !oscap.IsProfileAllowed(osc.ProfileID, t.arch.distro.DistroYAML.OscapProfilesAllowList) {
