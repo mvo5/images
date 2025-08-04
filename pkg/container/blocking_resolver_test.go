@@ -12,7 +12,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/testregistry"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/container"
 )
 
@@ -55,7 +55,7 @@ func TestBlockingResolver(t *testing.T) {
 
 	want := make([]container.Spec, len(refs))
 	for i, r := range refs {
-		spec, err := registry.Resolve(r, arch.ARCH_X86_64)
+		spec, err := registry.Resolve(r, arches.X86_64)
 		assert.NoError(t, err)
 		want[i] = spec
 	}
@@ -178,7 +178,7 @@ func TestBlockingResolverLocalManifest(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, specs, 1)
 	assert.Equal(t, specs[0].LocalName, "localhost/multi-arch:latest")
-	assert.Equal(t, specs[0].Arch.String(), arch.ARCH_X86_64.String())
+	assert.Equal(t, specs[0].Arch.String(), arches.X86_64.String())
 
 	// try resolve an  aarch64 container using a local manifest list
 	resolver = container.NewBlockingResolverWithTestClient("arm64", func(target string) (*container.Client, error) {
@@ -196,5 +196,5 @@ func TestBlockingResolverLocalManifest(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, specs, 1)
 	assert.Equal(t, specs[0].LocalName, "localhost/multi-arch:latest")
-	assert.Equal(t, specs[0].Arch.String(), arch.ARCH_AARCH64.String())
+	assert.Equal(t, specs[0].Arch.String(), arches.AARCH64.String())
 }

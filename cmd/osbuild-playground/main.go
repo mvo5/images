@@ -8,7 +8,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/image"
@@ -25,7 +25,7 @@ func main() {
 	var distroArg string
 	flag.StringVar(&distroArg, "distro", "host", "distro to build from")
 	var archArg string
-	flag.StringVar(&archArg, "arch", arch.Current().String(), "architecture to build for")
+	flag.StringVar(&archArg, "arch", arches.Current().String(), "architecture to build for")
 	var imageTypeArg string
 	flag.StringVar(&imageTypeArg, "type", "my-container", "image type to build")
 	flag.Parse()

@@ -31,7 +31,7 @@ import (
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 const (
@@ -339,7 +339,7 @@ func (cl *Client) UploadImage(ctx context.Context, from, tag string) (digest.Dig
 type RawManifest struct {
 	Data     []byte
 	MimeType string
-	Arch     arch.Arch
+	Arch     arches.Arch
 }
 
 // Digest computes the digest from the raw manifest data
@@ -360,7 +360,7 @@ func (cl *Client) getImageRef(id string, local bool) (types.ImageReference, erro
 	return docker.NewReference(cl.Target)
 }
 
-func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.ImageReference) (*arch.Arch, error) {
+func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.ImageReference) (*arches.Arch, error) {
 	img, err := ref.NewImage(ctx, cl.sysCtx)
 	if err != nil {
 		return nil, err
@@ -370,7 +370,7 @@ func (cl *Client) resolveContainerImageArch(ctx context.Context, ref types.Image
 	if err != nil {
 		return nil, err
 	}
-	a, err := arch.FromString(info.Architecture)
+	a, err := arches.FromString(info.Architecture)
 	return &a, err
 }
 
@@ -470,7 +470,7 @@ type resolvedIds struct {
 	ListManifest digest.Digest
 }
 
-func (cl *Client) resolveManifestList(ctx context.Context, list manifestList, local bool) (resolvedIds, *arch.Arch, error) {
+func (cl *Client) resolveManifestList(ctx context.Context, list manifestList, local bool) (resolvedIds, *arches.Arch, error) {
 	digest, err := list.ChooseInstance(cl.sysCtx)
 	if err != nil {
 		return resolvedIds{}, nil, err
@@ -489,7 +489,7 @@ func (cl *Client) resolveManifestList(ctx context.Context, list manifestList, lo
 	return ids, &raw.Arch, err
 }
 
-func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local bool) (resolvedIds, *arch.Arch, error) {
+func (cl *Client) resolveRawManifest(ctx context.Context, rm RawManifest, local bool) (resolvedIds, *arches.Arch, error) {
 
 	var imageID digest.Digest
 

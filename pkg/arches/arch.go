@@ -1,4 +1,4 @@
-package arch
+package arches
 
 import (
 	"encoding/json"
@@ -11,27 +11,27 @@ import (
 type Arch uint64
 
 const ( // architecture enum
-	ARCH_UNSET Arch = iota
-	ARCH_AARCH64
-	ARCH_PPC64LE
-	ARCH_S390X
-	ARCH_X86_64
-	ARCH_RISCV64
+	UNSET Arch = iota
+	AARCH64
+	PPC64LE
+	S390X
+	X86_64
+	RISCV64
 )
 
 func (a Arch) String() string {
 	switch a {
-	case ARCH_UNSET:
+	case UNSET:
 		return "unset"
-	case ARCH_AARCH64:
+	case AARCH64:
 		return "aarch64"
-	case ARCH_PPC64LE:
+	case PPC64LE:
 		return "ppc64le"
-	case ARCH_S390X:
+	case S390X:
 		return "s390x"
-	case ARCH_X86_64:
+	case X86_64:
 		return "x86_64"
-	case ARCH_RISCV64:
+	case RISCV64:
 		return "riscv64"
 	default:
 		panic("invalid architecture")
@@ -54,17 +54,17 @@ func (a *Arch) UnmarshalYAML(unmarshal func(any) error) error {
 func FromString(a string) (Arch, error) {
 	switch a {
 	case "amd64", "x86_64":
-		return ARCH_X86_64, nil
+		return X86_64, nil
 	case "arm64", "aarch64":
-		return ARCH_AARCH64, nil
+		return AARCH64, nil
 	case "s390x":
-		return ARCH_S390X, nil
+		return S390X, nil
 	case "ppc64le":
-		return ARCH_PPC64LE, nil
+		return PPC64LE, nil
 	case "riscv64":
-		return ARCH_RISCV64, nil
+		return RISCV64, nil
 	default:
-		return ARCH_UNSET, fmt.Errorf("unsupported architecture %q", a)
+		return UNSET, fmt.Errorf("unsupported architecture %q", a)
 	}
 }
 
@@ -75,21 +75,21 @@ func Current() Arch {
 }
 
 func IsX86_64() bool {
-	return Current() == ARCH_X86_64
+	return Current() == X86_64
 }
 
 func IsAarch64() bool {
-	return Current() == ARCH_AARCH64
+	return Current() == AARCH64
 }
 
 func IsPPC() bool {
-	return Current() == ARCH_PPC64LE
+	return Current() == PPC64LE
 }
 
 func IsS390x() bool {
-	return Current() == ARCH_S390X
+	return Current() == S390X
 }
 
 func IsRISCV64() bool {
-	return Current() == ARCH_RISCV64
+	return Current() == RISCV64
 }

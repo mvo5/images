@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -127,7 +127,7 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
 	}
 
 	switch p.platform.GetArch() {
-	case arch.ARCH_X86_64:
+	case arches.X86_64:
 		packages = append(packages,
 			"grub2-efi-x64",
 			"grub2-efi-x64-cdboot",
@@ -137,7 +137,7 @@ func (p *AnacondaInstaller) anacondaBootPackageSet() []string {
 			"syslinux",
 			"syslinux-nonlinux",
 		)
-	case arch.ARCH_AARCH64:
+	case arches.AARCH64:
 		packages = append(packages,
 			"grub2-efi-aa64-cdboot",
 			"grub2-efi-aa64",

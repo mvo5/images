@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/cloud"
 	"github.com/osbuild/images/pkg/platform"
 )
@@ -138,7 +138,7 @@ func (au *awsUploader) UploadAndRegister(r io.Reader, status io.Writer) (err err
 	}()
 	fmt.Fprintf(status, "File uploaded to %s\n", aws.StringValue(&res.Location))
 	if au.targetArch == "" {
-		au.targetArch = arch.Current().String()
+		au.targetArch = arches.Current().String()
 	}
 
 	fmt.Fprintf(status, "Registering AMI %s\n", au.imageName)

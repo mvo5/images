@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type S390X struct {
@@ -9,8 +9,8 @@ type S390X struct {
 	Zipl bool
 }
 
-func (p *S390X) GetArch() arch.Arch {
-	return arch.ARCH_S390X
+func (p *S390X) GetArch() arches.Arch {
+	return arches.S390X
 }
 
 func (p *S390X) GetZiplSupport() bool {

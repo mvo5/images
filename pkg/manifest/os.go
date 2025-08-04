@@ -11,7 +11,7 @@ import (
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
@@ -1078,12 +1078,12 @@ func grubStage(p *OS, pt *disk.PartitionTable, kernelOptions []string) *osbuild.
 // NOTE: This is a temporary workaround. We expect that the kernel-bootcfg
 // command from the python3-virt-firmware package will gain the ability to
 // write these files offline during the RHEL 9.7 / 10.1 development cycle.
-func ukiBootCSVfile(espMountpoint string, architecture arch.Arch, kernelVer, vendor string) (*fsnode.File, error) {
+func ukiBootCSVfile(espMountpoint string, architecture arches.Arch, kernelVer, vendor string) (*fsnode.File, error) {
 	shortArch := ""
 	switch architecture {
-	case arch.ARCH_AARCH64:
+	case arches.AARCH64:
 		shortArch = "aa64"
-	case arch.ARCH_X86_64:
+	case arches.X86_64:
 		shortArch = "x64"
 	default:
 		return nil, fmt.Errorf("ukiBootCSVfile: UKIs are only supported for x86_64 and aarch64")

@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/platform"
@@ -110,7 +110,7 @@ const DefaultBootPartitionSize = 1 * datasizes.GiB
 // containing the root filesystem is grown to fill any left over space on the
 // partition table. Logical Volumes are not grown to fill the space in the
 // Volume Group since they are trivial to grow on a live system.
-func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, architecture arch.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
+func NewPartitionTable(basePT *PartitionTable, mountpoints []blueprint.FilesystemCustomization, imageSize uint64, mode PartitioningMode, architecture arches.Arch, requiredSizes map[string]uint64, rng *rand.Rand) (*PartitionTable, error) {
 	newPT := basePT.Clone().(*PartitionTable)
 
 	if basePT.features().LVM && (mode == RawPartitioningMode || mode == BtrfsPartitioningMode) {
@@ -801,7 +801,7 @@ func (pt *PartitionTable) ensureLVM() error {
 
 // ensureBtrfs will ensure that the root partition is on a btrfs subvolume, i.e. if
 // it currently is not, it will wrap it in one
-func (pt *PartitionTable) ensureBtrfs(architecture arch.Arch) error {
+func (pt *PartitionTable) ensureBtrfs(architecture arches.Arch) error {
 
 	rootPath := entityPath(pt, "/")
 	if rootPath == nil {
@@ -976,7 +976,7 @@ func (pt *PartitionTable) GetMountpointSize(mountpoint string) (uint64, error) {
 //   - At the end of the plain partitions.
 //
 // For LVM and Plain, the fsType argument must be a valid filesystem type.
-func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType, architecture arch.Arch) error {
+func EnsureRootFilesystem(pt *PartitionTable, defaultFsType FSType, architecture arches.Arch) error {
 	// collect all labels and subvolume names to avoid conflicts
 	subvolNames := make(map[string]bool)
 	labels := make(map[string]bool)
@@ -1087,7 +1087,7 @@ func addBootPartition(pt *PartitionTable, bootFsType FSType) error {
 		return fmt.Errorf("error creating boot partition: %w", err)
 	}
 
-	partType, err := getPartitionTypeIDfor(pt.Type, "boot", arch.ARCH_UNSET)
+	partType, err := getPartitionTypeIDfor(pt.Type, "boot", arches.UNSET)
 	if err != nil {
 		return fmt.Errorf("error creating boot partition: %w", err)
 	}
@@ -1127,7 +1127,7 @@ func hasESP(disk *blueprint.DiskCustomization) bool {
 // The function will append the new partitions to the end of the existing
 // partition table therefore it is best to call this function early to put them
 // near the front (as is conventional).
-func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode, architecture arch.Arch) error {
+func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomization, bootMode platform.BootMode, architecture arches.Arch) error {
 	if bootMode == platform.BOOT_NONE {
 		return nil
 	}
@@ -1135,14 +1135,14 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 	// UEFI is not supported for PPC CPUs so we don't need to
 	// add an ESP partition there
 	switch architecture {
-	case arch.ARCH_PPC64LE:
+	case arches.PPC64LE:
 		part, err := mkPPCPrepBoot(pt.Type)
 		if err != nil {
 			return err
 		}
 		pt.Partitions = append(pt.Partitions, part)
 		return nil
-	case arch.ARCH_S390X:
+	case arches.S390X:
 		// s390x does not need any special boot partition
 		return nil
 	}
@@ -1187,7 +1187,7 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 }
 
 func mkPPCPrepBoot(ptType PartitionTableType) (Partition, error) {
-	partType, err := getPartitionTypeIDfor(ptType, "ppc_prep", arch.ARCH_UNSET)
+	partType, err := getPartitionTypeIDfor(ptType, "ppc_prep", arches.UNSET)
 	if err != nil {
 		return Partition{}, fmt.Errorf("error creating ppc PReP boot partition: %w", err)
 	}
@@ -1199,7 +1199,7 @@ func mkPPCPrepBoot(ptType PartitionTableType) (Partition, error) {
 }
 
 func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
-	partType, err := getPartitionTypeIDfor(ptType, "bios", arch.ARCH_UNSET)
+	partType, err := getPartitionTypeIDfor(ptType, "bios", arches.UNSET)
 	if err != nil {
 		return Partition{}, fmt.Errorf("error creating BIOS boot partition: %w", err)
 	}
@@ -1212,7 +1212,7 @@ func mkBIOSBoot(ptType PartitionTableType) (Partition, error) {
 }
 
 func mkESP(size uint64, ptType PartitionTableType) (Partition, error) {
-	partType, err := getPartitionTypeIDfor(ptType, "esp", arch.ARCH_UNSET)
+	partType, err := getPartitionTypeIDfor(ptType, "esp", arches.UNSET)
 	if err != nil {
 		return Partition{}, fmt.Errorf("error creating EFI system partition: %w", err)
 	}
@@ -1263,7 +1263,7 @@ type CustomPartitionTableOptions struct {
 	// used to select appropriate partition types for GPT formatted disks to
 	// enable automatic discovery. It has no effect and is not required when
 	// the PartitionTableType is PT_DOS.
-	Architecture arch.Arch
+	Architecture arches.Arch
 }
 
 // Returns the default filesystem type if the fstype is empty. If both are
@@ -1559,7 +1559,7 @@ func addBtrfsPartition(pt *PartitionTable, partition blueprint.PartitionCustomiz
 	partType := partition.PartType
 	if partType == "" {
 		var err error
-		partType, err = getPartitionTypeIDfor(pt.Type, "data", arch.ARCH_UNSET)
+		partType, err = getPartitionTypeIDfor(pt.Type, "data", arches.UNSET)
 		if err != nil {
 			return fmt.Errorf("error creating btrfs partition: %w", err)
 		}

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/distro_test_common"
@@ -363,7 +363,7 @@ func TestRhel9_ImageType_Name(t *testing.T) {
 	for _, dist := range rhel9_FamilyDistros {
 		t.Run(dist.name, func(t *testing.T) {
 			for _, mapping := range imgMap {
-				if mapping.arch == arch.ARCH_S390X.String() && dist.name == "centos" {
+				if mapping.arch == arches.S390X.String() && dist.name == "centos" {
 					continue
 				}
 				arch, err := dist.distro.GetArch(mapping.arch)

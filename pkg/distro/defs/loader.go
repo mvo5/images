@@ -17,7 +17,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/environment"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/distro"
@@ -88,7 +88,7 @@ type DistroYAML struct {
 	// image types file/directory.
 	DefsPath string `yaml:"defs_path"`
 
-	BootstrapContainers map[arch.Arch]string `yaml:"bootstrap_containers"`
+	BootstrapContainers map[arches.Arch]string `yaml:"bootstrap_containers"`
 
 	OscapProfilesAllowList []oscap.Profile `yaml:"oscap_profiles_allowlist"`
 

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/internal/testregistry"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/container"
 )
 
@@ -48,7 +48,7 @@ func TestClientResolve(t *testing.T) {
 		TLSVerify:  client.GetTLSVerify(),
 		LocalName:  client.Target.String(),
 		ListDigest: listDigest,
-		Arch:       arch.ARCH_X86_64,
+		Arch:       arches.X86_64,
 	}, spec)
 
 	client.SetArchitectureChoice("ppc64le")
@@ -62,7 +62,7 @@ func TestClientResolve(t *testing.T) {
 		TLSVerify:  client.GetTLSVerify(),
 		LocalName:  client.Target.String(),
 		ListDigest: listDigest,
-		Arch:       arch.ARCH_PPC64LE,
+		Arch:       arches.PPC64LE,
 	}, spec)
 
 	// don't have that architecture

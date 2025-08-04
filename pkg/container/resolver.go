@@ -37,7 +37,7 @@ type SourceSpec struct {
 	Local     bool
 }
 
-// XXX: use arch.Arch here?
+// XXX: use arches.Arch here?
 func NewResolver(arch string) *asyncResolver {
 	// NOTE: this should return the Resolver interface, but osbuild-composer
 	// sets the AuthFilePath and for now we don't want to break the API.

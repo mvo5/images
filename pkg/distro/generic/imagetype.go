@@ -8,7 +8,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/internal/workload"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -347,6 +347,6 @@ func (t *imageType) checkOptions(bp *blueprint.Blueprint, options distro.ImageOp
 }
 
 func bootstrapContainerFor(t *imageType) string {
-	a := common.Must(arch.FromString(t.arch.name))
+	a := common.Must(arches.FromString(t.arch.name))
 	return t.arch.distro.DistroYAML.BootstrapContainers[a]
 }

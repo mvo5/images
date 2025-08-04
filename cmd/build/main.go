@@ -11,7 +11,7 @@ import (
 
 	"github.com/osbuild/images/internal/buildconfig"
 	"github.com/osbuild/images/internal/cmdutil"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/manifestgen"
@@ -65,7 +65,7 @@ func run() error {
 		return fmt.Errorf("invalid or unsupported distribution: %q", distroName)
 	}
 
-	archName := arch.Current().String()
+	archName := arches.Current().String()
 	arch, err := distribution.GetArch(archName)
 	if err != nil {
 		return fmt.Errorf("invalid arch name %q for distro %q: %w", archName, distroName, err)

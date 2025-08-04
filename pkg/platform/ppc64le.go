@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type PPC64LE struct {
@@ -9,8 +9,8 @@ type PPC64LE struct {
 	BIOS bool
 }
 
-func (p *PPC64LE) GetArch() arch.Arch {
-	return arch.ARCH_PPC64LE
+func (p *PPC64LE) GetArch() arches.Arch {
+	return arches.PPC64LE
 }
 
 func (p *PPC64LE) GetBIOSPlatform() string {

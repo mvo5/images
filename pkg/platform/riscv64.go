@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type RISCV64 struct {
@@ -9,8 +9,8 @@ type RISCV64 struct {
 	UEFIVendor string
 }
 
-func (p *RISCV64) GetArch() arch.Arch {
-	return arch.ARCH_RISCV64
+func (p *RISCV64) GetArch() arches.Arch {
+	return arches.RISCV64
 }
 
 func (p *RISCV64) GetPackages() []string {

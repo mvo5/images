@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/customizations/users"
 	"github.com/osbuild/images/pkg/datasizes"
@@ -662,7 +662,7 @@ image_types:
 	assert.Equal(t, map[string]uint64{"/": 1_073_741_824}, imgType.RequiredPartitionSizes)
 	assert.Equal(t, []platform.PlatformConf{
 		{
-			Arch:         arch.ARCH_PPC64LE,
+			Arch:         arches.PPC64LE,
 			BIOSPlatform: "powerpc-ieee1275",
 			ImageFormat:  platform.FORMAT_QCOW2,
 			QCOW2Compat:  "1.1",
@@ -857,8 +857,8 @@ func TestDistrosLoadingExact(t *testing.T) {
 			Name:          "org.osbuild.fedora43",
 			BuildPackages: []string{"glibc"},
 		},
-		BootstrapContainers: map[arch.Arch]string{
-			arch.ARCH_X86_64: "registry.fedoraproject.org/fedora-toolbox:43",
+		BootstrapContainers: map[arches.Arch]string{
+			arches.X86_64: "registry.fedoraproject.org/fedora-toolbox:43",
 		},
 		OscapProfilesAllowList: []oscap.Profile{
 			oscap.Ospp,
@@ -916,8 +916,8 @@ func TestDistrosLoadingFactoryCompat(t *testing.T) {
 			Name:          "org.osbuild.fedora40",
 			BuildPackages: []string{"glibc"},
 		},
-		BootstrapContainers: map[arch.Arch]string{
-			arch.ARCH_X86_64: "registry.fedoraproject.org/fedora-toolbox:40",
+		BootstrapContainers: map[arches.Arch]string{
+			arches.X86_64: "registry.fedoraproject.org/fedora-toolbox:40",
 		},
 		OscapProfilesAllowList: []oscap.Profile{
 			oscap.Ospp,
@@ -1062,7 +1062,7 @@ distros:
 		assert.NoError(t, err)
 		assert.Equal(t, []platform.PlatformConf{
 			{
-				Arch:       arch.ARCH_X86_64,
+				Arch:       arches.X86_64,
 				UEFIVendor: tc.expectedUEFIVendor,
 			},
 		}, platforms)

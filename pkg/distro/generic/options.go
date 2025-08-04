@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/customizations/oscap"
 	"github.com/osbuild/images/pkg/distro"
@@ -377,7 +377,7 @@ func checkOptionsRhel8(t *imageType, bp *blueprint.Blueprint, options distro.Ima
 
 	if partitioning != nil {
 		for _, partition := range partitioning.Partitions {
-			if t.Arch().Name() == arch.ARCH_AARCH64.String() {
+			if t.Arch().Name() == arches.AARCH64.String() {
 				if partition.FSType == "swap" {
 					return warnings, fmt.Errorf("swap partition creation is not supported on %s %s", t.Arch().Distro().Name(), t.Arch().Name())
 				}

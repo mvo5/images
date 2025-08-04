@@ -1,4 +1,4 @@
-package arch
+package arches
 
 import (
 	"testing"
@@ -62,13 +62,13 @@ func TestFromStringUnsupported(t *testing.T) {
 }
 
 func TestFromString(t *testing.T) {
-	assert.Equal(t, ARCH_AARCH64, common.Must(FromString("arm64")))
-	assert.Equal(t, ARCH_AARCH64, common.Must(FromString("aarch64")))
-	assert.Equal(t, ARCH_X86_64, common.Must(FromString("amd64")))
-	assert.Equal(t, ARCH_X86_64, common.Must(FromString("x86_64")))
-	assert.Equal(t, ARCH_S390X, common.Must(FromString("s390x")))
-	assert.Equal(t, ARCH_PPC64LE, common.Must(FromString("ppc64le")))
-	assert.Equal(t, ARCH_RISCV64, common.Must(FromString("riscv64")))
+	assert.Equal(t, AARCH64, common.Must(FromString("arm64")))
+	assert.Equal(t, AARCH64, common.Must(FromString("aarch64")))
+	assert.Equal(t, X86_64, common.Must(FromString("amd64")))
+	assert.Equal(t, X86_64, common.Must(FromString("x86_64")))
+	assert.Equal(t, S390X, common.Must(FromString("s390x")))
+	assert.Equal(t, PPC64LE, common.Must(FromString("ppc64le")))
+	assert.Equal(t, RISCV64, common.Must(FromString("riscv64")))
 }
 
 func TestUnmarshal(t *testing.T) {
@@ -76,11 +76,11 @@ func TestUnmarshal(t *testing.T) {
 		inp      string
 		expected Arch
 	}{
-		{"arch: arm64", ARCH_AARCH64},
-		{"arch: amd64", ARCH_X86_64},
-		{"arch: s390x", ARCH_S390X},
-		{"arch: ppc64le", ARCH_PPC64LE},
-		{"arch: riscv64", ARCH_RISCV64},
+		{"arch: arm64", AARCH64},
+		{"arch: amd64", X86_64},
+		{"arch: s390x", S390X},
+		{"arch: ppc64le", PPC64LE},
+		{"arch: riscv64", RISCV64},
 	} {
 		var v struct {
 			Arch Arch

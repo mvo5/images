@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type Aarch64 struct {
@@ -9,8 +9,8 @@ type Aarch64 struct {
 	UEFIVendor string
 }
 
-func (p *Aarch64) GetArch() arch.Arch {
-	return arch.ARCH_AARCH64
+func (p *Aarch64) GetArch() arches.Arch {
+	return arches.AARCH64
 }
 
 func (p *Aarch64) GetUEFIVendor() string {
@@ -42,8 +42,8 @@ type Aarch64_Fedora struct {
 	BootFiles  [][2]string
 }
 
-func (p *Aarch64_Fedora) GetArch() arch.Arch {
-	return arch.ARCH_AARCH64
+func (p *Aarch64_Fedora) GetArch() arches.Arch {
+	return arches.AARCH64
 }
 
 func (p *Aarch64_Fedora) GetUEFIVendor() string {

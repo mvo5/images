@@ -30,7 +30,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 const (
@@ -106,7 +106,7 @@ const (
 	EFIFilesystemUUID = "7B77-95E7"
 )
 
-func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, architecture arch.Arch) (string, error) {
+func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, architecture arches.Arch) (string, error) {
 	switch ptType {
 	case PT_DOS:
 		switch partTypeName {
@@ -143,30 +143,30 @@ func getPartitionTypeIDfor(ptType PartitionTableType, partTypeName string, archi
 			return SwapPartitionGUID, nil
 		case "root":
 			switch architecture {
-			case arch.ARCH_X86_64:
+			case arches.X86_64:
 				return RootPartitionX86_64GUID, nil
-			case arch.ARCH_AARCH64:
+			case arches.AARCH64:
 				return RootPartitionAarch64GUID, nil
-			case arch.ARCH_PPC64LE:
+			case arches.PPC64LE:
 				return RootPartitionPpc64leGUID, nil
-			case arch.ARCH_S390X:
+			case arches.S390X:
 				return RootPartitionS390xGUID, nil
-			case arch.ARCH_UNSET:
+			case arches.UNSET:
 				return "", fmt.Errorf("architecture must be specified for selecting GUID for %q partition", partTypeName)
 			default:
 				return "", fmt.Errorf("unknown or unsupported architecture enum value: %d", architecture)
 			}
 		case "usr":
 			switch architecture {
-			case arch.ARCH_X86_64:
+			case arches.X86_64:
 				return UsrPartitionX86_64GUID, nil
-			case arch.ARCH_AARCH64:
+			case arches.AARCH64:
 				return UsrPartitionAarch64GUID, nil
-			case arch.ARCH_PPC64LE:
+			case arches.PPC64LE:
 				return UsrPartitionPpc64leGUID, nil
-			case arch.ARCH_S390X:
+			case arches.S390X:
 				return UsrPartitionS390xGUID, nil
-			case arch.ARCH_UNSET:
+			case arches.UNSET:
 				return "", fmt.Errorf("architecture must be specified for selecting GUID for %q partition", partTypeName)
 			default:
 				return "", fmt.Errorf("unknown or unsupported architecture enum value: %d", architecture)

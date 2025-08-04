@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
@@ -94,7 +94,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 		}
 	}
 	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arches.X86_64)
 	anacondaPipeline.Checkpoint()
 
 	anacondaPipeline.UseLegacyAnacondaConfig = img.UseLegacyAnacondaConfig

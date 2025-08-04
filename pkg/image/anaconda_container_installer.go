@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
@@ -97,7 +97,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 	anacondaPipeline.ExtraRepos = img.ExtraBasePackages.Repositories
 	anacondaPipeline.Variant = img.Variant
-	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	anacondaPipeline.Biosdevname = (img.Platform.GetArch() == arches.X86_64)
 	anacondaPipeline.Checkpoint()
 	anacondaPipeline.AdditionalAnacondaModules = img.AdditionalAnacondaModules
 	anacondaPipeline.DisabledAnacondaModules = img.DisabledAnacondaModules

@@ -1,7 +1,7 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type X86 struct {
@@ -11,8 +11,8 @@ type X86 struct {
 	Bootloader Bootloader
 }
 
-func (p *X86) GetArch() arch.Arch {
-	return arch.ARCH_X86_64
+func (p *X86) GetArch() arches.Arch {
+	return arches.X86_64
 }
 
 func (p *X86) GetBIOSPlatform() string {

@@ -3,7 +3,7 @@ package manifest
 import (
 	"fmt"
 
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/osbuild"
 )
@@ -98,7 +98,7 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 	}
 
 	switch p.treePipeline.platform.GetArch() {
-	case arch.ARCH_S390X:
+	case arches.S390X:
 		loopback := osbuild.NewLoopbackDevice(&osbuild.LoopbackDeviceOptions{Filename: p.Filename()})
 		pipeline.AddStage(osbuild.NewZiplInstStage(osbuild.NewZiplInstStageOptions(p.treePipeline.kernelVer, pt), loopback, copyDevices, copyMounts))
 	default:

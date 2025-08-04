@@ -18,7 +18,7 @@ import (
 	"github.com/containers/image/v5/manifest"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/container"
 )
 
@@ -319,7 +319,7 @@ func (reg *Registry) GetRef(repo string) string {
 	return fmt.Sprintf("%s/%s", reg.server.Listener.Addr().String(), repo)
 }
 
-func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, error) {
+func (reg *Registry) Resolve(target string, imgArch arches.Arch) (container.Spec, error) {
 
 	ref, err := reference.ParseNormalizedNamed(target)
 	if err != nil {
@@ -365,7 +365,7 @@ func (reg *Registry) Resolve(target string, imgArch arch.Arch) (container.Spec, 
 		checksum = ""
 
 		for _, m := range lst.Manifests {
-			if common.Must(arch.FromString(m.Platform.Architecture)) == imgArch {
+			if common.Must(arches.FromString(m.Platform.Architecture)) == imgArch {
 				checksum = m.Digest.String()
 				break
 			}

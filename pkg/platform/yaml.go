@@ -1,13 +1,13 @@
 package platform
 
 import (
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 // PlatformConf is a platform configured from YAML inputs
 // that implements the "Platform" interface
 type PlatformConf struct {
-	Arch         arch.Arch   `yaml:"arch"`
+	Arch         arches.Arch `yaml:"arch"`
 	ImageFormat  ImageFormat `yaml:"image_format"`
 	QCOW2Compat  string      `yaml:"qcow2_compat"`
 	BIOSPlatform string      `yaml:"bios_platform"`
@@ -27,7 +27,7 @@ type PlatformConf struct {
 // ensure PlatformConf implements the Platform interface
 var _ = Platform(&PlatformConf{})
 
-func (pc *PlatformConf) GetArch() arch.Arch {
+func (pc *PlatformConf) GetArch() arches.Arch {
 	return pc.Arch
 }
 func (pc *PlatformConf) GetImageFormat() ImageFormat {

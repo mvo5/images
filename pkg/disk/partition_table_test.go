@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/internal/testdisk"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
@@ -120,7 +120,7 @@ func TestEnsureRootFilesystem(t *testing.T) {
 	}
 
 	// use AARCH64 for all test cases
-	architecture := arch.ARCH_AARCH64
+	architecture := arches.AARCH64
 
 	testCases := map[string]testCase{
 		"empty-plain-gpt": {
@@ -662,7 +662,7 @@ func TestEnsureRootFilesystemErrors(t *testing.T) {
 	}
 
 	// use X86_64 for all test cases
-	architecture := arch.ARCH_X86_64
+	architecture := arches.X86_64
 
 	testCases := map[string]testCase{
 		"err-empty": {
@@ -1120,7 +1120,7 @@ func TestAddPartitionsForBootMode(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			assert := assert.New(t)
 			pt := tc.pt
-			err := disk.AddPartitionsForBootMode(&pt, nil, tc.bootMode, arch.ARCH_X86_64)
+			err := disk.AddPartitionsForBootMode(&pt, nil, tc.bootMode, arches.X86_64)
 			if tc.errmsg == "" {
 				assert.NoError(err)
 				assert.Equal(tc.expected, pt)
@@ -1147,7 +1147,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				DefaultFSType:      disk.FS_XFS,
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_GPT,
-				Architecture:       arch.ARCH_AARCH64, // doesn't matter for dos
+				Architecture:       arches.AARCH64, // doesn't matter for dos
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_DOS,
@@ -1293,7 +1293,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				DefaultFSType:      disk.FS_XFS,
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_GPT,
-				Architecture:       arch.ARCH_X86_64,
+				Architecture:       arches.X86_64,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_GPT,
@@ -1382,7 +1382,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				DefaultFSType:      disk.FS_XFS,
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_GPT,
-				Architecture:       arch.ARCH_AARCH64,
+				Architecture:       arches.AARCH64,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_GPT,
@@ -1711,7 +1711,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
-				Architecture:       arch.ARCH_S390X,
+				Architecture:       arches.S390X,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_GPT,
@@ -1785,7 +1785,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
-				Architecture:       arch.ARCH_PPC64LE,
+				Architecture:       arches.PPC64LE,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_DOS,
@@ -1837,7 +1837,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
-				Architecture:       arch.ARCH_PPC64LE,
+				Architecture:       arches.PPC64LE,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_GPT,

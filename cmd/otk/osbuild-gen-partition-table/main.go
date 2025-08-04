@@ -10,7 +10,7 @@ import (
 	"github.com/osbuild/images/internal/buildconfig"
 	"github.com/osbuild/images/internal/cmdutil"
 	"github.com/osbuild/images/internal/otkdisk"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/blueprint"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/disk"
@@ -242,10 +242,10 @@ func genPartitionTable(genPartInput *Input, rng *rand.Rand) (*Output, error) {
 		return nil, fmt.Errorf("cannot get the disk size: %w", err)
 	}
 
-	architecture := arch.ARCH_UNSET
+	architecture := arches.UNSET
 	if genPartInput.Properties.Type == otkdisk.PartTypeGPT {
 		// GPT partition table generation requires an architecture
-		architecture, err = arch.FromString(genPartInput.Properties.Architecture)
+		architecture, err = arches.FromString(genPartInput.Properties.Architecture)
 		if err != nil {
 			return nil, err
 		}

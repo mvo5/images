@@ -6,7 +6,7 @@ import (
 
 	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/internal/workload"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/datasizes"
 	"github.com/osbuild/images/pkg/manifest"
@@ -74,7 +74,7 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	livePipeline.ExcludePackages = img.ExtraBasePackages.Exclude
 
 	livePipeline.Variant = img.Variant
-	livePipeline.Biosdevname = (img.Platform.GetArch() == arch.ARCH_X86_64)
+	livePipeline.Biosdevname = (img.Platform.GetArch() == arches.X86_64)
 	livePipeline.Locale = img.Locale
 
 	// The live installer has SELinux enabled and targeted

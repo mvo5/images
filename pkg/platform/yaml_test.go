@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 	"github.com/osbuild/images/pkg/platform"
 )
 
@@ -32,7 +32,7 @@ func TestPlatformYamlSmoke(t *testing.T) {
 	err := yaml.Unmarshal(inputYAML, &pc)
 	assert.NoError(t, err)
 	expected := platform.PlatformConf{
-		Arch:         common.Must(arch.FromString("x86_64")),
+		Arch:         common.Must(arches.FromString("x86_64")),
 		BIOSPlatform: "i386-pc",
 		UEFIVendor:   "fedora",
 		ImageFormat:  platform.FORMAT_QCOW2,

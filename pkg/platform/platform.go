@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/arches"
 )
 
 type ImageFormat uint64
@@ -126,7 +126,7 @@ func (f *ImageFormat) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 type Platform interface {
-	GetArch() arch.Arch
+	GetArch() arches.Arch
 	GetImageFormat() ImageFormat
 	GetQCOW2Compat() string
 	GetBIOSPlatform() string
