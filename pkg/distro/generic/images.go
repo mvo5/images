@@ -150,6 +150,7 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.ChronyConfig = imageConfig.TimeSynchronization
 	}
 
+	osc.NoSELinux = imageConfig.NoSELinux
 	// Relabel the tree, unless the `NoSELinux` flag is explicitly set to `true`
 	if imageConfig.NoSELinux == nil || imageConfig.NoSELinux != nil && !*imageConfig.NoSELinux {
 		osc.SELinux = "targeted"

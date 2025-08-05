@@ -94,6 +94,9 @@ type OSCustomizations struct {
 
 	SELinuxForceRelabel *bool
 
+	// fully disable selinux everywhere including during build
+	NoSELinux *bool
+
 	// Do not install documentation
 	ExcludeDocs bool
 

@@ -121,12 +121,16 @@ func (p *BuildrootFromPackages) addDependent(dep Pipeline) {
 func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.PackageSet {
 	// TODO: make the /usr/bin/cp dependency conditional
 	// TODO: make the /usr/bin/xz dependency conditional
-	policyPackage := fmt.Sprintf("selinux-policy-%s", p.selinuxPolicy)
-	packages := []string{
-		policyPackage, // needed to build the build pipeline
-		"coreutils",   // /usr/bin/cp - used all over
-		"xz",          // usage unclear
+	var packages []string
+
+	if !p.disableSelinux {
+		packages = append(packages, fmt.Sprintf("selinux-policy-%s", p.selinuxPolicy))
 	}
+
+	packages = append(packages, []string{
+		"coreutils", // /usr/bin/cp - used all over
+		"xz",        // usage unclear
+	}...)
 
 	packages = append(packages, p.runner.GetBuildPackages()...)
 

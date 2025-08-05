@@ -34,7 +34,12 @@ func (img *Archive) InstantiateManifest(m *manifest.Manifest,
 	repos []rpmmd.RepoConfig,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, nil)
+
+	var opts manifest.BuildOptions
+	if img.OSCustomizations.NoSELinux != nil {
+		opts.DisableSELinux = *img.OSCustomizations.NoSELinux
+	}
+	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, &opts)
 	buildPipeline.Checkpoint()
 
 	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)

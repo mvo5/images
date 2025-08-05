@@ -22,10 +22,13 @@ func LoadAllRepositories(confPaths []string, confFSes []fs.FS) (rpmmd.DistrosRep
 	mergedFSes = append(mergedFSes, confFSes...)
 
 	distrosRepoConfigs, err := loadAllRepositoriesFromFS(mergedFSes)
+	if err != nil {
+		return nil, err
+	}
 	if len(distrosRepoConfigs) == 0 {
 		return nil, &NoReposLoadedError{confPaths, confFSes}
 	}
-	return distrosRepoConfigs, err
+	return distrosRepoConfigs, nil
 }
 
 func loadAllRepositoriesFromFS(confPaths []fs.FS) (rpmmd.DistrosRepoConfigs, error) {

@@ -335,3 +335,24 @@ distros:
       x86_64: "registry.access.redhat.com/ubi{{.MajorVersion}}/ub i:latest"
       ppc64le: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
       s390x: "registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest"
+
+  - &opensues_leap_16_0 
+    name: "leap-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'leap-16\.[0-9]'
+    # XXX: :(
+    distro_like: fedora
+    os_version: "16.{{.MinorVersion}}"
+    release_version: 16
+    vendor: "opensues"
+    default_fs_type: "ext4"
+    defs_path: leap
+    runner:
+      # XXX: we just need a working /etc/ld.so.conf
+      name: "org.osbuild.leap"
+      build_packages:
+        - "glibc" 
+        - "python3"
+        - "bash"
+        - "gzip"
+        # for systemd-firstboot
+        - "systemd"

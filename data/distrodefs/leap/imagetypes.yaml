@@ -1,0 +1,27 @@
+---
+image_types:
+  container: &container
+    filename: "container.tar"
+    mime_type: "application/x-tar"
+    image_func: "container"
+    bootable: false
+    build_pipelines: ["build"]
+    payload_pipelines: ["os", "container"]
+    exports: ["container"]
+    platforms:
+      - arch: "x86_64"
+    image_config: &image_config_container
+      # this include now no selinux in the buildroot
+      no_selinux: true
+      locale: "C.UTF-8"
+      timezone: "UTC"
+    package_sets:
+      os:
+        - include:
+            - "bash"
+            - "coreutils"
+            - "rpm"
+            - "sudo"
+            - "tar"
+            - "util-linux"
+            - "vim"
