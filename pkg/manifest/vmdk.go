@@ -58,7 +58,6 @@ func (p *VMDK) getBuildPackages(Distro) []string {
 }
 
 func (p *VMDK) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-vmdk"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

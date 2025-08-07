@@ -49,7 +49,6 @@ func (p *XZ) getBuildPackages(Distro) []string {
 }
 
 func (p *XZ) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/xz"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

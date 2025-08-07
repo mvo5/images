@@ -224,10 +224,11 @@ func (m Manifest) GetCheckpoints() []string {
 	return checkpoints
 }
 
-func (m Manifest) GetExports() []string {
-	exports := []string{}
+// Exports retuns all pipelines that can export an artifact
+func (m Manifest) Exports() []string {
+	var exports []string
 	for _, p := range m.pipelines {
-		if p.getExport() {
+		if _, ok := p.(ExportingPipeline); ok {
 			exports = append(exports, p.Name())
 		}
 	}

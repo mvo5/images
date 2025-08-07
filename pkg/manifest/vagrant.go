@@ -109,7 +109,6 @@ func (p *Vagrant) getBuildPackages(Distro) []string {
 }
 
 func (p *Vagrant) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-qemu-disk"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

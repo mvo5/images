@@ -111,6 +111,5 @@ func (p *RawImage) serialize() osbuild.Pipeline {
 }
 
 func (p *RawImage) Export() *artifact.Artifact {
-	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
 }

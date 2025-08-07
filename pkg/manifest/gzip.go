@@ -49,7 +49,6 @@ func (p *Gzip) getBuildPackages(Distro) []string {
 }
 
 func (p *Gzip) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/gzip"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

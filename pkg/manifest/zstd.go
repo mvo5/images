@@ -49,7 +49,6 @@ func (p *Zstd) getBuildPackages(Distro) []string {
 }
 
 func (p *Zstd) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/zstd"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

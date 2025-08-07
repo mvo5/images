@@ -261,6 +261,5 @@ func (p *RawBootcImage) getInline() []string {
 
 // XXX: copied from raw.go
 func (p *RawBootcImage) Export() *artifact.Artifact {
-	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
 }

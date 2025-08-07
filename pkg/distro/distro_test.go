@@ -208,7 +208,9 @@ func TestImageTypePipelineNames(t *testing.T) {
 					// The last pipeline should match the export pipeline.
 					// This might change in the future, but for now, let's make
 					// sure they match.
-					assert.Equal(imageType.Exports()[0], pm.Pipelines[len(pm.Pipelines)-1].Name)
+					assert.Equal(imageType.Exports(), []string{pm.Pipelines[len(pm.Pipelines)-1].Name})
+					// also ensure the generated manifest exports agree with the image type
+					assert.Equal(imageType.Exports(), []string{m.Exports()[len(m.Exports())-1]})
 
 					// The pipelines named in allPipelines must exist in the manifest, and in the
 					// order specified (eg. 'build' first) but it does not need to be an exact

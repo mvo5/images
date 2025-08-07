@@ -57,7 +57,6 @@ func (p *OCIContainer) getBuildPackages(Distro) []string {
 }
 
 func (p *OCIContainer) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-tar"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

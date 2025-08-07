@@ -31,8 +31,6 @@ type Pipeline interface {
 
 	getCheckpoint() bool
 
-	getExport() bool
-
 	// getBuildPackages returns the list of packages required for the pipeline
 	// at build time.
 	getBuildPackages(Distro) []string
@@ -86,7 +84,6 @@ type Base struct {
 	name       string
 	build      Build
 	checkpoint bool
-	export     bool
 }
 
 // Name returns the name of the pipeline. The name must be unique for a given manifest.
@@ -102,10 +99,6 @@ func (p *Base) Checkpoint() {
 
 func (p Base) getCheckpoint() bool {
 	return p.checkpoint
-}
-
-func (p Base) getExport() bool {
-	return p.export
 }
 
 func (p Base) BuildPipeline() Build {

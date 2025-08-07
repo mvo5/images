@@ -60,7 +60,6 @@ func (p *QCOW2) getBuildPackages(Distro) []string {
 }
 
 func (p *QCOW2) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-qemu-disk"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

@@ -80,7 +80,6 @@ func xorrisofsStageOptions(filename, isolabel string, isoboot ISOBootType) *osbu
 }
 
 func (p *ISO) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-iso9660-image"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

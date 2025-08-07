@@ -155,6 +155,5 @@ func (p *RawOSTreeImage) maybeAddGrubInstStage(pipeline *osbuild.Pipeline) {
 }
 
 func (p *RawOSTreeImage) Export() *artifact.Artifact {
-	p.Base.export = true
 	return artifact.New(p.Name(), p.Filename(), nil)
 }

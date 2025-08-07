@@ -50,7 +50,6 @@ func (p *OSTreeEncapsulate) getBuildPackages(Distro) []string {
 }
 
 func (p *OSTreeEncapsulate) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-tar"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }

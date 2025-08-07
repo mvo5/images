@@ -59,7 +59,6 @@ func (p *VPC) getBuildPackages(Distro) []string {
 }
 
 func (p *VPC) Export() *artifact.Artifact {
-	p.Base.export = true
 	mimeType := "application/x-vhd"
 	return artifact.New(p.Name(), p.Filename(), &mimeType)
 }
