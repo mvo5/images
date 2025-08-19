@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/workload"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/anaconda"
 	"github.com/osbuild/images/pkg/customizations/bootc"
@@ -389,7 +388,7 @@ func ostreeDeploymentCustomizations(
 
 // IMAGES
 
-func diskImage(workload workload.Workload,
+func diskImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -437,7 +436,7 @@ func diskImage(workload workload.Workload,
 	return img, nil
 }
 
-func tarImage(workload workload.Workload,
+func tarImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -466,7 +465,7 @@ func tarImage(workload workload.Workload,
 	return img, nil
 }
 
-func containerImage(workload workload.Workload,
+func containerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -491,7 +490,7 @@ func containerImage(workload workload.Workload,
 	return img, nil
 }
 
-func liveInstallerImage(workload workload.Workload,
+func liveInstallerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -550,7 +549,7 @@ func liveInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func imageInstallerImage(workload workload.Workload,
+func imageInstallerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -650,7 +649,7 @@ func imageInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotCommitImage(workload workload.Workload,
+func iotCommitImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -686,7 +685,7 @@ func iotCommitImage(workload workload.Workload,
 	return img, nil
 }
 
-func bootableContainerImage(workload workload.Workload,
+func bootableContainerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -726,7 +725,7 @@ func bootableContainerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotContainerImage(workload workload.Workload,
+func iotContainerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -762,7 +761,7 @@ func iotContainerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotInstallerImage(workload workload.Workload,
+func iotInstallerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -857,7 +856,7 @@ func iotInstallerImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotImage(workload workload.Workload,
+func iotImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -905,7 +904,7 @@ func iotImage(workload workload.Workload,
 	return img, nil
 }
 
-func iotSimplifiedInstallerImage(workload workload.Workload,
+func iotSimplifiedInstallerImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -990,7 +989,7 @@ func iotSimplifiedInstallerImage(workload workload.Workload,
 }
 
 // Make an Anaconda installer boot.iso
-func netinstImage(workload workload.Workload,
+func netinstImage(workload manifest.OSCustomizations,
 	t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
