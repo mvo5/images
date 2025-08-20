@@ -49,6 +49,10 @@ type BuildrootFromPackages struct {
 	disableSelinux bool
 
 	selinuxPolicy string
+
+	// :((
+	Files       []*fsnode.File
+	Directories []*fsnode.Directory
 }
 
 type BuildOptions struct {
@@ -107,6 +111,15 @@ func NewBuild(m *Manifest, runner runner.Runner, repos []rpmmd.RepoConfig, opts 
 		disableSelinux:     opts.DisableSELinux,
 		selinuxPolicy:      policyOrDefault(opts.SELinuxPolicy),
 	}
+
+	// XXX: this is not very portable, anything non-dracut will
+	// simply not work here
+	virtiofsConfContent := `
+add_drivers+=" virtiofs "
+add_dracutmodules+=" virtiofs "
+`
+	pipeline.Directories = append(pipeline.Directories, common.Must(fsnode.NewDirectory("/etc/dracut.conf.d", nil, nil, nil, true)))
+	pipeline.Files = append(pipeline.Files, common.Must(fsnode.NewFile("/etc/dracut.conf.d/virtiofs.conf", nil, nil, nil, []byte(virtiofsConfContent))))
 
 	m.addPipeline(pipeline)
 	return pipeline
@@ -173,12 +186,10 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
 
-	// qemu needs this
-	virtiofsConfContent := `add_drivers+=" virtio_fs "`
-	virtiofsConf := common.Must(fsnode.NewFile("/etc/dracut.conf.d/virtiofs.conf", nil, nil, nil, []byte(virtiofsConfContent)))
-	for _, stage := range osbuild.GenFileNodesStages([]*fsnode.File{virtiofsConf}) {
-		pipeline.AddStage(stage)
-	}
+	stages := osbuild.GenDirectoryNodesStages(p.Directories)
+	pipeline.AddStages(stages...)
+	stages = osbuild.GenFileNodesStages(p.Files)
+	pipeline.AddStages(stages...)
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	if !p.disableSelinux {
@@ -190,6 +201,18 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	}
 
 	return pipeline
+}
+
+// XXX: sooooo sad
+func (p *BuildrootFromPackages) getInline() []string {
+	inlineData := []string{}
+
+	// inline data for custom files
+	for _, file := range p.Files {
+		inlineData = append(inlineData, string(file.Data()))
+	}
+
+	return inlineData
 }
 
 // Returns a map of paths to labels for the SELinux stage based on specific
