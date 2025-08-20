@@ -3,6 +3,7 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/osbuild"
@@ -128,6 +129,7 @@ func (p *BuildrootFromPackages) getPackageSetChain(distro Distro) []rpmmd.Packag
 		policyPackage, // needed to build the build pipeline
 		"coreutils",   // /usr/bin/cp - used all over
 		"xz",          // usage unclear
+		"kernel",      // for qemu based osbuild
 	}
 
 	packages = append(packages, p.runner.GetBuildPackages()...)
@@ -170,6 +172,13 @@ func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
 	}
 	pipeline := p.Base.serialize()
 	pipeline.Runner = p.runner.String()
+
+	// qemu needs this
+	virtiofsConfContent := `add_drivers+=" virtio_fs "`
+	virtiofsConf := common.Must(fsnode.NewFile("/etc/dracut.conf.d/virtiofs.conf", nil, nil, nil, []byte(virtiofsConfContent)))
+	for _, stage := range osbuild.GenFileNodesStages([]*fsnode.File{virtiofsConf}) {
+		pipeline.AddStage(stage)
+	}
 
 	pipeline.AddStage(osbuild.NewRPMStage(osbuild.NewRPMStageOptions(p.repos), osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
 	if !p.disableSelinux {
