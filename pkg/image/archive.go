@@ -39,7 +39,6 @@ func (img *Archive) InstantiateManifest(m *manifest.Manifest,
 	osPipeline := manifest.NewOS(buildPipeline, img.Platform, repos)
 	osPipeline.OSCustomizations = img.OSCustomizations
 	osPipeline.Environment = img.Environment
-	osPipeline.ImgTypeCustomizations = img.ImgTypeCustomizations
 	osPipeline.OSVersion = img.OSVersion
 
 	tarPipeline := manifest.NewTar(buildPipeline, osPipeline, "archive")
