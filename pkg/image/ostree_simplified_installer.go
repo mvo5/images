@@ -10,7 +10,6 @@ import (
 	"github.com/osbuild/images/pkg/customizations/fdo"
 	"github.com/osbuild/images/pkg/customizations/ignition"
 	"github.com/osbuild/images/pkg/manifest"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -21,7 +20,6 @@ type OSTreeSimplifiedInstaller struct {
 	// Raw image that will be created and embedded
 	rawImage *OSTreeDiskImage
 
-	Platform              platform.Platform
 	OSCustomizations      manifest.OSCustomizations
 	Environment           environment.Environment
 	ImgTypeCustomizations manifest.OSCustomizations

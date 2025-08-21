@@ -13,7 +13,6 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -38,7 +37,6 @@ func efiBootPartitionTable(rng *rand.Rand) *disk.PartitionTable {
 
 type AnacondaTarInstaller struct {
 	Base
-	Platform                platform.Platform
 	OSCustomizations        manifest.OSCustomizations
 	InstallerCustomizations manifest.InstallerCustomizations
 	Environment             environment.Environment

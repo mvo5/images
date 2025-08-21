@@ -439,6 +439,11 @@ func ostreeDeploymentCustomizations(
 
 // IMAGES
 
+func populateImageBase(img *image.Base, t *imageType) {
+	img.Platform = t.platform
+	img.Environment = &t.ImageTypeYAML.Environment
+}
+
 func diskImage(t *imageType,
 	bp *blueprint.Blueprint,
 	options distro.ImageOptions,
@@ -448,7 +453,7 @@ func diskImage(t *imageType,
 	rng *rand.Rand) (image.ImageKind, error) {
 
 	img := image.NewDiskImage()
-	img.Platform = t.platform
+	populateImageBase(&img.Base, t)
 
 	var err error
 	img.OSCustomizations, err = osCustomizations(t, packageSets[osPkgsKey], options, containers, bp)
@@ -457,7 +462,6 @@ func diskImage(t *imageType,
 	}
 	img.OSCustomizations.PayloadRepos = payloadRepos
 
-	img.Environment = &t.ImageTypeYAML.Environment
 	img.Compression = t.ImageTypeYAML.Compression
 	if bp.Minimal {
 		// Disable weak dependencies if the 'minimal' option is enabled

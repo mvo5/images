@@ -13,14 +13,12 @@ import (
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
 	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 type AnacondaOSTreeInstaller struct {
 	Base
-	Platform                platform.Platform
 	OSCustomizations        manifest.OSCustomizations
 	InstallerCustomizations manifest.InstallerCustomizations
 	ExtraBasePackages       rpmmd.PackageSet

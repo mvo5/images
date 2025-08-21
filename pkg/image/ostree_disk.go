@@ -17,7 +17,6 @@ import (
 type OSTreeDiskImage struct {
 	Base
 
-	Platform         platform.Platform
 	OSCustomizations manifest.OSCustomizations
 	PartitionTable   *disk.PartitionTable
 

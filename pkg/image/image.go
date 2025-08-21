@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 
+	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/manifest"
+	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
@@ -17,6 +19,9 @@ type ImageKind interface {
 
 type Base struct {
 	name string
+
+	Platform    platform.Platform
+	Environment environment.Environment
 }
 
 func (img Base) Name() string {

@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/osbuild/images/internal/environment"
 	"github.com/osbuild/images/pkg/artifact"
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
@@ -18,10 +17,8 @@ import (
 
 type DiskImage struct {
 	Base
-	Platform              platform.Platform
 	PartitionTable        *disk.PartitionTable
 	OSCustomizations      manifest.OSCustomizations
-	Environment           environment.Environment
 	ImgTypeCustomizations manifest.OSCustomizations
 	Filename              string
 	Compression           string

@@ -8,14 +8,12 @@ import (
 	"github.com/osbuild/images/pkg/customizations/bootc"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/ostree"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/rpmmd"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 type OSTreeArchive struct {
 	Base
-	Platform              platform.Platform
 	OSCustomizations      manifest.OSCustomizations
 	Environment           environment.Environment
 	ImgTypeCustomizations manifest.OSCustomizations

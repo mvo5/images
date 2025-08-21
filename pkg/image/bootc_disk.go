@@ -9,14 +9,12 @@ import (
 	"github.com/osbuild/images/pkg/disk"
 	"github.com/osbuild/images/pkg/manifest"
 	"github.com/osbuild/images/pkg/osbuild"
-	"github.com/osbuild/images/pkg/platform"
 	"github.com/osbuild/images/pkg/runner"
 )
 
 type BootcDiskImage struct {
 	Base
 
-	Platform       platform.Platform
 	PartitionTable *disk.PartitionTable
 
 	Filename string
