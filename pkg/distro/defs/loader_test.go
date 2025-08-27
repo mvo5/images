@@ -436,6 +436,61 @@ image_types:
 	assert.EqualError(t, err, `mount "/" requires a default filesystem for the distribution but none set`)
 }
 
+func TestDefsPartitionTableFilesystemPartTableOverrideDefault(t *testing.T) {
+	fakeDistrosYaml := `
+distros:
+  - name: test-distro-1
+    defs_path: test-distro
+    default_fs_type: ext4
+`
+	fakeImageTypesYaml := `
+image_types:
+  test_type:
+    filename: test.img
+    platforms:
+      - arch: x86_64
+    partition_table:
+      x86_64:
+        partitions:
+          - payload_type: filesystem
+            payload:
+              type: xfs
+              mountpoint: "/"
+    partition_tables_override:
+      conditions:
+        "test condition":
+          when:
+            distro_name: test-distro
+          override:
+            x86_64:
+              partitions:
+                - payload_type: filesystem
+                  payload:
+                    # note that no "type: <fstype>" is set here
+                    mountpoint: "/"
+`
+	baseDir := makeFakeDistrosYAML(t, fakeDistrosYaml, fakeImageTypesYaml)
+	restore := defs.MockDataFS(baseDir)
+	defer restore()
+	td, err := defs.NewDistroYAML("test-distro-1")
+	require.NoError(t, err)
+	it := td.ImageTypes()["test_type"]
+	require.NotNil(t, it)
+
+	partTable, err := it.PartitionTable(distro.ID{Name: "test-distro", MajorVersion: 1}, "x86_64")
+	require.NoError(t, err)
+	assert.Equal(t, &disk.PartitionTable{
+		Partitions: []disk.Partition{
+			{
+				Payload: &disk.Filesystem{
+					Type:       "ext4",
+					Mountpoint: "/",
+				},
+			},
+		},
+	}, partTable)
+}
+
 var fakeImageTypesYaml = `
 image_types:
   test_type:
