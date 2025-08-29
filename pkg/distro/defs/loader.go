@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"sort"
 	"text/template"
@@ -69,13 +70,14 @@ type DistroYAML struct {
 	Name             string            `yaml:"name"`
 	Codename         string            `yaml:"codename"`
 	Vendor           string            `yaml:"vendor"`
-	Preview          bool              `yaml:"preview"`
 	OsVersion        string            `yaml:"os_version"`
 	ReleaseVersion   string            `yaml:"release_version"`
 	ModulePlatformID string            `yaml:"module_platform_id"`
 	Product          string            `yaml:"product"`
 	OSTreeRefTmpl    string            `yaml:"ostree_ref_tmpl"`
 	Runner           runner.RunnerConf `yaml:"runner"`
+
+	Preview bool `yaml:"preview"`
 
 	// ISOLabelTmpl can contain {{.Product}},{{.OsVersion}},{{.Arch}},{{.ISOLabel}}
 	ISOLabelTmpl string `yaml:"iso_label_tmpl"`
@@ -218,6 +220,22 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	if err := foundDistro.runTemplates(*id); err != nil {
 		return nil, err
 	}
+	for _, cond := range foundDistro.Conditions {
+		if cond.OverrideVars == nil {
+			continue
+		}
+		arch := ""
+		if cond.When.Eval(*id, arch) {
+			for key, val := range cond.OverrideVars {
+				elem := reflect.ValueOf(foundDistro).Elem()
+				field := elem.FieldByName(key)
+				if !field.IsValid() {
+					return nil, fmt.Errorf("cannot find key %q", key)
+				}
+				field.Set(reflect.ValueOf(val))
+			}
+		}
+	}
 
 	// load imageTypes
 	f, err := dataFS().Open(filepath.Join(foundDistro.DefsPath, "imagetypes.yaml"))
@@ -274,6 +292,8 @@ type whenCondition struct {
 	VersionLessThan       string `yaml:"version_less_than,omitempty"`
 	VersionGreaterOrEqual string `yaml:"version_greater_or_equal,omitempty"`
 	VersionEqual          string `yaml:"version_equal,omitempty"`
+
+	EnvSet string `yaml:"env_set"`
 }
 
 func (wc *whenCondition) Eval(id distro.ID, archStr string) bool {
@@ -296,6 +316,9 @@ func (wc *whenCondition) Eval(id distro.ID, archStr string) bool {
 	}
 	if wc.VersionEqual != "" {
 		match = match && (id.VersionString() == wc.VersionEqual)
+	}
+	if wc.EnvSet != "" {
+		match = match && os.Getenv(wc.EnvSet) != ""
 	}
 
 	return match
@@ -324,8 +347,9 @@ type distroImageConfigConditions struct {
 }
 
 type distroConditions struct {
-	When             *whenCondition `yaml:"when"`
-	IgnoreImageTypes []string       `yaml:"ignore_image_types"`
+	When             *whenCondition    `yaml:"when"`
+	IgnoreImageTypes []string          `yaml:"ignore_image_types"`
+	OverrideVars     map[string]string `yaml:"override_vars"`
 }
 
 type ImageTypeYAML struct {
