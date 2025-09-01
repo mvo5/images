@@ -367,7 +367,7 @@ func (t *BootcImageType) Manifest(bp *blueprint.Blueprint, options distro.ImageO
 
 // newBootcDistro returns a new instance of BootcDistro
 // from the given url
-func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
+func NewBootcDistro(imgref string) (*BootcDistro, error) {
 	cnt, err := bibcontainer.New(imgref)
 	if err != nil {
 		return nil, err
@@ -390,9 +390,14 @@ func NewBootcDistro(imgref string) (bd *BootcDistro, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot get container size: %w", err)
 	}
+	return NewBootcDistroFrom(info, imgref, defaultFs, cntSize)
+}
 
+// XXX: use this to generate mock bootc manifests for manifest-diff
+// and checksum support
+func NewBootcDistroFrom(info *osinfo.Info, imgref, defaultFs string, cntSize uint64) (*BootcDistro, error) {
 	nameVer := fmt.Sprintf("bootc-%s-%s", info.OSRelease.ID, info.OSRelease.VersionID)
-	bd = &BootcDistro{
+	bd := &BootcDistro{
 		name:          nameVer,
 		releasever:    info.OSRelease.VersionID,
 		defaultFs:     defaultFs,
