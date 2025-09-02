@@ -77,6 +77,7 @@ func (d *BootcDistro) SetBuildContainer(imgref string) (err error) {
 	if err != nil {
 		return err
 	}
+	d.buildImgref = imgref
 	d.buildSourceInfo = info
 	return nil
 }
