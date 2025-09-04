@@ -6,30 +6,26 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/osbuild/images/internal/randutil"
 )
 
-func makeOsRelease(t *testing.T, buildDir string) {
+func makeOsRelease(buildDir string) error {
 	osRelease := `
-NAME="bootc-fake-name"
-ID="bootc-fake"
+NAME="fake-name"
+ID="fake-id"
 VERSION_ID="1"
 `
 
 	osReleasePath := filepath.Join(buildDir, "etc/os-release")
-	err := os.MkdirAll(filepath.Dir(osReleasePath), 0755)
-	require.NoError(t, err)
+	if err := os.MkdirAll(filepath.Dir(osReleasePath), 0755); err != nil {
+		return err
+	}
 	//nolint:gosec
-	err = os.WriteFile(osReleasePath, []byte(osRelease), 0644)
-	require.NoError(t, err)
+	return os.WriteFile(osReleasePath, []byte(osRelease), 0644)
 }
 
-func makeUsrBinInstall(t *testing.T, buildDir string) {
+func makeUsrBinInstall(buildDir string) error {
 	installToml := `
 [install]
 filesystem = [
@@ -39,21 +35,24 @@ filesystem = [
 `
 
 	installTomlPath := filepath.Join(buildDir, "usr/lib/bootc/install/99-fedora-install.toml")
-	err := os.MkdirAll(filepath.Dir(installTomlPath), 0755)
-	require.NoError(t, err)
+	if err := os.MkdirAll(filepath.Dir(installTomlPath), 0755); err != nil {
+		return err
+	}
 	//nolint:gosec
-	err = os.WriteFile(installTomlPath, []byte(installToml), 0644)
-	require.NoError(t, err)
+	return os.WriteFile(installTomlPath, []byte(installToml), 0644)
 }
 
-func makeFakeBinaries(t *testing.T, buildDir string) {
+func makeFakeBinaries(buildDir string) error {
 	_, currentFile, _, ok := runtime.Caller(0)
-	require.True(t, ok)
+	if !ok {
+		return fmt.Errorf("cannot find caller")
+	}
 	currentDir := filepath.Dir(currentFile)
 
 	fakeBootcPath := filepath.Join(buildDir, "usr/bin/bootc")
-	err := os.MkdirAll(filepath.Dir(fakeBootcPath), 0755)
-	require.NoError(t, err)
+	if err := os.MkdirAll(filepath.Dir(fakeBootcPath), 0755); err != nil {
+		return err
+	}
 	cmd := exec.Command(
 		"go", "build",
 		"-o", fakeBootcPath,
@@ -62,15 +61,14 @@ func makeFakeBinaries(t *testing.T, buildDir string) {
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		require.NoError(t, err, string(output))
+		return fmt.Errorf("error running go: %w\n%s", err, output)
 	}
 
 	fakeSleepPath := filepath.Join(buildDir, "usr/bin/sleep")
-	err = os.Symlink("bootc", fakeSleepPath)
-	require.NoError(t, err)
+	return os.Symlink("bootc", fakeSleepPath)
 }
 
-func makeContainerfile(t *testing.T, buildDir string) {
+func makeContainerfile(buildDir string) error {
 	var fakeBootcCnt = `
 FROM scratch
 COPY etc /etc
@@ -80,38 +78,55 @@ COPY usr/lib/bootc/install /usr/lib/bootc/install
 
 	cntFilePath := filepath.Join(buildDir, "Containerfile")
 	//nolint:gosec
-	err := os.WriteFile(cntFilePath, []byte(fakeBootcCnt), 0644)
-	require.NoError(t, err)
+	return os.WriteFile(cntFilePath, []byte(fakeBootcCnt), 0644)
 }
 
-func makeFakeContainerImage(t *testing.T, buildDir, purpose string) string {
+func makeFakeContainerImage(buildDir, purpose string) (cntTag string, cleanup func() error, err error) {
 	imgTag := fmt.Sprintf("image-builder-test-%s-%s", purpose, randutil.String(10, randutil.AsciiLower))
 	output, err := exec.Command(
 		"podman", "build",
 		"-f", filepath.Join(buildDir, "Containerfile"),
 		"-t", imgTag,
 	).CombinedOutput()
-	require.NoError(t, err, string(output))
+	if err != nil {
+		return "", nil, fmt.Errorf("error running podman: %w\n%s", err, output)
+	}
 	// add cleanup
-	t.Cleanup(func() {
+	cleanup = func() error {
 		output, err := exec.Command("podman", "image", "rm", imgTag).CombinedOutput()
-		assert.NoError(t, err, string(output))
-	})
+		if err != nil {
+			return fmt.Errorf("cannot run podman cleanup: %w\n%s", err, output)
+		}
+		return nil
+	}
 
-	return fmt.Sprintf("localhost/%s", imgTag)
+	return fmt.Sprintf("localhost/%s", imgTag), cleanup, nil
 }
 
-func NewFakeContainer(t *testing.T, purpose string) string {
-	t.Helper()
-
-	buildDir := t.TempDir()
+func NewFakeContainer(purpose string) (imgTag string, cleanup func() error, err error) {
+	buildDir, err := os.MkdirTemp("", "fake-bootc-cnt")
+	if err != nil {
+		return "", nil, err
+	}
 
 	// XXX: allow adding test specific content
-	makeContainerfile(t, buildDir)
-	makeFakeBinaries(t, buildDir)
+	if err := makeContainerfile(buildDir); err != nil {
+		return "", nil, err
+	}
+	if err := makeFakeBinaries(buildDir); err != nil {
+		return "", nil, err
+	}
 	// XXX: make os-release content configurable
-	makeOsRelease(t, buildDir)
-	makeUsrBinInstall(t, buildDir)
+	if err := makeOsRelease(buildDir); err != nil {
+		return "", nil, err
+	}
+	if err := makeUsrBinInstall(buildDir); err != nil {
+		return "", nil, err
+	}
 
-	return makeFakeContainerImage(t, buildDir, purpose)
+	cntTag, cleanup, err := makeFakeContainerImage(buildDir, purpose)
+	if err != nil {
+		return "", nil, err
+	}
+	return cntTag, cleanup, err
 }

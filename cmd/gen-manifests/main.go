@@ -24,6 +24,7 @@ import (
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/distro/bootc"
+	"github.com/osbuild/images/pkg/distro/bootc/bootctest"
 	"github.com/osbuild/images/pkg/distrofactory"
 	"github.com/osbuild/images/pkg/dnfjson"
 	"github.com/osbuild/images/pkg/experimentalflags"
@@ -520,6 +521,22 @@ func main() {
 		if len(l) > 1 {
 			buildBootcRef = l[1]
 		}
+		if bootcRef == "fake" {
+			fakeRef, cleanup, err := bootctest.NewFakeContainer("gen-manifests")
+			if err != nil {
+				panic(err)
+			}
+			defer cleanup()
+			bootcRef = fakeRef
+		}
+		if buildBootcRef == "fake" {
+			fakeRef, cleanup, err := bootctest.NewFakeContainer("gen-manifests")
+			if err != nil {
+				panic(err)
+			}
+			defer cleanup()
+			buildBootcRef = fakeRef
+		}
 
 		distribution, err := bootc.NewBootcDistro(bootcRef)
 		if err != nil {
@@ -537,12 +554,14 @@ func main() {
 				panic(err)
 			}
 		}
-		for _, archName := range arches {
+		distroArches, _ := arches.ResolveArgValues(distribution.ListArches())
+		for _, archName := range distroArches {
 			archi, err := distribution.GetArch(archName)
 			if err != nil {
 				panic(err)
 			}
-			for _, imgTypeName := range imgTypes {
+			daImgTypes, _ := imgTypes.ResolveArgValues(archi.ListImageTypes())
+			for _, imgTypeName := range daImgTypes {
 				imgType, err := archi.GetImageType(imgTypeName)
 				if err != nil {
 					panic(err)
