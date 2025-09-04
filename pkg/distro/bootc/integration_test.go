@@ -62,8 +62,12 @@ func genManifest(t *testing.T, imgType distro.ImageType) string {
 func TestBuildContainerHandling(t *testing.T) {
 	canRunIntegration(t)
 
-	imgTag := bootctest.NewFakeContainer(t, "bootc")
-	buildImgTag := bootctest.NewFakeContainer(t, "build")
+	imgTag, cleanup1, err := bootctest.NewFakeContainer("bootc")
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cleanup1()) })
+	buildImgTag, cleanup2, err := bootctest.NewFakeContainer("build")
+	require.NoError(t, err)
+	t.Cleanup(func() { assert.NoError(t, cleanup2()) })
 
 	for _, withBuildContainer := range []bool{true, false} {
 		t.Run(fmt.Sprintf("build-cnt:%v", withBuildContainer), func(t *testing.T) {
