@@ -12,8 +12,6 @@ import (
 	"strings"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/images/internal/common"
-	"github.com/osbuild/images/pkg/arch"
 	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/distro"
 	"github.com/osbuild/images/pkg/dnfjson"
@@ -152,7 +150,7 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 	if mg.overrideRepos != nil {
 		repos = mg.overrideRepos
 	} else {
-		repos, err = mg.reporegistry.ReposByImageTypeName(dist.Name(), a.Name(), imgType.Name())
+		repos, err = mg.reporegistry.ReposByImageTypeName(imgType.Arch().Distro().Name(), imgType.Arch().Name(), imgType.Name())
 		if err != nil {
 			return err
 		}
@@ -174,33 +172,11 @@ func (mg *Generator) Generate(bp *blueprint.Blueprint, dist distro.Distro, imgTy
 		}
 	}
 
-	// XXX: make nicer
-	// XXX2: find a way to pass custom solver to depsolverFunc
-	var depsolved map[string]dnfjson.DepsolveResult
-	if dd, ok := dist.(distro.CustomDepsolverDistro); ok {
-		archi := common.Must(arch.FromString(a.Name()))
-		solver, cleanupFunc, err := dd.Depsolver(mg.cacheDir, archi)
-		if err != nil {
-			return err
-		}
-		defer cleanupFunc()
-
-		depsolvedSets := make(map[string]dnfjson.DepsolveResult)
-		packageSets := preManifest.GetPackageSetChains()
-		for name, pkgSet := range packageSets {
-			res, err := solver.Depsolve(pkgSet, sbom.StandardTypeSpdx)
-			if err != nil {
-				return fmt.Errorf("error depsolving: %w", err)
-			}
-			depsolvedSets[name] = *res
-		}
-		depsolved = depsolvedSets
-	} else {
-		depsolved, err = mg.depsolver(mg.cacheDir, mg.depsolveWarningsOutput, preManifest.GetPackageSetChains(), dist, a.Name())
-		if err != nil {
-			return err
-		}
+	depsolved, err := mg.depsolver(mg.cacheDir, mg.depsolveWarningsOutput, preManifest.GetPackageSetChains(), dist, a.Name())
+	if err != nil {
+		return err
 	}
+
 	containerSpecs, err := mg.containerResolver(preManifest.GetContainerSourceSpecs(), a.Name())
 	if err != nil {
 		return err
