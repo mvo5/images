@@ -34,7 +34,9 @@ func NewOCIContainer(buildPipeline Build, treePipeline TreePipeline) *OCIContain
 	return p
 }
 
-func (p *OCIContainer) serialize() osbuild.Pipeline {
+func (p *OCIContainer) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	options := &osbuild.OCIArchiveStageOptions{
@@ -46,8 +48,8 @@ func (p *OCIContainer) serialize() osbuild.Pipeline {
 		},
 	}
 	baseInput := osbuild.NewTreeInput("name:" + p.treePipeline.Name())
-	inputs := &osbuild.OCIArchiveStageInputs{Base: baseInput}
-	pipeline.AddStage(osbuild.NewOCIArchiveStage(options, inputs))
+	inputs2 := &osbuild.OCIArchiveStageInputs{Base: baseInput}
+	pipeline.AddStage(osbuild.NewOCIArchiveStage(options, inputs2))
 
 	return pipeline
 }

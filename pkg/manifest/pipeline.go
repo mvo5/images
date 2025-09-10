@@ -50,9 +50,8 @@ type Pipeline interface {
 	// its full Spec. See the ostree package for more details.
 	getOSTreeCommitSources() []ostree.SourceSpec
 
-	serializeStart(Inputs)
 	serializeEnd()
-	serialize() osbuild.Pipeline
+	serialize(Inputs) osbuild.Pipeline
 
 	// getPackageSpecs returns the list of specifications for packages that
 	// will be installed to the pipeline tree.

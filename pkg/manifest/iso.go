@@ -42,7 +42,9 @@ func (p *ISO) getBuildPackages(Distro) []string {
 	}
 }
 
-func (p *ISO) serialize() osbuild.Pipeline {
+func (p *ISO) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewXorrisofsStage(xorrisofsStageOptions(p.Filename(), p.isoLabel, p.ISOBoot), p.treePipeline.Name()))

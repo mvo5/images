@@ -33,7 +33,9 @@ func NewXZ(buildPipeline Build, imgPipeline FilePipeline) *XZ {
 	return p
 }
 
-func (p *XZ) serialize() osbuild.Pipeline {
+func (p *XZ) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewXzStage(

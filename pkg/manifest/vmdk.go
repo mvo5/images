@@ -40,7 +40,9 @@ func NewVMDK(buildPipeline Build, imgPipeline FilePipeline) *VMDK {
 	return p
 }
 
-func (p *VMDK) serialize() osbuild.Pipeline {
+func (p *VMDK) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewQEMUStage(

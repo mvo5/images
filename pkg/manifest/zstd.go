@@ -33,7 +33,9 @@ func NewZstd(buildPipeline Build, imgPipeline FilePipeline) *Zstd {
 	return p
 }
 
-func (p *Zstd) serialize() osbuild.Pipeline {
+func (p *Zstd) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewZstdStage(

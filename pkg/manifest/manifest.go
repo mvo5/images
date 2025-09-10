@@ -112,6 +112,7 @@ func New() Manifest {
 }
 
 func (m *Manifest) addPipeline(p Pipeline) {
+	println("addPipeline: ", p.Name())
 	for _, pipeline := range m.pipelines {
 		if pipeline.Name() == p.Name() {
 			panic(fmt.Errorf("duplicate pipeline name %v in manifest", p.Name()))
@@ -177,27 +178,22 @@ func (m Manifest) Serialize(depsolvedSets map[string]dnfjson.DepsolveResult, con
 		opts = &SerializeOptions{}
 	}
 
-	for _, pipeline := range m.pipelines {
-		pipeline.serializeStart(Inputs{
-			Depsolved:  depsolvedSets[pipeline.Name()],
-			Containers: containerSpecs[pipeline.Name()],
-			Commits:    ostreeCommits[pipeline.Name()],
-		})
-	}
-
 	var pipelines []osbuild.Pipeline
 	var mergedInputs osbuild.SourceInputs
 	for _, pipeline := range m.pipelines {
-		pipelines = append(pipelines, pipeline.serialize())
+		println("serializing pipeline", pipeline.Name())
+		inputs := Inputs{
+			Depsolved:  depsolvedSets[pipeline.Name()],
+			Containers: containerSpecs[pipeline.Name()],
+			Commits:    ostreeCommits[pipeline.Name()],
+		}
+		pipelines = append(pipelines, pipeline.serialize(inputs))
 		mergedInputs.Commits = append(mergedInputs.Commits, pipeline.getOSTreeCommits()...)
 		mergedInputs.Depsolved.Packages = append(mergedInputs.Depsolved.Packages, depsolvedSets[pipeline.Name()].Packages...)
 		mergedInputs.Depsolved.Repos = append(mergedInputs.Depsolved.Repos, depsolvedSets[pipeline.Name()].Repos...)
 		mergedInputs.Containers = append(mergedInputs.Containers, pipeline.getContainerSpecs()...)
 		mergedInputs.InlineData = append(mergedInputs.InlineData, pipeline.getInline()...)
 		mergedInputs.FileRefs = append(mergedInputs.FileRefs, pipeline.fileRefs()...)
-	}
-	for _, pipeline := range m.pipelines {
-		pipeline.serializeEnd()
 	}
 
 	sources, err := osbuild.GenSources(mergedInputs, opts.RpmDownloader)

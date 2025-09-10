@@ -344,7 +344,10 @@ func (p *AnacondaInstallerISOTree) serializeEnd() {
 	p.containerSpec = nil
 }
 
-func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
+func (p *AnacondaInstallerISOTree) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	// If the anaconda pipeline is a payload then we need one of three payload types
 	if p.anacondaPipeline.Type == AnacondaInstallerTypePayload {
 		count := 0

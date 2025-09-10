@@ -497,7 +497,10 @@ func (p *OS) serializeEnd() {
 	p.ostreeParentSpec = nil
 }
 
-func (p *OS) serialize() osbuild.Pipeline {
+func (p *OS) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}

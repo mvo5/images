@@ -23,7 +23,9 @@ func NewISORootfsImg(buildPipeline Build, installerPipeline Pipeline) *ISORootfs
 	return p
 }
 
-func (p *ISORootfsImg) serialize() osbuild.Pipeline {
+func (p *ISORootfsImg) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewMkdirStage(&osbuild.MkdirStageOptions{

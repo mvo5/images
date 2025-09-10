@@ -40,7 +40,9 @@ func NewQCOW2(buildPipeline Build, imgPipeline FilePipeline) *QCOW2 {
 	return p
 }
 
-func (p *QCOW2) serialize() osbuild.Pipeline {
+func (p *QCOW2) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewQEMUStage(

@@ -30,7 +30,9 @@ func (p *OSTreeEncapsulate) SetFilename(filename string) {
 	p.filename = filename
 }
 
-func (p *OSTreeEncapsulate) serialize() osbuild.Pipeline {
+func (p *OSTreeEncapsulate) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	encOptions := &osbuild.OSTreeEncapsulateStageOptions{

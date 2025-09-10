@@ -208,7 +208,10 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 	}
 }
 
-func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
+func (p *AnacondaInstaller) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}

@@ -164,7 +164,10 @@ func (p *BuildrootFromPackages) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *BuildrootFromPackages) serialize() osbuild.Pipeline {
+func (p *BuildrootFromPackages) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}
@@ -293,7 +296,10 @@ func (p *BuildrootFromContainer) getSELinuxLabels() map[string]string {
 	return labels
 }
 
-func (p *BuildrootFromContainer) serialize() osbuild.Pipeline {
+func (p *BuildrootFromContainer) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	if len(p.containerSpecs) == 0 {
 		panic("serialization not started")
 	}

@@ -44,7 +44,9 @@ func (p *RawImage) getBuildPackages(d Distro) []string {
 	return pkgs
 }
 
-func (p *RawImage) serialize() osbuild.Pipeline {
+func (p *RawImage) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pt := p.treePipeline.PartitionTable

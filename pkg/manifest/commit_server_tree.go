@@ -93,7 +93,10 @@ func (p *OSTreeCommitServer) serializeEnd() {
 	p.packageSpecs = nil
 }
 
-func (p *OSTreeCommitServer) serialize() osbuild.Pipeline {
+func (p *OSTreeCommitServer) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	if len(p.packageSpecs) == 0 {
 		panic("serialization not started")
 	}

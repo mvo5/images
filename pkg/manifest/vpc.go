@@ -41,7 +41,9 @@ func NewVPC(buildPipeline Build, imgPipeline FilePipeline) *VPC {
 	return p
 }
 
-func (p *VPC) serialize() osbuild.Pipeline {
+func (p *VPC) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	formatOptions := osbuild.VPCOptions{ForceSize: p.ForceSize}

@@ -48,7 +48,9 @@ func NewTar(buildPipeline Build, inputPipeline Pipeline, pipelinename string) *T
 	return p
 }
 
-func (p *Tar) serialize() osbuild.Pipeline {
+func (p *Tar) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	tarOptions := &osbuild.TarStageOptions{

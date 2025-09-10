@@ -33,7 +33,10 @@ func (p *OSTreeCommit) getBuildPackages(Distro) []string {
 	return packages
 }
 
-func (p *OSTreeCommit) serialize() osbuild.Pipeline {
+func (p *OSTreeCommit) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	pipeline := p.Base.serialize()
 
 	if p.treePipeline.OSTreeRef == "" {

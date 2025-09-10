@@ -274,7 +274,15 @@ func (p *OSTreeDeployment) doOSTreeContainerSpec(pipeline *osbuild.Pipeline, rep
 	return ref
 }
 
-func (p *OSTreeDeployment) serialize() osbuild.Pipeline {
+func (p *OSTreeDeployment) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	// XXX: this one is problematic, the RawOSTreeImage accesses
+	// the OSTreeDeployment.treePipeline.ostreeSpec and crashes
+	// if we stop serializing too early
+	defer p.serializeEnd()
+
+	println("OSTreeDeployment.serialize()", p.ostreeSpec)
+
 	switch {
 	case p.ostreeSpec == nil && p.containerSpec == nil:
 		panic("serialization not started")

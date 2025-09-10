@@ -88,7 +88,9 @@ func (p *ContentTest) serializeEnd() {
 	p.serializing = false
 }
 
-func (p *ContentTest) serialize() osbuild.Pipeline {
+func (p *ContentTest) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	if !p.serializing {
 		panic("serialization not started")
 	}

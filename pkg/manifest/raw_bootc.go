@@ -129,7 +129,9 @@ func buildHomedirPaths(users []users.User) []osbuild.MkdirStagePath {
 	}
 }
 
-func (p *RawBootcImage) serialize() osbuild.Pipeline {
+func (p *RawBootcImage) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pt := p.PartitionTable
@@ -150,14 +152,14 @@ func (p *RawBootcImage) serialize() osbuild.Pipeline {
 	if len(p.containers) > 0 {
 		opts.TargetImgref = p.containers[0].Name
 	}
-	inputs := osbuild.ContainerDeployInputs{
+	inputs2 := osbuild.ContainerDeployInputs{
 		Images: osbuild.NewContainersInputForSingleSource(p.containerSpecs[0]),
 	}
 	devices, mounts, err := osbuild.GenBootupdDevicesMounts(p.filename, p.PartitionTable, p.platform)
 	if err != nil {
 		panic(err)
 	}
-	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs, devices, mounts, p.platform)
+	st, err := osbuild.NewBootcInstallToFilesystemStage(opts, inputs2, devices, mounts, p.platform)
 	if err != nil {
 		panic(err)
 	}

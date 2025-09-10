@@ -50,7 +50,9 @@ func (p *RawOSTreeImage) getBuildPackages(Distro) []string {
 	return packages
 }
 
-func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
+func (p *RawOSTreeImage) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pt := p.treePipeline.PartitionTable
@@ -76,6 +78,7 @@ func (p *RawOSTreeImage) serialize() osbuild.Pipeline {
 		bootCopyOptions := &osbuild.CopyStageOptions{}
 
 		commit := p.treePipeline.ostreeSpec
+		println(commit)
 		commitChecksum := commit.Checksum
 
 		bootCopyInputs := osbuild.OSTreeCheckoutInputs{

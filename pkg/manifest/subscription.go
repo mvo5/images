@@ -36,7 +36,10 @@ func NewSubscription(buildPipeline Build, subOptions *subscription.ImageOptions)
 	return p
 }
 
-func (p *Subscription) serialize() osbuild.Pipeline {
+func (p *Subscription) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
+
 	pipeline := p.Base.serialize()
 	if p.Subscription != nil {
 		serviceDir, err := fsnode.NewDirectory("/etc/systemd/system", nil, nil, nil, true)

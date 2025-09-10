@@ -33,7 +33,9 @@ func NewGzip(buildPipeline Build, imgPipeline FilePipeline) *Gzip {
 	return p
 }
 
-func (p *Gzip) serialize() osbuild.Pipeline {
+func (p *Gzip) serialize(inputs Inputs) osbuild.Pipeline {
+	p.serializeStart(inputs)
+	defer p.serializeEnd()
 	pipeline := p.Base.serialize()
 
 	pipeline.AddStage(osbuild.NewGzipStage(
