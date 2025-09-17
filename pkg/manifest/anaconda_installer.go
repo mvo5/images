@@ -55,6 +55,8 @@ type AnacondaInstaller struct {
 	kernelName   string
 	kernelVer    string
 
+	// XXX: public
+	Containers     []container.SourceSpec
 	containerSpecs []container.Spec
 
 	// Interactive defaults is a kickstart stage that can be provided, it
@@ -156,6 +158,10 @@ func (p *AnacondaInstaller) getBuildPackages(Distro) []string {
 	return packages
 }
 
+func (p *AnacondaInstaller) getContainerSources() []container.SourceSpec {
+	return p.Containers
+}
+
 // getPackageSetChain returns the packages to install
 // It will also include weak deps for the Live installer type
 func (p *AnacondaInstaller) getPackageSetChain(Distro) []rpmmd.PackageSet {
@@ -217,12 +223,13 @@ func installerRootUser() osbuild.UsersStageOptionsUser {
 }
 
 func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
-	if len(p.packageSpecs) == 0 {
+	if len(p.packageSpecs) == 0 && len(p.containerSpecs) == 0 {
 		panic("serialization not started")
 	}
 
 	pipeline := p.Base.serialize()
 
+	// XXX: check on len(p.packageSpecs) instead?
 	if p.repos != nil {
 		options := osbuild.NewRPMStageOptions(p.repos)
 		// Documentation is only installed on live installer images

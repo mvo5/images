@@ -49,21 +49,29 @@ func NewAnacondaContainerInstaller(platform platform.Platform, filename string, 
 	}
 }
 
-func (img *AnacondaContainerInstaller) InstantiateManifest(m *manifest.Manifest,
-	repos []rpmmd.RepoConfig,
+func (img *AnacondaContainerInstaller) InstantiateManifestFromContainers(m *manifest.Manifest,
+	containers []container.SourceSpec,
 	runner runner.Runner,
 	rng *rand.Rand) (*artifact.Artifact, error) {
-	buildPipeline := addBuildBootstrapPipelines(m, runner, repos, &manifest.BuildOptions{ContainerBuildable: true})
+
+	cnts := []container.SourceSpec{img.ContainerSource}
+	buildPipeline := manifest.NewBuildFromContainer(m, runner, cnts,
+		&manifest.BuildOptions{
+			ContainerBuildable: true,
+		})
 	buildPipeline.Checkpoint()
 
 	anacondaPipeline := manifest.NewAnacondaInstaller(
 		manifest.AnacondaInstallerTypePayload,
 		buildPipeline,
 		img.platform,
-		repos,
+		nil, //repos,
 		"kernel",
 		img.InstallerCustomizations,
 	)
+	// XXX: call this differently, its the replacement for the
+	// rpm stage
+	anacondaPipeline.Containers = containers
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
