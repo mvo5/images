@@ -260,6 +260,9 @@ func (m *Manifest) BuildPipelines() []string {
 // name in their PackageSets list in addition to any global repositories
 // (global repositories are ones that do not specify any PackageSets).
 func filterRepos(repos []rpmmd.RepoConfig, plName string) []rpmmd.RepoConfig {
+	if repos == nil {
+		return nil
+	}
 	filtered := make([]rpmmd.RepoConfig, 0, len(repos))
 	for _, repo := range repos {
 		if len(repo.PackageSets) == 0 {

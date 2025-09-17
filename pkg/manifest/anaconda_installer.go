@@ -6,6 +6,7 @@ import (
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
+	"github.com/osbuild/images/pkg/container"
 	"github.com/osbuild/images/pkg/customizations/fsnode"
 	"github.com/osbuild/images/pkg/customizations/kickstart"
 	"github.com/osbuild/images/pkg/customizations/users"
@@ -53,6 +54,8 @@ type AnacondaInstaller struct {
 	packageSpecs []rpmmd.PackageSpec
 	kernelName   string
 	kernelVer    string
+
+	containerSpecs []container.Spec
 
 	// Interactive defaults is a kickstart stage that can be provided, it
 	// will be written to /usr/share/anaconda/interactive-defaults
@@ -184,22 +187,27 @@ func (p *AnacondaInstaller) getPackageSpecs() []rpmmd.PackageSpec {
 }
 
 func (p *AnacondaInstaller) serializeStart(inputs Inputs) {
-	if len(p.packageSpecs) > 0 {
+	if len(p.packageSpecs) > 0 && len(p.containerSpecs) > 0 {
 		panic("double call to serializeStart()")
 	}
+
 	p.packageSpecs = inputs.Depsolved.Packages
-	if p.kernelName != "" {
-		p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+	if len(p.packageSpecs) > 0 {
+		if p.kernelName != "" {
+			p.kernelVer = rpmmd.GetVerStrFromPackageSpecListPanic(p.packageSpecs, p.kernelName)
+		}
 	}
 	p.repos = append(p.repos, inputs.Depsolved.Repos...)
+	p.containerSpecs = inputs.Containers
 }
 
 func (p *AnacondaInstaller) serializeEnd() {
-	if len(p.packageSpecs) == 0 {
+	if len(p.packageSpecs) == 0 && len(p.containerSpecs) == 0 {
 		panic("serializeEnd() call when serialization not in progress")
 	}
 	p.kernelVer = ""
 	p.packageSpecs = nil
+	p.containerSpecs = nil
 }
 
 func installerRootUser() osbuild.UsersStageOptionsUser {
@@ -214,13 +222,30 @@ func (p *AnacondaInstaller) serialize() osbuild.Pipeline {
 	}
 
 	pipeline := p.Base.serialize()
-	options := osbuild.NewRPMStageOptions(p.repos)
-	// Documentation is only installed on live installer images
-	if p.Type != AnacondaInstallerTypeLive {
-		options.Exclude = &osbuild.Exclude{Docs: true}
-	}
 
-	pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	if p.repos != nil {
+		options := osbuild.NewRPMStageOptions(p.repos)
+		// Documentation is only installed on live installer images
+		if p.Type != AnacondaInstallerTypeLive {
+			options.Exclude = &osbuild.Exclude{Docs: true}
+		}
+
+		pipeline.AddStage(osbuild.NewRPMStage(options, osbuild.NewRpmStageSourceFilesInputs(p.packageSpecs)))
+	} else {
+		// for anaconda containers just use the buildroot
+		// XXX: copied from BuildrootFromContainer:build.go
+
+		// use container deploy
+		image := osbuild.NewContainersInputForSingleSource(p.containerSpecs[0])
+		// Make skopeo copy to remove the signatures of signed containers by default to workaround
+		// build failures until https://github.com/containers/image/issues/2599 is implemented
+		stage, err := osbuild.NewContainerDeployStage(image, &osbuild.ContainerDeployOptions{RemoveSignatures: true})
+		if err != nil {
+			panic(err)
+		}
+		pipeline.AddStage(stage)
+
+	}
 	pipeline.AddStage(osbuild.NewBuildstampStage(&osbuild.BuildstampStageOptions{
 		Arch:    p.platform.GetArch().String(),
 		Product: p.InstallerCustomizations.Product,
