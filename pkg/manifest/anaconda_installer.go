@@ -100,6 +100,10 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	return p
 }
 
+func (p *AnacondaInstaller) SetKernelVer(kVer string) {
+	p.kernelVer = kVer
+}
+
 // TODO: refactor - what is required to boot and what to build, and
 // do they all belong in this pipeline?
 func (p *AnacondaInstaller) anacondaBootPackageSet() []string {

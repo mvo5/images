@@ -39,6 +39,9 @@ type AnacondaContainerInstaller struct {
 
 	// Filesystem type for the installed system as opposed to that of the ISO.
 	InstallRootfsType disk.FSType
+
+	// XXX: comes via introspecting the container
+	KernelVer string
 }
 
 func NewAnacondaContainerInstaller(platform platform.Platform, filename string, container container.SourceSpec, ref string) *AnacondaContainerInstaller {
@@ -72,6 +75,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainers(m *mani
 	// XXX: call this differently, its the replacement for the
 	// rpm stage
 	anacondaPipeline.Containers = containers
+	anacondaPipeline.SetKernelVer(img.KernelVer)
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude
