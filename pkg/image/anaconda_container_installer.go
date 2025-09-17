@@ -112,7 +112,14 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainers(m *mani
 		img.Kickstart.Path = osbuild.KickstartPathOSBuild
 	}
 
-	bootTreePipeline.KernelOpts = []string{fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel), fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path)}
+	bootTreePipeline.KernelOpts = []string{
+		fmt.Sprintf("inst.stage2=hd:LABEL=%s", img.InstallerCustomizations.ISOLabel),
+		fmt.Sprintf("inst.ks=hd:LABEL=%s:%s", img.InstallerCustomizations.ISOLabel, img.Kickstart.Path),
+		// XXX: configure
+		"inst.text",
+		// last console is what anaconda uses
+		"console=tty0", "console=ttyS0",
+	}
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		bootTreePipeline.KernelOpts = append(bootTreePipeline.KernelOpts, "fips=1")
 	}
