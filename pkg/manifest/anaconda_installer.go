@@ -55,6 +55,11 @@ type AnacondaInstaller struct {
 	kernelName   string
 	kernelVer    string
 
+	// some images (like bootc installers) know their path in
+	// advance
+	kernelPath    string
+	initramfsPath string
+
 	// XXX: public
 	Containers     []container.SourceSpec
 	containerSpecs []container.Spec
@@ -98,6 +103,11 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	}
 	buildPipeline.addDependent(p)
 	return p
+}
+
+func (p *AnacondaInstaller) SetKernelInitramfsPaths(kPath, iPath string) {
+	p.kernelPath = kPath
+	p.initramfsPath = iPath
 }
 
 func (p *AnacondaInstaller) SetKernelVer(kVer string) {
@@ -447,6 +457,12 @@ func (p *AnacondaInstaller) dracutStageOptions() *osbuild.DracutStageOptions {
 		Extra:          []string{"--xz"},
 		AddDrivers:     p.InstallerCustomizations.AdditionalDrivers,
 	}
+	if p.initramfsPath != "" {
+		// dracut will by default write to /boot/initrmfs-$ver
+		// so we need to override if we have explicit paths
+		options.Extra = append(options.Extra, p.initramfsPath)
+	}
+
 	options.AddModules = append(options.AddModules, p.InstallerCustomizations.AdditionalDracutModules...)
 
 	if p.Biosdevname {

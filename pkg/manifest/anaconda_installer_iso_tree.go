@@ -408,15 +408,23 @@ func (p *AnacondaInstallerISOTree) serialize() osbuild.Pipeline {
 		}))
 	}
 
+	// XXX: this is too indirect, look into it
+	if p.anacondaPipeline.kernelPath == "" {
+		p.anacondaPipeline.kernelPath = fmt.Sprintf("boot/vmlinuz-%s", p.anacondaPipeline.kernelVer)
+	}
+	if p.anacondaPipeline.initramfsPath == "" {
+		p.anacondaPipeline.initramfsPath = fmt.Sprintf("boot/initramfs-%s.img", p.anacondaPipeline.kernelVer)
+	}
+
 	inputName := "tree"
 	copyStageOptions := &osbuild.CopyStageOptions{
 		Paths: []osbuild.CopyStagePath{
 			{
-				From: fmt.Sprintf("input://%s/boot/vmlinuz-%s", inputName, p.anacondaPipeline.kernelVer),
+				From: fmt.Sprintf("input://%s/%s", inputName, p.anacondaPipeline.kernelPath),
 				To:   "tree:///images/pxeboot/vmlinuz",
 			},
 			{
-				From: fmt.Sprintf("input://%s/boot/initramfs-%s.img", inputName, p.anacondaPipeline.kernelVer),
+				From: fmt.Sprintf("input://%s/%s", inputName, p.anacondaPipeline.initramfsPath),
 				To:   "tree:///images/pxeboot/initrd.img",
 			},
 		},
