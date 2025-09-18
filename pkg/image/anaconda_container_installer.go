@@ -29,6 +29,7 @@ type AnacondaContainerInstaller struct {
 	Ref string
 
 	ContainerSource           container.SourceSpec
+	InstallerPayload          container.SourceSpec
 	ContainerRemoveSignatures bool
 
 	Kickstart *kickstart.Options
@@ -136,7 +137,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainers(m *mani
 	isoTreePipeline.PayloadPath = "/container"
 	isoTreePipeline.PayloadRemoveSignatures = img.ContainerRemoveSignatures
 
-	isoTreePipeline.ContainerSource = &img.ContainerSource
+	isoTreePipeline.ContainerSource = &img.InstallerPayload
 	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
 	if anacondaPipeline.InstallerCustomizations.FIPS {
 		isoTreePipeline.KernelOpts = append(isoTreePipeline.KernelOpts, "fips=1")
