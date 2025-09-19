@@ -106,10 +106,12 @@ func TestPartitionTable_GenerateUUIDs_VFAT(t *testing.T) {
 	// Static seed for testing
 	/* #nosec G404 */
 	rnd := rand.New(rand.NewSource(0))
+	/* #nosec G404 */
+	rand.Seed(0)
 
 	pt.GenerateUUIDs(rnd)
 
-	assert.Equal(t, "6e4ff95f", pt.Partitions[0].Payload.(*disk.Filesystem).UUID)
+	assert.Equal(t, "SSNK-9QHR", pt.Partitions[0].Payload.(*disk.Filesystem).UUID)
 }
 
 func TestEnsureRootFilesystem(t *testing.T) {
@@ -2843,10 +2845,10 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Start: 1 * datasizes.MiB,
 						Size:  500 * datasizes.MiB,
 						Type:  disk.EFISystemPartitionGUID,
-						UUID:  "48a79ee0-b10d-4946-9185-0fd4a178892e",
+						UUID:  "fb180daf-48a7-4ee0-b10d-394651850fd4",
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
-							UUID:         "6e4ff95f",
+							UUID:         "AMYL-LMYG",
 							Mountpoint:   "/boot/efi",
 							FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 							FSTabFreq:    0,
@@ -2857,13 +2859,13 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Start:    501 * datasizes.MiB,
 						Size:     1*datasizes.MiB - (disk.DefaultSectorSize + (128 * 128)),
 						Type:     disk.RootPartitionX86_64GUID,
-						UUID:     "e285ece1-5114-4578-8875-d64ee2d3d0d0",
+						UUID:     "a178892e-e285-4ce1-9114-55780875d64e",
 						Bootable: false,
 						Payload: &disk.Filesystem{
 							Type:         "xfs",
 							Label:        "root",
 							Mountpoint:   "/",
-							UUID:         "f662a5ee-e82a-4df4-8a2d-0b75fb180daf",
+							UUID:         "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
 							FSTabOptions: "defaults",
 							FSTabFreq:    0,
 							FSTabPassNo:  0,
@@ -2901,7 +2903,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 						Type:  disk.EFISystemPartitionDOSID,
 						Payload: &disk.Filesystem{
 							Type:         "vfat",
-							UUID:         "6e4ff95f",
+							UUID:         "LCKS-XM0Y",
 							Mountpoint:   "/boot/efi",
 							FSTabOptions: "defaults,uid=0,gid=0,umask=077,shortname=winnt",
 							FSTabFreq:    0,
@@ -2917,7 +2919,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 							Type:         "xfs",
 							Label:        "root",
 							Mountpoint:   "/",
-							UUID:         "f662a5ee-e82a-4df4-8a2d-0b75fb180daf",
+							UUID:         "6e4ff95f-f662-45ee-a82a-bdf44a2d0b75",
 							FSTabOptions: "defaults",
 							FSTabFreq:    0,
 							FSTabPassNo:  0,

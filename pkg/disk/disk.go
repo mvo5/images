@@ -18,7 +18,6 @@
 package disk
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +29,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/osbuild/images/internal/common"
+	"github.com/osbuild/images/internal/randutil"
 	"github.com/osbuild/images/pkg/arch"
 )
 
@@ -455,12 +455,10 @@ func newRandomUUIDFromReader(r io.Reader) (uuid.UUID, error) {
 // NewVolIDFromRand creates a random 32 bit hex string to use as a volume ID
 // for FAT filesystems.
 func NewVolIDFromRand(r *rand.Rand) string {
-	volid := make([]byte, 4)
-	len, _ := r.Read(volid)
-	if len != 4 {
-		panic("expected four random bytes")
-	}
-	return hex.EncodeToString(volid)
+	return fmt.Sprintf("%s-%s",
+		randutil.String(4, randutil.AsciiUpper, randutil.AsciiDigit),
+		randutil.String(4, randutil.AsciiUpper, randutil.AsciiDigit),
+	)
 }
 
 // genUniqueString returns a string based on base that does does not exist in
