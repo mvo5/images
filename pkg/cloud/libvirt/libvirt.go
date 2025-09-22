@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"github.com/osbuild/images/pkg/cloud"
 	"io"
-	"os"
 
 	lv "libvirt.org/go/libvirt"
 )
+
+var _ = cloud.Uploader(&libvirtUploader{})
 
 type libvirtUploader struct {
 	connection string
@@ -27,7 +28,7 @@ func (lu *libvirtUploader) Check(status io.Writer) error {
 	return nil
 }
 
-func (lu *libvirtUploader) UploadAndRegister(r io.Reader, f *os.File, status io.Writer) (err error) {
+func (lu *libvirtUploader) UploadAndRegister(r io.Reader, uploadSize int64, status io.Writer) (err error) {
 	fmt.Fprintf(status, "Uploading to libvirt...\n")
 
 	// Connect to libvirt
@@ -44,14 +45,8 @@ func (lu *libvirtUploader) UploadAndRegister(r io.Reader, f *os.File, status io.
 	}
 	defer pool.Free()
 
-	// Get file info (for volume size)
-	stat, err := f.Stat()
-	if err != nil {
-		return fmt.Errorf("Failed to stat qcow2 file: %v", err)
-	}
-
 	// Create the volume in the pool
-	volXML := lu.VolumeXML(lu.volume, stat.Size())
+	volXML := lu.VolumeXML(lu.volume, int64(uploadSize))
 	vol, err := pool.StorageVolCreateXML(volXML, 0)
 	if err != nil {
 		return fmt.Errorf("Failed to create a libvirt volume: %v", err)
@@ -59,12 +54,11 @@ func (lu *libvirtUploader) UploadAndRegister(r io.Reader, f *os.File, status io.
 	defer vol.Free()
 
 	// Upload data into the volume
-	err = lu.Upload(conn, vol, r, stat.Size())
+	err = lu.Upload(conn, vol, r, int64(uploadSize))
 	if err != nil {
 		return fmt.Errorf("Failed to upload the file to libvirt: %v", err)
 	}
 
-	fmt.Fprintf(status, "File %s uploaded to %s\n", f.Name(), lu.connection)
 	return nil
 }
 

@@ -2,7 +2,6 @@ package cloud
 
 import (
 	"io"
-	"os"
 )
 
 // Uploader is an interface that is returned from the actual
@@ -21,5 +20,7 @@ type Uploader interface {
 	// the reader and write status message to the given
 	// status writer.
 	// To implement progress a proxy reader can be used.
-	UploadAndRegister(r io.Reader, f *os.File, status io.Writer) error
+	// For more complex scenarios an optional uploadSize can be
+	// passed.
+	UploadAndRegister(r io.Reader, uploadSize int64, status io.Writer) error
 }
