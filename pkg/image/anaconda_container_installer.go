@@ -47,6 +47,8 @@ type AnacondaContainerInstaller struct {
 	// {Kernel,Initramfs}Path is needed for grub2.iso
 	KernelPath    string
 	InitramfsPath string
+	// bootc installer cannot use /root as installer home
+	InstallerHome string
 }
 
 func NewAnacondaContainerInstaller(platform platform.Platform, filename string, container container.SourceSpec, ref string) *AnacondaContainerInstaller {
@@ -82,6 +84,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainers(m *mani
 	anacondaPipeline.Containers = containers
 	anacondaPipeline.SetKernelInitramfsPaths(img.KernelPath, img.InitramfsPath)
 	anacondaPipeline.SetKernelVer(img.KernelVer)
+	anacondaPipeline.InstallerHome = img.InstallerHome
 
 	anacondaPipeline.ExtraPackages = img.ExtraBasePackages.Include
 	anacondaPipeline.ExcludePackages = img.ExtraBasePackages.Exclude

@@ -59,6 +59,8 @@ type AnacondaInstaller struct {
 	// advance
 	kernelPath    string
 	initramfsPath string
+	// bootc installer cannot use /root as installer home
+	InstallerHome string
 
 	// XXX: public
 	Containers     []container.SourceSpec
@@ -314,7 +316,11 @@ func (p *AnacondaInstaller) payloadStages() []*osbuild.Stage {
 
 	installUID := 0
 	installGID := 0
-	installHome := "/root"
+	// bootc systems needs to be able to override this to /var/roothome
+	installHome := p.InstallerHome
+	if installHome == "" {
+		installHome = "/root"
+	}
 	installShell := "/usr/libexec/anaconda/run-anaconda"
 	installPassword := ""
 	installUser := osbuild.UsersStageOptionsUser{
