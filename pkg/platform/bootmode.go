@@ -1,5 +1,7 @@
 package platform
 
+import "fmt"
+
 type BootMode uint64
 
 const (
@@ -20,6 +22,6 @@ func (m BootMode) String() string {
 	case BOOT_HYBRID:
 		return "hybrid"
 	default:
-		panic("invalid boot mode")
+		panic(fmt.Errorf("invalid boot mode %d", m))
 	}
 }

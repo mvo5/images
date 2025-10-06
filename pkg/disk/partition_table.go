@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"github.com/google/uuid"
@@ -1113,6 +1114,28 @@ func hasESP(disk *blueprint.DiskCustomization) bool {
 	return false
 }
 
+func addLegacyPartitionForArch(pt *PartitionTable, architecture arch.Arch) error {
+	switch architecture {
+	case arch.ARCH_X86_64:
+		part, err := mkBIOSBoot(pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, part)
+	case arch.ARCH_PPC64LE:
+		part, err := mkPPCPrepBoot(pt.Type)
+		if err != nil {
+			return err
+		}
+		pt.Partitions = append(pt.Partitions, part)
+	case arch.ARCH_S390X:
+		// no partition needed to boot s390x
+	default:
+		fmt.Errorf("cannot create bios partition for %v", architecture)
+	}
+	return nil
+}
+
 // addPartitionsForBootMode creates partitions to satisfy the boot mode requirements:
 //   - BIOS/legacy: adds a 1 MiB BIOS boot partition.
 //   - UEFI: adds a 200 MiB EFI system partition.
@@ -1126,21 +1149,32 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 		return nil
 	}
 
-	switch architecture {
-	case arch.ARCH_PPC64LE:
-		// UEFI is not supported for PPC CPUs so we don't need to
-		// add an ESP partition there
-		part, err := mkPPCPrepBoot(pt.Type)
-		if err != nil {
+	supportedBootModes := map[arch.Arch][]platform.BootMode{
+		arch.ARCH_PPC64LE: []platform.BootMode{platform.BOOT_LEGACY},
+		arch.ARCH_S390X:   []platform.BootMode{platform.BOOT_LEGACY},
+		arch.ARCH_AARCH64: []platform.BootMode{platform.BOOT_UEFI},
+		arch.ARCH_RISCV64: []platform.BootMode{platform.BOOT_UEFI},
+		arch.ARCH_X86_64: []platform.BootMode{
+			platform.BOOT_LEGACY,
+			platform.BOOT_UEFI,
+			platform.BOOT_HYBRID,
+		},
+	}
+	supported, ok := supportedBootModes[architecture]
+	if !ok {
+		return fmt.Errorf("internal error: missing supported bootmode information for %v", architecture)
+	}
+	if !slices.Contains(supported, bootMode) {
+		return fmt.Errorf("invalid boot mode %s for %v: only %v are supported", bootMode, architecture, supported)
+	}
+
+	switch bootMode {
+	case platform.BOOT_LEGACY:
+		if err := addLegacyPartitionForArch(pt, architecture); err != nil {
 			return err
 		}
-		pt.Partitions = append(pt.Partitions, part)
-		return nil
-	case arch.ARCH_S390X:
-		// s390x does not need any special boot partition
-		return nil
-	case arch.ARCH_AARCH64, arch.ARCH_RISCV64:
-		// (our) aarch64/riscv64 only supports UEFI right now
+	case platform.BOOT_UEFI:
+		// add ESP if needed
 		if !hasESP(disk) {
 			part, err := mkESP(200*datasizes.MiB, pt.Type)
 			if err != nil {
@@ -1148,48 +1182,22 @@ func addPartitionsForBootMode(pt *PartitionTable, disk *blueprint.DiskCustomizat
 			}
 			pt.Partitions = append(pt.Partitions, part)
 		}
-		return nil
-	case arch.ARCH_X86_64:
-		switch bootMode {
-		case platform.BOOT_LEGACY:
-			// add BIOS boot partition
-			part, err := mkBIOSBoot(pt.Type)
+	case platform.BOOT_HYBRID:
+		// add both
+		if err := addLegacyPartitionForArch(pt, architecture); err != nil {
+			return err
+		}
+		if !hasESP(disk) {
+			esp, err := mkESP(200*datasizes.MiB, pt.Type)
 			if err != nil {
 				return err
 			}
-			pt.Partitions = append(pt.Partitions, part)
-			return nil
-		case platform.BOOT_UEFI:
-			// add ESP if needed
-			if !hasESP(disk) {
-				part, err := mkESP(200*datasizes.MiB, pt.Type)
-				if err != nil {
-					return err
-				}
-				pt.Partitions = append(pt.Partitions, part)
-			}
-			return nil
-		case platform.BOOT_HYBRID:
-			// add both
-			bios, err := mkBIOSBoot(pt.Type)
-			if err != nil {
-				return err
-			}
-			pt.Partitions = append(pt.Partitions, bios)
-			if !hasESP(disk) {
-				esp, err := mkESP(200*datasizes.MiB, pt.Type)
-				if err != nil {
-					return err
-				}
-				pt.Partitions = append(pt.Partitions, esp)
-			}
-			return nil
-		default:
-			return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
+			pt.Partitions = append(pt.Partitions, esp)
 		}
 	default:
-		return fmt.Errorf("unknown or unsupported architecture %v", architecture)
+		return fmt.Errorf("unknown or unsupported boot mode type with enum value %d", bootMode)
 	}
+	return nil
 }
 
 func mkPPCPrepBoot(ptType PartitionTableType) (Partition, error) {

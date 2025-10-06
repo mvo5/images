@@ -1147,7 +1147,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 				DefaultFSType:      disk.FS_XFS,
 				BootMode:           platform.BOOT_HYBRID,
 				PartitionTableType: disk.PT_GPT,
-				Architecture:       arch.ARCH_AARCH64, // doesn't matter for dos
+				Architecture:       arch.ARCH_X86_64,
 			},
 			expected: &disk.PartitionTable{
 				Type: disk.PT_DOS,
@@ -1373,7 +1373,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: &disk.CustomPartitionTableOptions{
 				DefaultFSType:      disk.FS_XFS,
-				BootMode:           platform.BOOT_HYBRID,
+				BootMode:           platform.BOOT_UEFI,
 				PartitionTableType: disk.PT_GPT,
 				Architecture:       arch.ARCH_AARCH64,
 			},
@@ -1462,7 +1462,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: &disk.CustomPartitionTableOptions{
 				DefaultFSType:      disk.FS_XFS,
-				BootMode:           platform.BOOT_HYBRID,
+				BootMode:           platform.BOOT_UEFI,
 				PartitionTableType: disk.PT_GPT,
 				Architecture:       arch.ARCH_AARCH64,
 			},
@@ -1786,7 +1786,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: &disk.CustomPartitionTableOptions{
 				DefaultFSType:      disk.FS_EXT4,
-				BootMode:           platform.BOOT_HYBRID,
+				BootMode:           platform.BOOT_LEGACY,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
 				Architecture:       arch.ARCH_S390X,
@@ -1859,7 +1859,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: &disk.CustomPartitionTableOptions{
 				DefaultFSType:      disk.FS_EXT4,
-				BootMode:           platform.BOOT_HYBRID,
+				BootMode:           platform.BOOT_LEGACY,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
 				Architecture:       arch.ARCH_PPC64LE,
@@ -1911,7 +1911,7 @@ func TestNewCustomPartitionTable(t *testing.T) {
 			},
 			options: &disk.CustomPartitionTableOptions{
 				DefaultFSType:      disk.FS_EXT4,
-				BootMode:           platform.BOOT_HYBRID,
+				BootMode:           platform.BOOT_LEGACY,
 				PartitionTableType: disk.PT_DOS,
 				RequiredMinSizes:   map[string]uint64{"/": 3 * datasizes.GiB},
 				Architecture:       arch.ARCH_PPC64LE,
