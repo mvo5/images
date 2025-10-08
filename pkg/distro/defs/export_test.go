@@ -13,3 +13,5 @@ func MockDataFS(path string) (restore func()) {
 		defaultDataFS = saved
 	}
 }
+
+var DefaultYamlOptions = defaultYamlOptions

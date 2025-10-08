@@ -1,6 +1,7 @@
 package defs_test
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -8,9 +9,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 
 	"github.com/osbuild/images/internal/common"
 	"github.com/osbuild/images/pkg/arch"
@@ -53,6 +54,9 @@ distros:
    defs_path: test-distro-1/
 `
 	}
+	if imgTypesContent == "" {
+		imgTypesContent = ".common:"
+	}
 
 	tmpdir := t.TempDir()
 	distrosPath := filepath.Join(tmpdir, "distros.yaml")
@@ -62,7 +66,9 @@ distros:
 	var di struct {
 		Distros []defs.DistroYAML `yaml:"distros"`
 	}
-	err = yaml.Unmarshal([]byte(distrosContent), &di)
+
+	dec := yaml.NewDecoder(bytes.NewBufferString(distrosContent), defs.DefaultYamlOptions...)
+	err = dec.Decode(&di)
 	assert.NoError(t, err)
 	for _, d := range di.Distros {
 		p := filepath.Join(tmpdir, d.DefsPath, "imagetypes.yaml")

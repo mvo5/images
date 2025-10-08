@@ -18,7 +18,7 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/images/internal/buildconfig"

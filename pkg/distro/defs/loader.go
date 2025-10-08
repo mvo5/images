@@ -12,7 +12,7 @@ import (
 	"sort"
 	"text/template"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 
 	"github.com/osbuild/images/data/distrodefs"
 	"github.com/osbuild/images/internal/common"
@@ -158,6 +158,12 @@ func (d *DistroYAML) runTemplates(id distro.ID) error {
 	return errors.Join(errs...)
 }
 
+var defaultYamlOptions = []yaml.DecodeOption{
+	yaml.DisallowUnknownField(),
+	yaml.UseJSONUnmarshaler(),
+	yaml.AllowDuplicateMapKey(),
+}
+
 func loadDistros() (*distrosYAML, error) {
 	f, err := dataFS().Open("distros.yaml")
 	if err != nil {
@@ -165,8 +171,7 @@ func loadDistros() (*distrosYAML, error) {
 	}
 	defer f.Close()
 
-	decoder := yaml.NewDecoder(f)
-	decoder.KnownFields(true)
+	decoder := yaml.NewDecoder(f, defaultYamlOptions...)
 
 	var distros distrosYAML
 	if err := decoder.Decode(&distros); err != nil {
@@ -228,8 +233,7 @@ func NewDistroYAML(nameVer string) (*DistroYAML, error) {
 	defer f.Close()
 
 	var toplevel imageTypesYAML
-	decoder := yaml.NewDecoder(f)
-	decoder.KnownFields(true)
+	decoder := yaml.NewDecoder(f, defaultYamlOptions...)
 	if err := decoder.Decode(&toplevel); err != nil {
 		return nil, err
 	}

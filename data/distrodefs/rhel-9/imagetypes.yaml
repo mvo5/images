@@ -981,8 +981,8 @@
       - unit: "nm-cloud-setup.service"
         dropin: "10-rh-enable-for-azure.conf"
         config:
-          service:
-            environment:
+          Service:
+            Environment:
               - key: "NM_CLOUD_SETUP_AZURE"
                 value: "yes"
     default_target: "multi-user.target"
@@ -1598,7 +1598,7 @@ image_types:
         - filename: "91-azure_datasource.cfg"
           config:
             datasource:
-              azure:
+              Azure:
                 apply_network_config: false
             datasource_list:
               - "Azure"
@@ -1925,8 +1925,8 @@ image_types:
         - unit: "nm-cloud-setup.service"
           dropin: "10-rh-enable-for-ec2.conf"
           config:
-            service:
-              environment:
+            Service:
+              Environment:
                 - key: "NM_CLOUD_SETUP_EC2"
                   value: "yes"
       authselect:
@@ -3113,7 +3113,7 @@ image_types:
         - filename: "91-azure_datasource.cfg"
           config:
             datasource:
-              azure:
+              Azure:
                 apply_network_config: false
             datasource_list:
               - "Azure"

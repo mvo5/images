@@ -1664,7 +1664,7 @@ image_types:
         - filename: "91-azure_datasource.cfg"
           config:
             datasource:
-              azure:
+              Azure:
                 apply_network_config: false
             datasource_list:
               - "Azure"
