@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 import argparse
+import asyncio
 import contextlib
 import json
 import os
+import pathlib
 import uuid
 from tempfile import TemporaryDirectory
 import shutil
 
 import imgtestlib as testlib
+from vendored.vm import QEMU
 
 BASE_TEST_SCRIPT = "test/scripts/check-host-config.sh"
 WSL_TEST_SCRIPT = "test/scripts/wsl-entrypoint.bat"
@@ -88,6 +91,79 @@ def ensure_uncompressed(filepath):
     else:
         # we only do xz for now so it must be raw: return as is and hope for the best
         yield filepath
+
+
+@contextlib.contextmanager
+def ensure_qcow2(filepath):
+    base, ext = os.path.splitext(filepath)
+    if ext != ".qcow2":
+        print(f"Converting {filepath} to qcow2")
+        filepath_qcow2 = base + ".qcow2"
+        testlib.runcmd_nc([
+            "qemu-img", "convert",
+            "-f", "raw",
+            "-O", "qcow2",
+            "-o", "preallocation=metadata",
+            filepath, filepath_qcow2,
+        ])
+        yield filepath_qcow2
+        os.unlink(filepath_qcow2)
+    else:
+        yield filepath
+
+
+def mutate_qemu_image_for_login(filepath, pubkey_path):
+    here = pathlib.Path(__file__).parent
+    pubkey = pathlib.Path(pubkey_path).read_text(encoding="utf8")
+    # pylint: disable=import-outside-toplevel
+    import guestfs
+    g = guestfs.GuestFS()
+    try:
+        g.add_drive_opts(filepath, readonly=False)
+        g.launch()
+        roots = g.inspect_os()
+        if not roots:
+            raise RuntimeError("No operating system found in the image")
+        print("found: ", roots)
+        root_device = roots[0]
+        g.mount(root_device, "/")
+        # we need the right mount in /root (all-customizations sets it on its own lv),
+        # sadly "/" and "/root" both are called "rootlv", but the later is rootlv00
+        if any([fs[0] == "/dev/rootvg/rootlv00" for fs in g.list_filesystems()]):
+            g.mount("/dev/rootvg/rootlv00", "/root")
+        # setfiles needs a setup /usr, on lvm setups we need to mount it
+        if any([fs[0] == "/dev/rootvg/usrlv" for fs in g.list_filesystems()]):
+            g.mount("/dev/rootvg/usrlv", "/usr")
+        # add root ssh key for systems that lack systemd credentials
+        ssh_dir = "/root/.ssh"
+        g.mkdir_p(ssh_dir)
+        g.chmod(0o700, ssh_dir)
+        auth_keys_file = f"{ssh_dir}/authorized_keys"
+        g.write_append(auth_keys_file, pubkey.encode('utf-8'))
+        g.chmod(0o600, auth_keys_file)
+        # we need /root/.ssh/authorized_keys to be labeled correctly
+        # XXX: detect contexts file path
+        g.sh("setfiles -F -v /etc/selinux/targeted/contexts/files/file_contexts /root/.ssh/authorized_keys")
+    finally:
+        g.close()
+
+
+def boot_qemu(arch, image_path, config):
+    cmd = [BASE_TEST_SCRIPT, config]
+    with ensure_uncompressed(image_path) as raw_image_path:
+        with create_ssh_key(key_type="rsa") as (privkey_path, pubkey_path):
+            mutate_qemu_image_for_login(raw_image_path, pubkey_path)
+            with QEMU(raw_image_path, arch=arch) as vm:
+                # put script in place
+                cmd_dir = pathlib.Path("/root")
+                for arg in cmd:
+                    maybe_file = pathlib.Path(arg)
+                    if maybe_file.exists():
+                        vm.scp(maybe_file, os.fspath(cmd_dir / maybe_file.name), user="root", keyfile=privkey_path)
+                # run the script (fugly, make this nicer!)
+                vm.run(" ".join([
+                    os.fspath(cmd_dir / pathlib.Path(p).name) for p in cmd
+                ]), user="root", keyfile=privkey_path)
 
 
 def cmd_boot_aws(arch, image_name, privkey, pubkey, image_path, script_cmd):
@@ -248,6 +324,8 @@ def main():
     print(f"Testing image at {image_path}")
     bib_image_id = ""
     match image_type:
+        case "qcow2" | "minimal-raw":
+            boot_qemu(arch, image_path, build_config_path)
         case "ami" | "ec2" | "ec2-ha" | "ec2-sap" | "edge-ami":
             boot_ami(distro, arch, image_type, image_path, build_config_path)
         case "vhd":

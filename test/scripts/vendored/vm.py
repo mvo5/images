@@ -12,7 +12,7 @@ import boto3
 import paramiko
 from botocore.exceptions import ClientError
 from paramiko.client import AutoAddPolicy, SSHClient
-from testutil import AWS_REGION, get_free_port, wait_ssh_ready
+from .testutil import AWS_REGION, get_free_port, wait_ssh_ready
 
 
 class VM(abc.ABC):
@@ -43,14 +43,16 @@ class VM(abc.ABC):
         Stop the VM and clean up any resources that were created when setting up and starting the machine.
         """
 
-    def run(self, cmd, user, password="", keyfile=None):
-        """
-        Run a command on the VM via SSH using the provided credentials.
-        """
+    def _get_ssh_transport(self, user, password="", keyfile=None):
         if not self.running():
             self.start()
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy)
+
+        import logging, sys
+        logging.getLogger("paramiko").setLevel(logging.DEBUG)
+        logging.getLogger("paramiko").addHandler(logging.StreamHandler(sys.stderr))
+
         # workaround, see https://github.com/paramiko/paramiko/issues/2048
         pkey = None
         if keyfile:
@@ -59,7 +61,14 @@ class VM(abc.ABC):
             self._address, self._ssh_port,
             user, password, pkey=pkey,
             allow_agent=False, look_for_keys=False)
-        chan = client.get_transport().open_session()
+        return client.get_transport()
+        
+    def run(self, cmd, user, password="", keyfile=None):
+        """
+        Run a command on the VM via SSH using the provided credentials.
+        """
+        tr = self._get_ssh_transport(user, password, keyfile)
+        chan = tr.open_session()
         chan.get_pty()
         chan.exec_command(cmd)
         stdout_f = chan.makefile()
@@ -73,6 +82,11 @@ class VM(abc.ABC):
         exit_status = stdout_f.channel.recv_exit_status()
         return exit_status, output.getvalue()
 
+    def scp(self, src, dst, user, password="", keyfile=None):
+        from scp import SCPClient
+        with SCPClient(self._get_ssh_transport(user, password, keyfile)) as scp:
+            scp.put(src, dst)
+    
     @abc.abstractmethod
     def running(self):
         """
@@ -103,7 +117,8 @@ class QEMU(VM):
     def __init__(self, img, arch="", snapshot=True, cdrom=None):
         super().__init__()
         self._img = pathlib.Path(img)
-        self._qmp_socket = self._img.with_suffix(".qemp-socket")
+        import tempfile
+        self._qmp_socket = pathlib.Path(tempfile.mkdtemp()) / "qmp-socket"
         self._qemu_p = None
         self._snapshot = snapshot
         self._cdrom = cdrom
@@ -142,7 +157,8 @@ class QEMU(VM):
             "-serial", "stdio",
             "-monitor", "none",
             "-netdev", f"user,id=net.0,hostfwd=tcp::{self._ssh_port}-:22",
-            "-device", "rtl8139,netdev=net.0",
+            # XXX: no "qemu-system-x86_64: Slirp: Failed to send packet, ret: -1" with e1000
+            "-device", "e1000,netdev=net.0",
             "-qmp", f"unix:{self._qmp_socket},server,nowait",
         ]
         if not os.environ.get("OSBUILD_TEST_QEMU_GUI"):
