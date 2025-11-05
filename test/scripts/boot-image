@@ -7,6 +7,7 @@ import os
 import pathlib
 import uuid
 import subprocess
+import shlex
 import shutil
 import textwrap
 from tempfile import mkdtemp, TemporaryDirectory
@@ -150,9 +151,9 @@ def mutate_qemu_image_for_login(filepath, pubkey_path):
         g.close()
 
 
-def make_cloud_init_iso(ssh_key: str) -> pathlib.Path:
+def make_cloud_init_iso(ssh_key, extra_files = None) -> pathlib.Path:
     with TemporaryDirectory() as tmpdir:
-        user_data = pathlib.Path(tmpdir) / "user-data"
+        user_data = pathlib.Path(tmpdir) / "user-data.yaml"
         user_data_content = textwrap.dedent(f"""\
         #cloud-config
         users:
@@ -163,10 +164,23 @@ def make_cloud_init_iso(ssh_key: str) -> pathlib.Path:
         user_data.write_text(user_data_content)
         meta_data = pathlib.Path(tmpdir) / "meta-data"
         meta_data.write_text('{"instance-id": "i-1234567890abcdef0"}')
+        if extra_files:
+            extra_files_tar = pathlib.Path(tmpdir) / "extra-files.tar"
+            subprocess.check_call(
+                ["tar", "cf", os.fspath(extra_files_tar), *extra_files],
+            )
+            user_data = pathlib.Path(tmpdir) / "user-data-bundle"
+            subprocess.check_call(
+                ["write-mime-multipart",
+                 "--output", user_data,
+                 "user-data.yaml:text/cloud-config",
+                 "extra-files.tar:text/x-tarfile",
+                 ], cwd=tmpdir,
+            )
         # XXX: cleanup
         iso_path = pathlib.Path(mkdtemp(prefix="ci-")) / "cloud-init.iso"
         subprocess.check_call(
-            ["cloud-localds", os.fspath(iso_path), "user-data", "meta-data"],
+            ["cloud-localds", os.fspath(iso_path), user_data.name, meta_data.name],
             cwd=tmpdir,
         )
         return iso_path
@@ -177,18 +191,13 @@ def boot_qemu(arch, image_path, config):
     with ensure_uncompressed(image_path) as raw_image_path:
         with create_ssh_key(key_type="rsa") as (privkey_path, pubkey_path):
             #mutate_qemu_image_for_login(raw_image_path, pubkey_path)
-            cloud_init_iso = make_cloud_init_iso(pathlib.Path(pubkey_path).read_text().strip())
+            ssh_key = pathlib.Path(pubkey_path).read_text().strip()
+            # put cmd into iso as well via cloud-init
+            cloud_init_iso = make_cloud_init_iso(ssh_key, cmd)
             with QEMU(raw_image_path, arch=arch, cdrom=cloud_init_iso) as vm:
-                # put script in place
-                cmd_dir = pathlib.Path("/root")
-                for arg in cmd:
-                    maybe_file = pathlib.Path(arg)
-                    if maybe_file.exists():
-                        vm.scp(maybe_file, os.fspath(cmd_dir / maybe_file.name), user="root", keyfile=privkey_path)
-                # run the script (fugly, make this nicer!)
-                vm.run(" ".join([
-                    os.fspath(cmd_dir / pathlib.Path(p).name) for p in cmd
-                ]), user="root", keyfile=privkey_path)
+                # run the script, this assumes that we always have
+                cmd = "/" + shlex.join(cmd)
+                vm.run(cmd, user="root", keyfile=privkey_path)
 
 
 def cmd_boot_aws(arch, image_name, privkey, pubkey, image_path, script_cmd):
