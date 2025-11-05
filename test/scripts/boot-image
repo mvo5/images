@@ -6,8 +6,10 @@ import json
 import os
 import pathlib
 import uuid
-from tempfile import TemporaryDirectory
+import subprocess
 import shutil
+import textwrap
+from tempfile import mkdtemp, TemporaryDirectory
 
 import imgtestlib as testlib
 from vendored.vm import QEMU
@@ -148,12 +150,35 @@ def mutate_qemu_image_for_login(filepath, pubkey_path):
         g.close()
 
 
+def make_cloud_init_iso(ssh_key: str) -> pathlib.Path:
+    with TemporaryDirectory() as tmpdir:
+        user_data = pathlib.Path(tmpdir) / "user-data"
+        user_data_content = textwrap.dedent(f"""\
+        #cloud-config
+        users:
+          - name: root
+            ssh_authorized_keys:
+              - {ssh_key}
+        """)
+        user_data.write_text(user_data_content)
+        meta_data = pathlib.Path(tmpdir) / "meta-data"
+        meta_data.write_text('{"instance-id": "i-1234567890abcdef0"}')
+        # XXX: cleanup
+        iso_path = pathlib.Path(mkdtemp(prefix="ci-")) / "cloud-init.iso"
+        subprocess.check_call(
+            ["cloud-localds", os.fspath(iso_path), "user-data", "meta-data"],
+            cwd=tmpdir,
+        )
+        return iso_path
+
+
 def boot_qemu(arch, image_path, config):
     cmd = [BASE_TEST_SCRIPT, config]
     with ensure_uncompressed(image_path) as raw_image_path:
         with create_ssh_key(key_type="rsa") as (privkey_path, pubkey_path):
-            mutate_qemu_image_for_login(raw_image_path, pubkey_path)
-            with QEMU(raw_image_path, arch=arch) as vm:
+            #mutate_qemu_image_for_login(raw_image_path, pubkey_path)
+            cloud_init_iso = make_cloud_init_iso(pathlib.Path(pubkey_path).read_text().strip())
+            with QEMU(raw_image_path, arch=arch, cdrom=cloud_init_iso) as vm:
                 # put script in place
                 cmd_dir = pathlib.Path("/root")
                 for arg in cmd:
