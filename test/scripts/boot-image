@@ -395,7 +395,7 @@ def main():
     match image_type:
         case "qcow2" | "server-qcow2":
             boot_qemu(arch, image_path, build_config_path)
-        case "image-installer" | "minimal-installer":
+        case "image-installer" | "minimal-installer" | "network-installer" | "everything-network-installer":
             boot_qemu_iso(arch, image_path, build_config_path)
         case "ami" | "ec2" | "ec2-ha" | "ec2-sap" | "edge-ami":
             boot_ami(distro, arch, image_type, image_path, build_config_path)
