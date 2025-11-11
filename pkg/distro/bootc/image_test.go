@@ -349,8 +349,7 @@ func TestGenPartitionTableSetsRootfsForAllFilesystemsBtrfs(t *testing.T) {
 	rng := createRand()
 
 	imgType := bootc.NewTestBootcImageType()
-	err := imgType.Arch().Distro().(*bootc.BootcDistro).SetDefaultFs("btrfs")
-	assert.NoError(t, err)
+	imgType.Arch().Distro().(*bootc.BootcDistro).SetDefaultFs("btrfs")
 	cus := &blueprint.Customizations{}
 	rootfsMinSize := uint64(0)
 	pt, err := imgType.GenPartitionTable(cus, rootfsMinSize, rng)

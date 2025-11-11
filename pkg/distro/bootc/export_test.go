@@ -37,6 +37,10 @@ func NewTestBootcImageType() *BootcImageType {
 	return it.(*BootcImageType)
 }
 
+func (d *BootcDistro) SetDefaultFs(defaultFs string) {
+	d.defaultFs = defaultFs
+}
+
 func (t *BootcImageType) SetSourceInfoPartitionTable(basept *disk.PartitionTable) {
 	t.arch.distro.sourceInfo.PartitionTable = basept
 }

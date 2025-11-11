@@ -89,19 +89,6 @@ func (d *BootcDistro) SetBuildContainerForTesting(imgref string, info *osinfo.In
 	return d.setBuildContainer(imgref, info)
 }
 
-func (d *BootcDistro) SetDefaultFs(defaultFs string) error {
-	if defaultFs == "" {
-		return nil
-	}
-
-	d.defaultFs = defaultFs
-	return nil
-}
-
-func (d *BootcDistro) DefaultFs() string {
-	return d.defaultFs
-}
-
 func (d *BootcDistro) Name() string {
 	return d.id.String()
 }
@@ -525,7 +512,7 @@ func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 
 // newBootcDistro returns a new instance of BootcDistro
 // from the given url
-func NewBootcDistro(imgref string) (*BootcDistro, error) {
+func NewBootcDistro(imgref, overrideDefaultFs string) (*BootcDistro, error) {
 	cnt, err := bibcontainer.New(imgref)
 	if err != nil {
 		return nil, err
@@ -538,10 +525,12 @@ func NewBootcDistro(imgref string) (*BootcDistro, error) {
 	if err != nil {
 		return nil, err
 	}
-	// XXX: provide a way to set defaultfs (needed for bib)
 	defaultFs, err := cnt.DefaultRootfsType()
 	if err != nil {
 		return nil, err
+	}
+	if overrideDefaultFs != "" {
+		defaultFs = overrideDefaultFs
 	}
 	cntSize, err := getContainerSize(imgref)
 	if err != nil {
@@ -612,5 +601,5 @@ func DistroFactory(idStr string) distro.Distro {
 	}
 	imgRef := l[1]
 
-	return common.Must(NewBootcDistro(imgRef))
+	return common.Must(NewBootcDistro(imgRef, ""))
 }
