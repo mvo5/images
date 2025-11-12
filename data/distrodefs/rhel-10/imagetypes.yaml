@@ -1724,7 +1724,7 @@ image_types:
     boot_iso: true
     image_func: "image_installer"
     # We don't know the variant of the OS pipeline being installed
-    iso_label: "Unknown"
+    iso_label: "Unknown 123456"
     exports: ["bootiso"]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
