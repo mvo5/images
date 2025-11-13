@@ -432,14 +432,6 @@
     }
   },
   {
-    "path": "./configs/unattended-no-pkgs-iso.json",
-    "filters": {
-      "image-types": [
-        "unattended-installer"
-      ]
-    }
-  },
-  {
     "path": "./configs/interactive-iso-userkickstart.json",
     "filters": {
       "distros": [

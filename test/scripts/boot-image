@@ -197,13 +197,6 @@ def boot_qemu_iso(arch, installer_iso_path, config_file):
     except CannotRunQemuTest as e:
         print(f"WARNING: skipping {installer_iso_path} with {config_file}: {e.skip_reason}")
         return
-    config = json.loads(pathlib.Path(config_file).read_text(encoding="utf8"))
-    # We can only test the unattended-iso as the other configs require
-    # interactive setup of the installer which we do not support in this
-    # test-runner.
-    if not config.get("blueprint", {}).get("customizations", {}).get("installer", {}).get("unattended"):
-        print("WARNING: skipping {installer_iso_path} with {config_file}: only unattended installs are supported")
-        return
     cmd = [BASE_TEST_SCRIPT, config_file]
     # we should pass console=ttyS0 to instaler os that we see install
     # progress on the serial console, in the meantime for interactive use
@@ -211,6 +204,24 @@ def boot_qemu_iso(arch, installer_iso_path, config_file):
     with contextlib.ExitStack() as cm:
         # we need /var/tmp here as /tmp might be on a (small) tmpfs
         tmpdir = cm.enter_context(TemporaryDirectory(dir="/var/tmp"))
+        config = json.loads(pathlib.Path(config_file).read_text(encoding="utf8"))
+        # when we cannot do non-interactive we need to write our own config
+        if not config.get("blueprint", {}).get("customizations", {}).get("installer", {}).get("unattended"):
+            unattended_ks = pathlib.Path(tmpdir) / "ks.cfg"
+            unattended_ks.write_text(textwrap.dedent("""\
+            text --non-interactive
+            autopart --type=plain
+            network --activate --onboot=on
+            reboot --eject
+            """))
+            new_installer_iso_path = installer_iso_path + ".withks.iso"
+            subprocess.check_call(
+                ["sudo", "mkksiso",
+                 "-c", "console=ttyS0",
+                 "--ks", os.fspath(unattended_ks),
+                 os.fspath(installer_iso_path), new_installer_iso_path])
+            installer_iso_path = new_installer_iso_path
+        
         # create an (empty) target disk, truncate ensures its sparse
         # so it will not take up real disk space until things are
         # written to it

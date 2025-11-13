@@ -23,6 +23,9 @@ dnf -y install \
     yamllint \
     xz
 
+# for mkksiso
+dnf install lorax
+
 # we need this for the qemu boot tests and for any python tests but
 # could skip it for other testing.
 pip install .
