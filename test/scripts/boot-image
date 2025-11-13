@@ -216,7 +216,7 @@ def boot_qemu_iso(arch, installer_iso_path, config_file):
         # written to it
         test_disk_path = pathlib.Path(tmpdir) / "disk.img"
         with open(test_disk_path, "w", encoding="utf8") as fp:
-            fp.truncate(10_000_000_000)
+            fp.truncate(20_000_000_000)
         # boot from installer to install to test disk, anaconda will
         # reboot automatically for the unattended-iso config.
         with QEMU(test_disk_path, cdrom=installer_iso_path) as vm:
