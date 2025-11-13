@@ -6,7 +6,7 @@ name = "images"
 version = "0.1.0"
 
 dependencies = [
-    "vmtest @ git+https://github.com/osbuild/bootc-image-builder.git",
+    "vmtest @ git+https://github.com/mvo5/bootc-image-builder.git@paramiko-fixes",
 ]
 
 [tool.setuptools]
