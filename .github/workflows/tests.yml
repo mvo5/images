@@ -278,3 +278,20 @@ jobs:
         # yq will catch issues that yamllint will not, like duplicate anchros
         run: |
           find . "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yq . {} \+ > /dev/null
+
+      - name: Ensure our data YAMLs are pretty
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            # note that we cannot use "xargs" or "\+" here as yq would "merge" the inputs
+            find ./data "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yq -i -P {} \;
+            find ./data "(" -iname "*.yaml" -or -iname "*.yml" ")" -exec yq -i '
+  (.. | select(kind == "seq" and length < 2)) style="flow" |
+  (.. | select(kind == "seq" and length >= 2)) style="" |
+  .. tag = ""' {} \;
+            find ./data "(" -iname "*.yaml" -or -iname "*.yml" ")" |xargs sed -i 's/!!merge //g'
+            git diff --exit-code
+            if [ $? -ne 0 ]; then
+                echo "ERROR: yq -P formatted things differently"
+                exit 1
+            fi
