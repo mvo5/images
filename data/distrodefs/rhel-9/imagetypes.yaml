@@ -2,510 +2,440 @@
 .common:
   distro_build_pkgset: &distro_build_pkgset
     include:
-      - "dnf"
-      - "dosfstools"
-      - "e2fsprogs"
-      - "glibc"
-      - "lvm2"
-      - "policycoreutils"
-      - "python3-iniparse"
-      - "qemu-img"
-      - "selinux-policy-targeted"
-      - "systemd"
-      - "tar"
-      - "xfsprogs"
-      - "xz"
+      - dnf
+      - dosfstools
+      - e2fsprogs
+      - glibc
+      - lvm2
+      - policycoreutils
+      - python3-iniparse
+      - qemu-img
+      - selinux-policy-targeted
+      - systemd
+      - tar
+      - xfsprogs
+      - xz
     conditions:
-      "x86_64 specific packages for build pkgsset":
+      x86_64 specific packages for build pkgsset:
         when:
-          arch: "x86_64"
+          arch: x86_64
+        append:
+          include: [grub2-pc]
+      ppc64le specific packages for build pkgsset:
+        when:
+          arch: ppc64le
         append:
           include:
-            - "grub2-pc"
-      "ppc64le specific packages for build pkgsset":
-        when:
-          arch: "ppc64le"
-        append:
-          include:
-            - "grub2-ppc64le"
-            - "grub2-ppc64le-modules"
-
+            - grub2-ppc64le
+            - grub2-ppc64le-modules
   disk_sizes:
     default_required_partition_sizes: &default_required_dir_sizes
-      "/": "1 GiB"
-      "/usr": "2 GiB"
-
+      /: 1 GiB
+      /usr: 2 GiB
   platforms:
     x86_64_uefi_platform: &x86_64_uefi_platform
-      arch: "x86_64"
-      bootloader: "grub2"
-      uefi_vendor: "{{.DistroVendor}}"
-      qcow2_compat: "1.1"
+      arch: x86_64
+      bootloader: grub2
+      uefi_vendor: '{{.DistroVendor}}'
+      qcow2_compat: 1.1
       packages: &x86_64_uefi_platform_packages
         uefi:
-          - "dracut-config-generic"
-          - "efibootmgr"
-          - "grub2-efi-x64"
-          - "shim-x64"
+          - dracut-config-generic
+          - efibootmgr
+          - grub2-efi-x64
+          - shim-x64
     x86_64_bios_platform: &x86_64_bios_platform
       <<: *x86_64_uefi_platform
-      bios_platform: "i386-pc"
-      uefi_vendor: "{{.DistroVendor}}"
+      bios_platform: i386-pc
+      uefi_vendor: '{{.DistroVendor}}'
       packages: &x86_64_bios_platform_packages
         <<: *x86_64_uefi_platform_packages
         bios:
-          - "dracut-config-generic"
-          - "grub2-pc"
+          - dracut-config-generic
+          - grub2-pc
       build_packages:
-        bios:
-          - "grub2-pc"
+        bios: [grub2-pc]
     x86_64_bios_only_platform: &x86_64_bios_only_platform
-      arch: "x86_64"
-      bios_platform: "i386-pc"
-      bootloader: "grub2"
-      image_format: "raw"
+      arch: x86_64
+      bios_platform: i386-pc
+      bootloader: grub2
+      image_format: raw
       packages:
-        bios:
-          - "grub2-pc"
+        bios: [grub2-pc]
       build_packages:
-        bios:
-          - "grub2-pc"
+        bios: [grub2-pc]
     x86_64_edge_platform: &x86_64_edge_platform
       <<: *x86_64_bios_platform
       packages:
         <<: *x86_64_bios_platform_packages
         firmware:
-          - "microcode_ctl"  # ??
-          - "iwl1000-firmware"
-          - "iwl100-firmware"
-          - "iwl105-firmware"
-          - "iwl135-firmware"
-          - "iwl2000-firmware"
-          - "iwl2030-firmware"
-          - "iwl3160-firmware"
-          - "iwl5000-firmware"
-          - "iwl5150-firmware"
-          - "iwl6050-firmware"
+          - microcode_ctl # ??
+          - iwl1000-firmware
+          - iwl100-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
+          - iwl5000-firmware
+          - iwl5150-firmware
+          - iwl6050-firmware
     x86_64_installer_platform: &x86_64_installer_platform
       <<: *x86_64_bios_platform
-      image_format: "raw"
+      image_format: raw
       packages:
         <<: *x86_64_bios_platform_packages
         booting:
-          - "biosdevname"
-          - "memtest86+"
+          - biosdevname
+          - memtest86+
         firmware:
-          - "iwl100-firmware"
-          - "iwl1000-firmware"
-          - "iwl105-firmware"
-          - "iwl135-firmware"
-          - "iwl2000-firmware"
-          - "iwl2030-firmware"
-          - "iwl3160-firmware"
+          - iwl100-firmware
+          - iwl1000-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
           # NOTE: Some firmware packages are only available in Buildroot
           # - "iwl3945-firmware"
           # - "iwl4965-firmware"
-          - "iwl5000-firmware"
-          - "iwl5150-firmware"
+          - iwl5000-firmware
+          - iwl5150-firmware
           # - "iwl6000-firmware"
-          - "iwl6000g2a-firmware"
-          - "iwl6000g2b-firmware"
-          - "iwl6050-firmware"
-          - "iwl7260-firmware"
+          - iwl6000g2a-firmware
+          - iwl6000g2b-firmware
+          - iwl6050-firmware
+          - iwl7260-firmware
           # - "libertas-sd8686-firmware"
-          - "libertas-sd8787-firmware"
+          - libertas-sd8787-firmware
           # - "libertas-usb8388-firmware"
           # - "libertas-usb8388-olpc-firmware"
-          - "linux-firmware"
+          - linux-firmware
           # - "liquidio-firmware"
-          - "netronome-firmware"
+          - netronome-firmware
           # - "opal-firmware"
     aarch64_platform: &aarch64_platform
-      arch: "aarch64"
-      bootloader: "grub2"
-      uefi_vendor: "{{.DistroVendor}}"
-      image_format: "qcow2"
-      qcow2_compat: "1.1"
+      arch: aarch64
+      bootloader: grub2
+      uefi_vendor: '{{.DistroVendor}}'
+      image_format: qcow2
+      qcow2_compat: 1.1
       packages: &aarch64_uefi_platform_packages
         uefi:
-          - "dracut-config-generic"
-          - "efibootmgr"
-          - "grub2-efi-aa64"
-          - "grub2-tools"
-          - "shim-aa64"
+          - dracut-config-generic
+          - efibootmgr
+          - grub2-efi-aa64
+          - grub2-tools
+          - shim-aa64
     aarch64_installer_platform: &aarch64_installer_platform
       <<: *aarch64_platform
       packages:
         <<: *aarch64_uefi_platform_packages
-        booting:
-          - "grub2-efi-aa64-cdboot"
+        booting: [grub2-efi-aa64-cdboot]
         firmware:
-          - "iwl100-firmware"
-          - "iwl1000-firmware"
-          - "iwl105-firmware"
-          - "iwl135-firmware"
-          - "iwl2000-firmware"
-          - "iwl2030-firmware"
-          - "iwl3160-firmware"
+          - iwl100-firmware
+          - iwl1000-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
           # NOTE: Some firmware packages are only available in Buildroot
           # - "iwl3945-firmware"
           # - "iwl4965-firmware"
-          - "iwl5000-firmware"
-          - "iwl5150-firmware"
+          - iwl5000-firmware
+          - iwl5150-firmware
           # - "iwl6000-firmware"
-          - "iwl6000g2a-firmware"
-          - "iwl6000g2b-firmware"
-          - "iwl6050-firmware"
-          - "iwl7260-firmware"
+          - iwl6000g2a-firmware
+          - iwl6000g2b-firmware
+          - iwl6050-firmware
+          - iwl7260-firmware
           # - "libertas-sd8686-firmware"
-          - "libertas-sd8787-firmware"
+          - libertas-sd8787-firmware
           # - "libertas-usb8388-firmware"
           # - "libertas-usb8388-olpc-firmware"
-          - "linux-firmware"
+          - linux-firmware
           # - "liquidio-firmware"
-          - "netronome-firmware"
+          - netronome-firmware
           # - "opal-firmware"
     ppc64le_bios_platform: &ppc64le_bios_platform
-      arch: "ppc64le"
-      bootloader: "grub2"
-      bios_platform: "powerpc-ieee1275"
-      image_format: "qcow2"
-      qcow2_compat: "1.1"
+      arch: ppc64le
+      bootloader: grub2
+      bios_platform: powerpc-ieee1275
+      image_format: qcow2
+      qcow2_compat: 1.1
       packages:
         bios:
-          - "dracut-config-generic"
-          - "powerpc-utils"
-          - "grub2-ppc64le"
-          - "grub2-ppc64le-modules"
+          - dracut-config-generic
+          - powerpc-utils
+          - grub2-ppc64le
+          - grub2-ppc64le-modules
       build_packages:
         bios:
-          - "grub2-ppc64le"
-          - "grub2-ppc64le-modules"
+          - grub2-ppc64le
+          - grub2-ppc64le-modules
     s390x_zipl_platform: &s390x_zipl_platform
-      arch: "s390x"
+      arch: s390x
       # XXX: merge zipl_support/bootloader
-      bootloader: "zipl"
+      bootloader: zipl
       zipl_support: true
-      image_format: "qcow2"
-      qcow2_compat: "1.1"
+      image_format: qcow2
+      qcow2_compat: 1.1
       packages:
         zipl:
-          - "dracut-config-generic"
-          - "s390utils-base"
-          - "s390utils-core"
+          - dracut-config-generic
+          - s390utils-base
+          - s390utils-core
       build_packages:
-        zipl:
-          - "s390utils-base"
-
+        zipl: [s390utils-base]
   common_conditions:
-    "add insights client on rhel": &conditions_pkgsets_insights_client_on_rhel
+    add insights client on rhel: &conditions_pkgsets_insights_client_on_rhel
       when:
-        distro_name: "rhel"
+        distro_name: rhel
       append:
-        include:
-          - "insights-client"
-    "add system-reinstall-bootc to 9.6+": &conditions_pkgsets_system_reinstall_bootc
+        include: [insights-client]
+    add system-reinstall-bootc to 9.6+: &conditions_pkgsets_system_reinstall_bootc
       when:
-        version_greater_or_equal: "9.6"
+        version_greater_or_equal: 9.6
       append:
-        include:
-          - "system-reinstall-bootc"
-
+        include: [system-reinstall-bootc]
   ec2_base_pkgset: &ec2_base_pkgset
     include:
-      - "@core"
-      - "authselect-compat"
-      - "chrony"
-      - "cloud-init"
-      - "cloud-utils-growpart"
-      - "dhcp-client"
-      - "yum-utils"
-      - "dracut-config-generic"
-      - "gdisk"
-      - "grub2"
-      - "langpacks-en"
-      - "NetworkManager-cloud-setup"
-      - "redhat-release"
-      - "redhat-release-eula"
-      - "rsync"
-      - "tuned"
-      - "tar"
+      - '@core'
+      - authselect-compat
+      - chrony
+      - cloud-init
+      - cloud-utils-growpart
+      - dhcp-client
+      - yum-utils
+      - dracut-config-generic
+      - gdisk
+      - grub2
+      - langpacks-en
+      - NetworkManager-cloud-setup
+      - redhat-release
+      - redhat-release-eula
+      - rsync
+      - tuned
+      - tar
     exclude:
-      - "aic94xx-firmware"
-      - "alsa-firmware"
-      - "alsa-tools-firmware"
-      - "biosdevname"
-      - "firewalld"
-      - "iprutils"
-      - "ivtv-firmware"
-      - "iwl1000-firmware"
-      - "iwl100-firmware"
-      - "iwl105-firmware"
-      - "iwl135-firmware"
-      - "iwl2000-firmware"
-      - "iwl2030-firmware"
-      - "iwl3160-firmware"
-      - "iwl3945-firmware"
-      - "iwl4965-firmware"
-      - "iwl5000-firmware"
-      - "iwl5150-firmware"
-      - "iwl6000-firmware"
-      - "iwl6000g2a-firmware"
-      - "iwl6000g2b-firmware"
-      - "iwl6050-firmware"
-      - "iwl7260-firmware"
-      - "libertas-sd8686-firmware"
-      - "libertas-sd8787-firmware"
-      - "libertas-usb8388-firmware"
-      - "plymouth"
+      - aic94xx-firmware
+      - alsa-firmware
+      - alsa-tools-firmware
+      - biosdevname
+      - firewalld
+      - iprutils
+      - ivtv-firmware
+      - iwl1000-firmware
+      - iwl100-firmware
+      - iwl105-firmware
+      - iwl135-firmware
+      - iwl2000-firmware
+      - iwl2030-firmware
+      - iwl3160-firmware
+      - iwl3945-firmware
+      - iwl4965-firmware
+      - iwl5000-firmware
+      - iwl5150-firmware
+      - iwl6000-firmware
+      - iwl6000g2a-firmware
+      - iwl6000g2b-firmware
+      - iwl6050-firmware
+      - iwl7260-firmware
+      - libertas-sd8686-firmware
+      - libertas-sd8787-firmware
+      - libertas-usb8388-firmware
+      - plymouth
       # RHBZ#2064087
-      - "dracut-config-rescue"
+      - dracut-config-rescue
       # RHBZ#2075815
-      - "qemu-guest-agent"
+      - qemu-guest-agent
     conditions:
-      "insights client on rhel": *conditions_pkgsets_insights_client_on_rhel
-      "system reinstall bootc": *conditions_pkgsets_system_reinstall_bootc
-
+      insights client on rhel: *conditions_pkgsets_insights_client_on_rhel
+      system reinstall bootc: *conditions_pkgsets_system_reinstall_bootc
   azure_base_pkgset: &azure_base_pkgset
     include:
-      - "@Server"
-      - "bzip2"
-      - "cloud-init"
-      - "cloud-utils-growpart"
-      - "efibootmgr"
-      - "gdisk"
-      - "hyperv-daemons"
-      - "langpacks-en"
-      - "lvm2"
-      - "NetworkManager"
-      - "NetworkManager-cloud-setup"
-      - "nvme-cli"
-      - "patch"
-      - "rsync"
-      - "selinux-policy-targeted"
-      - "uuid"
-      - "WALinuxAgent"
-      - "yum-utils"
+      - '@Server'
+      - bzip2
+      - cloud-init
+      - cloud-utils-growpart
+      - efibootmgr
+      - gdisk
+      - hyperv-daemons
+      - langpacks-en
+      - lvm2
+      - NetworkManager
+      - NetworkManager-cloud-setup
+      - nvme-cli
+      - patch
+      - rsync
+      - selinux-policy-targeted
+      - uuid
+      - WALinuxAgent
+      - yum-utils
     exclude:
-      - "aic94xx-firmware"
-      - "alsa-firmware"
-      - "alsa-lib"
-      - "alsa-sof-firmware"
-      - "alsa-tools-firmware"
-      - "biosdevname"
-      - "bolt"
-      - "buildah"
-      - "cockpit-podman"
-      - "containernetworking-plugins"
-      - "dnf-plugin-spacewalk"
-      - "dracut-config-rescue"
-      - "glibc-all-langpacks"
-      - "iprutils"
-      - "ivtv-firmware"
-      - "iwl100-firmware"
-      - "iwl1000-firmware"
-      - "iwl105-firmware"
-      - "iwl135-firmware"
-      - "iwl2000-firmware"
-      - "iwl2030-firmware"
-      - "iwl3160-firmware"
-      - "iwl3945-firmware"
-      - "iwl4965-firmware"
-      - "iwl5000-firmware"
-      - "iwl5150-firmware"
-      - "iwl6000-firmware"
-      - "iwl6000g2a-firmware"
-      - "iwl6000g2b-firmware"
-      - "iwl6050-firmware"
-      - "iwl7260-firmware"
-      - "libertas-sd8686-firmware"
-      - "libertas-sd8787-firmware"
-      - "libertas-usb8388-firmware"
-      - "NetworkManager-config-server"
-      - "plymouth"
-      - "podman"
-      - "python3-dnf-plugin-spacewalk"
-      - "python3-hwdata"
-      - "python3-rhnlib"
-      - "rhn-check"
-      - "rhn-client-tools"
-      - "rhn-setup"
-      - "rhnlib"
-      - "rhnsd"
-      - "usb_modeswitch"
+      - aic94xx-firmware
+      - alsa-firmware
+      - alsa-lib
+      - alsa-sof-firmware
+      - alsa-tools-firmware
+      - biosdevname
+      - bolt
+      - buildah
+      - cockpit-podman
+      - containernetworking-plugins
+      - dnf-plugin-spacewalk
+      - dracut-config-rescue
+      - glibc-all-langpacks
+      - iprutils
+      - ivtv-firmware
+      - iwl100-firmware
+      - iwl1000-firmware
+      - iwl105-firmware
+      - iwl135-firmware
+      - iwl2000-firmware
+      - iwl2030-firmware
+      - iwl3160-firmware
+      - iwl3945-firmware
+      - iwl4965-firmware
+      - iwl5000-firmware
+      - iwl5150-firmware
+      - iwl6000-firmware
+      - iwl6000g2a-firmware
+      - iwl6000g2b-firmware
+      - iwl6050-firmware
+      - iwl7260-firmware
+      - libertas-sd8686-firmware
+      - libertas-sd8787-firmware
+      - libertas-usb8388-firmware
+      - NetworkManager-config-server
+      - plymouth
+      - podman
+      - python3-dnf-plugin-spacewalk
+      - python3-hwdata
+      - python3-rhnlib
+      - rhn-check
+      - rhn-client-tools
+      - rhn-setup
+      - rhnlib
+      - rhnsd
+      - usb_modeswitch
     conditions:
-      "insights clients on rhel": *conditions_pkgsets_insights_client_on_rhel
-      "system-reinstall-bootc": *conditions_pkgsets_system_reinstall_bootc
-      "rhel-9.6+ drops microcode_ctl":
+      insights clients on rhel: *conditions_pkgsets_insights_client_on_rhel
+      system-reinstall-bootc: *conditions_pkgsets_system_reinstall_bootc
+      rhel-9.6+ drops microcode_ctl:
         when:
-          version_greater_or_equal: "9.6"
+          version_greater_or_equal: 9.6
         append:
-          exclude:
-            - "microcode_ctl"
-      "x86_64 alone supports rngd":
+          exclude: [microcode_ctl]
+      x86_64 alone supports rngd:
         when:
-          arch: "x86_64"
+          arch: x86_64
         append:
-          include:
-            - "rng-tools"
-      "rhel-9.8+ gets azure-vm-utils and excludes initscripts-rename-device":
+          include: [rng-tools]
+      rhel-9.8+ gets azure-vm-utils and excludes initscripts-rename-device:
         when:
-          version_greater_or_equal: "9.8"
+          version_greater_or_equal: 9.8
         append:
-          include:
-            - "azure-vm-utils"
-          exclude:
-            - "initscripts-rename-device"
-
+          include: [azure-vm-utils]
+          exclude: [initscripts-rename-device]
   sapapps_image_config: &sapapps_image_config
     selinux_config:
-      state: "permissive"
+      state: permissive
     # RHBZ#1959979
-    tmpfilesd:
-      - filename: "sap.conf"
-        config:
-          - type: "x"
-            path: "/tmp/.sap*"
-          - type: "x"
-            path: "/tmp/.hdb*lock"
-          - type: "x"
-            path: "/tmp/.trex*lock"
+    tmpfilesd: [{filename: sap.conf, config: [{type: x, path: /tmp/.sap*}, {type: x, path: /tmp/.hdb*lock}, {type: x, path: /tmp/.trex*lock}]}]
     # RHBZ#1959963
-    pam_limits_conf:
-      - filename: "99-sap.conf"
-        config:
-          - domain: "@sapsys"
-            type: "hard"
-            item: "nofile"
-            value: 1048576
-          - domain: "@sapsys"
-            type: "soft"
-            item: "nofile"
-            value: 1048576
-          - domain: "@dba"
-            type: "hard"
-            item: "nofile"
-            value: 1048576
-          - domain: "@dba"
-            type: "soft"
-            item: "nofile"
-            value: 1048576
-          - domain: "@sapsys"
-            type: "hard"
-            item: "nproc"
-            value: "unlimited"
-          - domain: "@sapsys"
-            type: "soft"
-            item: "nproc"
-            value: "unlimited"
-          - domain: "@dba"
-            type: "hard"
-            item: "nproc"
-            value: "unlimited"
-          - domain: "@dba"
-            type: "soft"
-            item: "nproc"
-            value: "unlimited"
+    pam_limits_conf: [{filename: 99-sap.conf, config: [{domain: '@sapsys', type: hard, item: nofile, value: 1048576}, {domain: '@sapsys', type: soft, item: nofile, value: 1048576}, {domain: '@dba', type: hard, item: nofile, value: 1048576}, {domain: '@dba', type: soft, item: nofile, value: 1048576}, {domain: '@sapsys', type: hard, item: nproc, value: unlimited}, {domain: '@sapsys', type: soft, item: nproc, value: unlimited}, {domain: '@dba', type: hard, item: nproc, value: unlimited}, {domain: '@dba', type: soft, item: nproc, value: unlimited}]}]
     # RHBZ#1959962
-    sysctld:
-      - filename: "sap.conf"
-        config:
-          - key: "kernel.pid_max"
-            value: "4194304"
-          - key: "vm.max_map_count"
-            value: "2147483647"
+    sysctld: [{filename: sap.conf, config: [{key: kernel.pid_max, value: 4194304}, {key: vm.max_map_count, value: 2147483647}]}]
     dnf_config:
       set_releasever_var: true
-
   sap_image_config: &sap_image_config
     <<: *sapapps_image_config
     tuned:
-      profiles: ["sap-hana"]
-
+      profiles: [sap-hana]
   sap_base_pkgset: &sap_base_pkgset
     include:
       # RHBZ#2076763
-      - "@Server"
+      - '@Server'
       # RHBZ#1959813
-      - "bind-utils"
-      - "nfs-utils"
-      - "tcsh"
+      - bind-utils
+      - nfs-utils
+      - tcsh
       # RHBZ#1959955
-      - "uuidd"
+      - uuidd
       # RHBZ#1959923
-      - "cairo"
-      - "expect"
-      - "graphviz"
-      - "gtk2"
-      - "iptraf-ng"
-      - "krb5-workstation"
-      - "libaio"
-      - "libatomic"
-      - "libicu"
-      - "libtool-ltdl"
-      - "lm_sensors"
-      - "net-tools"
-      - "numactl"
-      - "PackageKit-gtk3-module"
-      - "xorg-x11-xauth"
+      - cairo
+      - expect
+      - graphviz
+      - gtk2
+      - iptraf-ng
+      - krb5-workstation
+      - libaio
+      - libatomic
+      - libicu
+      - libtool-ltdl
+      - lm_sensors
+      - net-tools
+      - numactl
+      - PackageKit-gtk3-module
+      - xorg-x11-xauth
       # RHBZ#1961168
-      - "libnsl"
+      - libnsl
     exclude:
-      - "iwl1000-firmware"
-      - "iwl100-firmware"
-      - "iwl105-firmware"
-      - "iwl135-firmware"
-      - "iwl2000-firmware"
-      - "iwl2030-firmware"
-      - "iwl3160-firmware"
-      - "iwl5000-firmware"
-      - "iwl5150-firmware"
-      - "iwl6000g2a-firmware"
-      - "iwl6000g2b-firmware"
-      - "iwl6050-firmware"
-      - "iwl7260-firmware"
-
+      - iwl1000-firmware
+      - iwl100-firmware
+      - iwl105-firmware
+      - iwl135-firmware
+      - iwl2000-firmware
+      - iwl2030-firmware
+      - iwl3160-firmware
+      - iwl5000-firmware
+      - iwl5150-firmware
+      - iwl6000g2a-firmware
+      - iwl6000g2b-firmware
+      - iwl6050-firmware
+      - iwl7260-firmware
   sap_extras_pkgset: &sap_extras_pkgset
     include:
       # SAP System Roles
       # https://access.redhat.com/sites/default/files/attachments/rhel_system_roles_for_sap_1.pdf
-      - "ansible-core"
-      - "rhel-system-roles-sap"
+      - ansible-core
+      - rhel-system-roles-sap
       # RHBZ#1960617
-      - "tuned-profiles-sap-hana"
-
+      - tuned-profiles-sap-hana
   installer_pkgset: &installer_pkgset
     include:
-      - "anaconda-dracut"
-      - "curl"
-      - "dracut-config-generic"
-      - "dracut-network"
-      - "hostname"
-      - "iwl100-firmware"
-      - "iwl1000-firmware"
-      - "iwl105-firmware"
-      - "iwl135-firmware"
-      - "iwl2000-firmware"
-      - "iwl2030-firmware"
-      - "iwl3160-firmware"
-      - "iwl5000-firmware"
-      - "iwl5150-firmware"
-      - "iwl6050-firmware"
-      - "iwl7260-firmware"
-      - "kernel"
-      - "less"
-      - "nfs-utils"
-      - "openssh-clients"
-      - "ostree"
-      - "plymouth"
-      - "prefixdevname"
-      - "rng-tools"
-      - "rpcbind"
-      - "selinux-policy-targeted"
-      - "systemd"
-      - "tar"
-      - "xfsprogs"
-      - "xz"
+      - anaconda-dracut
+      - curl
+      - dracut-config-generic
+      - dracut-network
+      - hostname
+      - iwl100-firmware
+      - iwl1000-firmware
+      - iwl105-firmware
+      - iwl135-firmware
+      - iwl2000-firmware
+      - iwl2030-firmware
+      - iwl3160-firmware
+      - iwl5000-firmware
+      - iwl5150-firmware
+      - iwl6050-firmware
+      - iwl7260-firmware
+      - kernel
+      - less
+      - nfs-utils
+      - openssh-clients
+      - ostree
+      - plymouth
+      - prefixdevname
+      - rng-tools
+      - rpcbind
+      - selinux-policy-targeted
+      - systemd
+      - tar
+      - xfsprogs
+      - xz
       # Extra packages that are required by the dracut stage of all installers.
       # These are weak deps of other packages in the list above, but lets be
       # explicit about what we need and not rely on the weak deps. Relying
@@ -513,16 +443,14 @@
       #
       # add these dynamically based on the modules enabled by each
       # pipeline.
-      - "mdadm"
-      - "nss-softokn"
+      - mdadm
+      - nss-softokn
     conditions:
-      "x86_64 specific installer packages":
+      x86_64 specific installer packages:
         when:
-          arch: "x86_64"
+          arch: x86_64
         append:
-          include:
-            - "biosdevname"
-
+          include: [biosdevname]
   wsl: &wsl_config
     config:
       boot_systemd: true
@@ -532,310 +460,303 @@
         icon: /usr/share/pixmaps/fedora-logo.ico
       oobe: &wsl_distribution_oobe_config
         default_uid: 1000
-
   anaconda_boot_pkgset: &anaconda_boot_pkgset
     conditions:
-      "x86 specific packages for the anaconda boot pkgset":
+      x86 specific packages for the anaconda boot pkgset:
         when:
-          arch: "x86_64"
+          arch: x86_64
         append:
           include:
             # eficommon
-            - "efibootmgr"
+            - efibootmgr
             # XXX: de-dup?
             # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
+            - grub2-tools
+            - grub2-tools-extra
+            - grub2-tools-minimal
             # arch specific
-            - "grub2-efi-x64"
-            - "grub2-efi-x64-cdboot"
-            - "grub2-pc"
-            - "grub2-pc-modules"
-            - "shim-x64"
-            - "syslinux"
-            - "syslinux-nonlinux"
-      "aarch64 specific packages for the anaconda boot pkgset":
+            - grub2-efi-x64
+            - grub2-efi-x64-cdboot
+            - grub2-pc
+            - grub2-pc-modules
+            - shim-x64
+            - syslinux
+            - syslinux-nonlinux
+      aarch64 specific packages for the anaconda boot pkgset:
         when:
-          arch: "aarch64"
+          arch: aarch64
         append:
           include:
             # eficommon
-            - "efibootmgr"
+            - efibootmgr
             # XXX: de-dup?
             # grub-common
-            - "grub2-tools"
-            - "grub2-tools-extra"
-            - "grub2-tools-minimal"
+            - grub2-tools
+            - grub2-tools-extra
+            - grub2-tools-minimal
             # arch specific
-            - "grub2-efi-aa64-cdboot"
-            - "grub2-efi-aa64"
-            - "shim-aa64"
-
+            - grub2-efi-aa64-cdboot
+            - grub2-efi-aa64
+            - shim-aa64
   anaconda_pkgset: &anaconda_pkgset
     include:
-      - "aajohan-comfortaa-fonts"
-      - "abattis-cantarell-fonts"
-      - "alsa-firmware"
-      - "alsa-tools-firmware"
-      - "anaconda"
-      - "anaconda-dracut"
-      - "anaconda-install-env-deps"
-      - "anaconda-widgets"
-      - "audit"
-      - "bind-utils"
-      - "bitmap-fangsongti-fonts"
-      - "bzip2"
-      - "cryptsetup"
-      - "curl"
-      - "dbus-x11"
-      - "dejavu-sans-fonts"
-      - "dejavu-sans-mono-fonts"
-      - "device-mapper-persistent-data"
-      - "dmidecode"
-      - "dnf"
-      - "dracut-config-generic"
-      - "dracut-network"
-      - "efibootmgr"
-      - "ethtool"
-      - "fcoe-utils"
-      - "ftp"
-      - "gdb-gdbserver"
-      - "gdisk"
-      - "glibc-all-langpacks"
-      - "gnome-kiosk"
-      - "google-noto-sans-cjk-ttc-fonts"
-      - "grub2-tools"
-      - "grub2-tools-extra"
-      - "grub2-tools-minimal"
-      - "grubby"
-      - "gsettings-desktop-schemas"
-      - "hdparm"
-      - "hexedit"
-      - "hostname"
-      - "initscripts"
-      - "ipmitool"
-      - "iwl1000-firmware"
-      - "iwl100-firmware"
-      - "iwl105-firmware"
-      - "iwl135-firmware"
-      - "iwl2000-firmware"
-      - "iwl2030-firmware"
-      - "iwl3160-firmware"
-      - "iwl5000-firmware"
-      - "iwl5150-firmware"
-      - "iwl6000g2a-firmware"
-      - "iwl6000g2b-firmware"
-      - "iwl6050-firmware"
-      - "iwl7260-firmware"
-      - "jomolhari-fonts"
-      - "kacst-farsi-fonts"
-      - "kacst-qurn-fonts"
-      - "kbd"
-      - "kbd-misc"
-      - "kdump-anaconda-addon"
-      - "kernel"
-      - "khmeros-base-fonts"
-      - "less"
-      - "libblockdev-lvm-dbus"
-      - "libibverbs"
-      - "libreport-plugin-bugzilla"
-      - "libreport-plugin-reportuploader"
-      - "librsvg2"
-      - "linux-firmware"
-      - "lklug-fonts"
-      - "lldpad"
-      - "lohit-assamese-fonts"
-      - "lohit-bengali-fonts"
-      - "lohit-devanagari-fonts"
-      - "lohit-gujarati-fonts"
-      - "lohit-gurmukhi-fonts"
-      - "lohit-kannada-fonts"
-      - "lohit-odia-fonts"
-      - "lohit-tamil-fonts"
-      - "lohit-telugu-fonts"
-      - "lsof"
-      - "madan-fonts"
-      - "mtr"
-      - "mt-st"
-      - "net-tools"
-      - "nfs-utils"
-      - "nmap-ncat"
-      - "nm-connection-editor"
-      - "nss-tools"
-      - "openssh-clients"
-      - "openssh-server"
-      - "oscap-anaconda-addon"
-      - "ostree"
-      - "pciutils"
-      - "perl-interpreter"
-      - "pigz"
-      - "plymouth"
-      - "prefixdevname"
-      - "python3-pyatspi"
-      - "rdma-core"
-      - "redhat-release-eula"
-      - "rng-tools"
-      - "rpcbind"
-      - "rpm-ostree"
-      - "rsync"
-      - "rsyslog"
-      - "selinux-policy-targeted"
-      - "sg3_utils"
-      - "sil-abyssinica-fonts"
-      - "sil-padauk-fonts"
-      - "sil-scheherazade-fonts"
-      - "smartmontools"
-      - "smc-meera-fonts"
-      - "spice-vdagent"
-      - "strace"
-      - "systemd"
-      - "tar"
-      - "thai-scalable-waree-fonts"
-      - "tigervnc-server-minimal"
-      - "tigervnc-server-module"
-      - "udisks2"
-      - "udisks2-iscsi"
-      - "usbutils"
-      - "vim-minimal"
-      - "volume_key"
-      - "wget"
-      - "xfsdump"
-      - "xfsprogs"
-      - "xorg-x11-drivers"
-      - "xorg-x11-fonts-misc"
-      - "xorg-x11-server-utils"
-      - "xorg-x11-server-Xorg"
-      - "xorg-x11-xauth"
-      - "xz"
+      - aajohan-comfortaa-fonts
+      - abattis-cantarell-fonts
+      - alsa-firmware
+      - alsa-tools-firmware
+      - anaconda
+      - anaconda-dracut
+      - anaconda-install-env-deps
+      - anaconda-widgets
+      - audit
+      - bind-utils
+      - bitmap-fangsongti-fonts
+      - bzip2
+      - cryptsetup
+      - curl
+      - dbus-x11
+      - dejavu-sans-fonts
+      - dejavu-sans-mono-fonts
+      - device-mapper-persistent-data
+      - dmidecode
+      - dnf
+      - dracut-config-generic
+      - dracut-network
+      - efibootmgr
+      - ethtool
+      - fcoe-utils
+      - ftp
+      - gdb-gdbserver
+      - gdisk
+      - glibc-all-langpacks
+      - gnome-kiosk
+      - google-noto-sans-cjk-ttc-fonts
+      - grub2-tools
+      - grub2-tools-extra
+      - grub2-tools-minimal
+      - grubby
+      - gsettings-desktop-schemas
+      - hdparm
+      - hexedit
+      - hostname
+      - initscripts
+      - ipmitool
+      - iwl1000-firmware
+      - iwl100-firmware
+      - iwl105-firmware
+      - iwl135-firmware
+      - iwl2000-firmware
+      - iwl2030-firmware
+      - iwl3160-firmware
+      - iwl5000-firmware
+      - iwl5150-firmware
+      - iwl6000g2a-firmware
+      - iwl6000g2b-firmware
+      - iwl6050-firmware
+      - iwl7260-firmware
+      - jomolhari-fonts
+      - kacst-farsi-fonts
+      - kacst-qurn-fonts
+      - kbd
+      - kbd-misc
+      - kdump-anaconda-addon
+      - kernel
+      - khmeros-base-fonts
+      - less
+      - libblockdev-lvm-dbus
+      - libibverbs
+      - libreport-plugin-bugzilla
+      - libreport-plugin-reportuploader
+      - librsvg2
+      - linux-firmware
+      - lklug-fonts
+      - lldpad
+      - lohit-assamese-fonts
+      - lohit-bengali-fonts
+      - lohit-devanagari-fonts
+      - lohit-gujarati-fonts
+      - lohit-gurmukhi-fonts
+      - lohit-kannada-fonts
+      - lohit-odia-fonts
+      - lohit-tamil-fonts
+      - lohit-telugu-fonts
+      - lsof
+      - madan-fonts
+      - mtr
+      - mt-st
+      - net-tools
+      - nfs-utils
+      - nmap-ncat
+      - nm-connection-editor
+      - nss-tools
+      - openssh-clients
+      - openssh-server
+      - oscap-anaconda-addon
+      - ostree
+      - pciutils
+      - perl-interpreter
+      - pigz
+      - plymouth
+      - prefixdevname
+      - python3-pyatspi
+      - rdma-core
+      - redhat-release-eula
+      - rng-tools
+      - rpcbind
+      - rpm-ostree
+      - rsync
+      - rsyslog
+      - selinux-policy-targeted
+      - sg3_utils
+      - sil-abyssinica-fonts
+      - sil-padauk-fonts
+      - sil-scheherazade-fonts
+      - smartmontools
+      - smc-meera-fonts
+      - spice-vdagent
+      - strace
+      - systemd
+      - tar
+      - thai-scalable-waree-fonts
+      - tigervnc-server-minimal
+      - tigervnc-server-module
+      - udisks2
+      - udisks2-iscsi
+      - usbutils
+      - vim-minimal
+      - volume_key
+      - wget
+      - xfsdump
+      - xfsprogs
+      - xorg-x11-drivers
+      - xorg-x11-fonts-misc
+      - xorg-x11-server-utils
+      - xorg-x11-server-Xorg
+      - xorg-x11-xauth
+      - xz
     conditions:
-      "x86 specific packages for the anaconda pkgset":
+      x86 specific packages for the anaconda pkgset:
         when:
-          arch: "x86_64"
+          arch: x86_64
         append:
           include:
-            - "biosdevname"
-            - "dmidecode"
-            - "grub2-tools-efi"
-            - "memtest86+"
-      "aarch64 specific packages for the anaconda pkgset":
+            - biosdevname
+            - dmidecode
+            - grub2-tools-efi
+            - memtest86+
+      aarch64 specific packages for the anaconda pkgset:
         when:
-          arch: "aarch64"
+          arch: aarch64
         append:
-          include:
-            - "dmidecode"
-
+          include: [dmidecode]
   partitioning:
     ids:
-      - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
+      - &prep_partition_dosid 41
+      - &filesystem_linux_dosid 83
+      - &fat16_bdosid 06
     guids:
-      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
-      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
-      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
-      - &root_partition_x86_64_guid "4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709"
-
+      - &bios_boot_partition_guid 21686148-6449-6E6F-744E-656564454649
+      - &efi_system_partition_guid C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+      - &filesystem_data_guid 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+      - &xboot_ldr_partition_guid BC13C2FF-59E6-4262-A352-B275FD6F7172
+      - &lvm_partition_guid E6D6D379-F507-44C2-A23C-238F2A3DF928
+      - &root_partition_x86_64_guid 4F68BCE3-E8CD-4DB1-96E7-FBCAF984B709
     partitions:
       - &default_partition_table_part_bios
-        size: "1 MiB"
+        size: 1 MiB
         bootable: true
         type: *bios_boot_partition_guid
       - &default_partition_table_part_efi
-        size: "200 MiB"
+        size: 200 MiB
         type: *efi_system_partition_guid
-        payload_type: "filesystem"
+        payload_type: filesystem
         payload:
           type: vfat
-          mountpoint: "/boot/efi"
-          label: "ESP"
-          fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+          mountpoint: /boot/efi
+          label: ESP
+          fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
           fstab_freq: 0
           fstab_passno: 2
       - &default_partition_table_part_boot
-        size: "1 GiB"
+        size: 1 GiB
         type: *xboot_ldr_partition_guid
-        payload_type: "filesystem"
+        payload_type: filesystem
         payload: &default_partition_table_part_boot_payload
-          type: "xfs"
-          mountpoint: "/boot"
-          label: "boot"
-          fstab_options: "defaults"
+          type: xfs
+          mountpoint: /boot
+          label: boot
+          fstab_options: defaults
           fstab_freq: 0
           fstab_passno: 0
       - &default_partition_table_part_root
-        size: "2 GiB"
+        size: 2 GiB
         type: *filesystem_data_guid
-        payload_type: "filesystem"
+        payload_type: filesystem
         payload: &default_partition_table_part_root_payload
-          type: "xfs"
-          label: "root"
-          mountpoint: "/"
-          fstab_options: "defaults"
+          type: xfs
+          label: root
+          mountpoint: /
+          fstab_options: defaults
           fstab_freq: 0
           fstab_passno: 0
-      # ppc64
       - &default_partition_table_part_bios_ppc64le
-        size: "4 MiB"
+        # ppc64
+        size: 4 MiB
         bootable: true
         type: *prep_partition_dosid
       - &default_partition_table_part_boot_ppc64le
-        size: "1 GiB"
-        payload_type: "filesystem"
+        size: 1 GiB
+        payload_type: filesystem
         payload:
           <<: *default_partition_table_part_boot_payload
       - &default_partition_table_part_boot512_ppc64le
         <<: *default_partition_table_part_boot_ppc64le
-        size: "500 MiB"
+        size: 500 MiB
       - &default_partition_table_part_boot600_ppc64le
         <<: *default_partition_table_part_boot_ppc64le
-        size: "600 MiB"
+        size: 600 MiB
       - &default_partition_table_part_root_ppc64le
-        size: "2 GiB"
-        payload_type: "filesystem"
+        size: 2 GiB
+        payload_type: filesystem
         payload:
           <<: *default_partition_table_part_root_payload
-          label: ""
-
+          label:
     default_partition_tables: &default_partition_tables
       x86_64: &default_partition_table_x86_64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
           - *default_partition_table_part_bios
           - *default_partition_table_part_efi
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
       aarch64: &default_partition_table_aarch64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
           - *default_partition_table_part_efi
           - *default_partition_table_part_boot
           - *default_partition_table_part_root
       ppc64le: &default_partition_table_ppc64le
-        uuid: "0x14fc63d2"
-        type: "dos"
+        uuid: 0x14fc63d2
+        type: dos
         partitions:
           - *default_partition_table_part_bios_ppc64le
           - *default_partition_table_part_boot_ppc64le
           - *default_partition_table_part_root_ppc64le
       s390x: &default_partition_table_s390x
-        uuid: "0x14fc63d2"
-        type: "dos"
+        uuid: 0x14fc63d2
+        type: dos
         partitions:
           - *default_partition_table_part_boot_ppc64le
           - &default_partition_table_part_root_s390x
             <<: *default_partition_table_part_root_ppc64le
             bootable: true
-
     ec2_partition_tables_override: &ec2_partition_tables_override
       conditions:
-        "rhel-9.2 and below have no efi partition":
+        rhel-9.2 and below have no efi partition:
           when:
-            version_less_than: "9.3"
+            version_less_than: 9.3
           override:
             x86_64:
               <<: *default_partition_table_x86_64
@@ -846,127 +767,106 @@
                 - *default_partition_table_part_root
             aarch64:
               <<: *default_partition_table_aarch64
-
     edge_base_partition_tables: &edge_base_partition_tables
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
           - *default_partition_table_part_bios
           - &edge_base_partition_table_part_efi
-            size: "127 MiB"
+            size: 127 MiB
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               type: vfat
-              mountpoint: "/boot/efi"
-              label: "ESP"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              mountpoint: /boot/efi
+              label: ESP
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
           - &edge_base_partition_table_part_boot
-            size: "384 MiB"
+            size: 384 MiB
             type: *xboot_ldr_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "xfs"
-              mountpoint: "/boot"
-              label: "boot"
-              fstab_options: "defaults"
+              type: xfs
+              mountpoint: /boot
+              label: boot
+              fstab_options: defaults
               fstab_freq: 1
               fstab_passno: 1
           - &edge_base_partition_table_part_root
-            size: "2 GiB"
+            size: 2 GiB
             type: *filesystem_data_guid
-            payload_type: "luks"
+            payload_type: luks
             payload:
-              label: "crypt_root"
-              cipher: "cipher_null"
-              passphrase: "osbuild"
+              label: crypt_root
+              cipher: cipher_null
+              passphrase: osbuild
               pbkdf:
                 memory: 32
                 iterations: 4
                 parallelism: 1
               clevis:
-                pin: "null"
-                policy: "{}"
+                pin: null
+                policy: '{}'
                 remove_passphrase: true
-              payload_type: "lvm"
+              payload_type: lvm
               payload:
-                type: "lvm"
-                name: "rootvg"
-                description: "built with lvm2 and osbuild"
-                logical_volumes:
-                  - size: "9 GiB"
-                    name: "rootlv"
-                    payload_type: "filesystem"
-                    payload:
-                      type: "xfs"
-                      label: "root"
-                      mountpoint: "/"
-                      fstab_options: "defaults"
-                      fstab_freq: 0
-                      fstab_passno: 0
+                type: lvm
+                name: rootvg
+                description: built with lvm2 and osbuild
+                logical_volumes: [{size: 9 GiB, name: rootlv, payload_type: filesystem, payload: {type: xfs, label: root, mountpoint: /, fstab_options: defaults, fstab_freq: 0, fstab_passno: 0}}]
       aarch64: &edge_base_partition_table_aarch64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
           - *edge_base_partition_table_part_efi
           - *edge_base_partition_table_part_boot
           - *edge_base_partition_table_part_root
-
   azure_common_grub2_config: &azure_common_grub2_config
     disable_recovery: true
     disable_submenu: true
-    distributor: "$(sed 's, release .*$,,g' /etc/system-release)"
-    serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+    distributor: $(sed 's, release .*$,,g' /etc/system-release)
+    serial: serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
     timeout: 10
-    timeout_style: "countdown"
-
+    timeout_style: countdown
   azure_image_config_base: &azure_image_config_base
-    timezone: "Etc/UTC"
-    locale: "en_US.UTF-8"
+    timezone: Etc/UTC
+    locale: en_US.UTF-8
     keyboard:
-      keymap: "us"
-      "x11-keymap":
-        layouts: ["us"]
+      keymap: us
+      x11-keymap:
+        layouts: [us]
     update_default_kernel: true
-    default_kernel: "kernel-core"
+    default_kernel: kernel-core
     sysconfig:
       networking: true
       no_zero_conf: true
     enabled_services:
-      - "firewalld"
-      - "nm-cloud-setup.service"
-      - "nm-cloud-setup.timer"
-      - "sshd"
-      - "waagent"
+      - firewalld
+      - nm-cloud-setup.service
+      - nm-cloud-setup.timer
+      - sshd
+      - waagent
     sshd_config:
       config:
         ClientAliveInterval: 180
     modprobe:
-      - filename: "blacklist-amdgpu.conf"
+      - filename: blacklist-amdgpu.conf
+        commands: [{command: blacklist, modulename: amdgpu}]
+      - filename: blacklist-intel-cstate.conf
+        commands: [{command: blacklist, modulename: intel_cstate}]
+      - filename: blacklist-floppy.conf
+        commands: [{command: blacklist, modulename: floppy}]
+      - filename: blacklist-nouveau.conf
         commands:
           - command: blacklist
-            modulename: "amdgpu"
-      - filename: "blacklist-intel-cstate.conf"
-        commands:
+            modulename: nouveau
           - command: blacklist
-            modulename: "intel_cstate"
-      - filename: "blacklist-floppy.conf"
-        commands:
-          - command: blacklist
-            modulename: "floppy"
-      - filename: "blacklist-nouveau.conf"
-        commands:
-          - command: blacklist
-            modulename: "nouveau"
-          - command: blacklist
-            modulename: "lbm-nouveau"
-      - filename: "blacklist-skylake-edac.conf"
-        commands:
-          - command: blacklist
-            modulename: "skx_edac"
+            modulename: lbm-nouveau
+      - filename: blacklist-skylake-edac.conf
+        commands: [{command: blacklist, modulename: skx_edac}]
     pwquality:
       config:
         minlen: 6
@@ -977,250 +877,181 @@
         ocredit: 0
     waagent_config:
       config:
-        "ResourceDisk.EnableSwap": false
-        "ResourceDisk.Format": false
-    systemd_dropin:
-      - unit: "nm-cloud-setup.service"
-        dropin: "10-rh-enable-for-azure.conf"
-        config:
-          service:
-            environment:
-              - key: "NM_CLOUD_SETUP_AZURE"
-                value: "yes"
-    default_target: "multi-user.target"
+        ResourceDisk.EnableSwap: false
+        ResourceDisk.Format: false
+    systemd_dropin: [{unit: nm-cloud-setup.service, dropin: 10-rh-enable-for-azure.conf, config: {service: {environment: [{key: NM_CLOUD_SETUP_AZURE, value: yes}]}}}]
+    default_target: multi-user.target
     conditions: &conditions_azure_image_config_base
-      "rhel needs the rhel release rpm gpg key":
+      rhel needs the rhel release rpm gpg key:
         when:
-          distro_name: "rhel"
+          distro_name: rhel
         shallow_merge:
-          gpgkey_files:
-            - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
-      "x86_64 specific kernel commandline for rhel-9.7+":
+          gpgkey_files: [/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release]
+      x86_64 specific kernel commandline for rhel-9.7+:
         when:
-          arch: "x86_64"
-          version_greater_or_equal: "9.7"
-        shallow_merge:
-          kernel_options:
-            - "ro"
-            - "console=tty1"
-            - "console=ttyS0"
-            - "earlyprintk=ttyS0"
-            - "rootdelay=300"
-            - "nvme_core.io_timeout=240"
-      "x86_64 specific kernel commandline for rhel-9.6":
-        when:
-          arch: "x86_64"
-          version_equal: "9.6"
+          arch: x86_64
+          version_greater_or_equal: 9.7
         shallow_merge:
           kernel_options:
-            - "ro"
-            - "loglevel=3"
-            - "console=tty1"
-            - "console=ttyS0"
-            - "earlyprintk=ttyS0"
-            - "rootdelay=300"
-            - "nvme_core.io_timeout=240"
-      "aarch64 specific kernel options for rhel 9.6":
+            - ro
+            - console=tty1
+            - console=ttyS0
+            - earlyprintk=ttyS0
+            - rootdelay=300
+            - nvme_core.io_timeout=240
+      x86_64 specific kernel commandline for rhel-9.6:
         when:
-          arch: "aarch64"
-          version_equal: "9.6"
+          arch: x86_64
+          version_equal: 9.6
         shallow_merge:
           kernel_options:
-            - "ro"
-            - "loglevel=3"
-            - "console=ttyAMA0"
-            - "nvme_core.io_timeout=240"
-      "aarch64 specific kernel options for rhel 9.7+":
+            - ro
+            - loglevel=3
+            - console=tty1
+            - console=ttyS0
+            - earlyprintk=ttyS0
+            - rootdelay=300
+            - nvme_core.io_timeout=240
+      aarch64 specific kernel options for rhel 9.6:
         when:
-          arch: "aarch64"
-          version_greater_or_equal: "9.7"
+          arch: aarch64
+          version_equal: 9.6
         shallow_merge:
           kernel_options:
-            - "ro"
-            - "console=ttyAMA0"
-            - "nvme_core.io_timeout=240"
-      "x86_64 specific kernel options rhel-9.5 or below":
+            - ro
+            - loglevel=3
+            - console=ttyAMA0
+            - nvme_core.io_timeout=240
+      aarch64 specific kernel options for rhel 9.7+:
         when:
-          arch: "x86_64"
-          version_less_than: "9.6"
+          arch: aarch64
+          version_greater_or_equal: 9.7
         shallow_merge:
           kernel_options:
-            - "ro"
-            - "loglevel=3"
-            - "console=tty1"
-            - "console=ttyS0"
-            - "earlyprintk=ttyS0"
-            - "rootdelay=300"
-      "aarch64 specific kernel options rhel-9.5 or below":
+            - ro
+            - console=ttyAMA0
+            - nvme_core.io_timeout=240
+      x86_64 specific kernel options rhel-9.5 or below:
         when:
-          arch: "aarch64"
-          version_less_than: "9.6"
+          arch: x86_64
+          version_less_than: 9.6
         shallow_merge:
           kernel_options:
-            - "ro"
-            - "loglevel=3"
-            - "console=ttyAMA0"
-      "rhel-9.6+ adds the dataloss warning":
+            - ro
+            - loglevel=3
+            - console=tty1
+            - console=ttyS0
+            - earlyprintk=ttyS0
+            - rootdelay=300
+      aarch64 specific kernel options rhel-9.5 or below:
         when:
-          distro_name: "rhel"
-          version_greater_or_equal: "9.6"
+          arch: aarch64
+          version_less_than: 9.6
+        shallow_merge:
+          kernel_options:
+            - ro
+            - loglevel=3
+            - console=ttyAMA0
+      rhel-9.6+ adds the dataloss warning:
+        when:
+          distro_name: rhel
+          version_greater_or_equal: 9.6
         shallow_merge:
           # from CreateAzureDatalossWarningScriptAndUnit
-          files:
-            - path: &dataloss_script "/usr/local/sbin/temp-disk-dataloss-warning"
-              mode: 0755
-              data: |
-                #!/bin/sh
-                # /usr/local/sbin/temp-disk-dataloss-warning
-                # Write dataloss warning file on mounted Azure resource disk
-
-                AZURE_RESOURCE_DISK_PART1="/dev/disk/cloud/azure_resource-part1"
-
-                MOUNTPATH=$(grep "$AZURE_RESOURCE_DISK_PART1" /etc/fstab | tr '\t' ' ' | cut -d' ' -f2)
-                if [ -z "$MOUNTPATH" ]; then
-                    echo "There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab"
-                    exit 0
-                fi
-
-                if [ "$MOUNTPATH" = "none" ]; then
-                    echo "Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path"
-                    exit 1
-                fi
-
-                if ! mountpoint -q "$MOUNTPATH"; then
-                    echo "$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH"
-                    exit 1
-                fi
-
-                echo "Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt"
-
-                cat <<'EOF' > "${MOUNTPATH}/DATALOSS_WARNING_README.txt"
-                WARNING: THIS IS A TEMPORARY DISK.
-
-                Any data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.
-
-                Please do not use this disk for storing any personal or application data.
-
-                EOF
-          systemd_unit:
-            - filename: &dataloss_systemd_unit_filename "temp-disk-dataloss-warning.service"
-              "unit-type": "system"
-              "unit-path": "etc"
-              config:
-                "Unit":
-                  Description: "Azure temporary resource disk dataloss warning file creation"
-                  After: ["multi-user.target", "cloud-final.service"]
-                "Service":
-                  Type: "oneshot"
-                  ExecStart: [*dataloss_script]
-                  StandardOutput: "journal+console"
-                "Install":
-                  WantedBy: ["default.target"]
+          files: [{path: &dataloss_script /usr/local/sbin/temp-disk-dataloss-warning, mode: 0755, data: "#!/bin/sh\n# /usr/local/sbin/temp-disk-dataloss-warning\n# Write dataloss warning file on mounted Azure resource disk\n\nAZURE_RESOURCE_DISK_PART1=\"/dev/disk/cloud/azure_resource-part1\"\n\nMOUNTPATH=$(grep \"$AZURE_RESOURCE_DISK_PART1\" /etc/fstab | tr '\\t' ' ' | cut -d' ' -f2)\nif [ -z \"$MOUNTPATH\" ]; then\n    echo \"There is no mountpoint of $AZURE_RESOURCE_DISK_PART1 in /etc/fstab\"\n    exit 0\nfi\n\nif [ \"$MOUNTPATH\" = \"none\" ]; then\n    echo \"Mountpoint of $AZURE_RESOURCE_DISK_PART1 is not a path\"\n    exit 1\nfi\n\nif ! mountpoint -q \"$MOUNTPATH\"; then\n    echo \"$AZURE_RESOURCE_DISK_PART1 is not mounted at $MOUNTPATH\"\n    exit 1\nfi\n\necho \"Creating a dataloss warning file at ${MOUNTPATH}/DATALOSS_WARNING_README.txt\"\n\ncat <<'EOF' > \"${MOUNTPATH}/DATALOSS_WARNING_README.txt\"\nWARNING: THIS IS A TEMPORARY DISK.\n\nAny data stored on this drive is SUBJECT TO LOSS and THERE IS NO WAY TO RECOVER IT.\n\nPlease do not use this disk for storing any personal or application data.\n\nEOF\n"}]
+          systemd_unit: [{filename: &dataloss_systemd_unit_filename temp-disk-dataloss-warning.service, unit-type: system, unit-path: etc, config: {Unit: {Description: Azure temporary resource disk dataloss warning file creation, After: [multi-user.target, cloud-final.service]}, Service: {Type: oneshot, ExecStart: [*dataloss_script], StandardOutput: journal+console}, Install: {WantedBy: [default.target]}}}]
           # XXX: de-duplicate with the above
           enabled_services:
-            - "firewalld"
-            - "nm-cloud-setup.service"
-            - "nm-cloud-setup.timer"
-            - "sshd"
-            - "waagent"
+            - firewalld
+            - nm-cloud-setup.service
+            - nm-cloud-setup.timer
+            - sshd
+            - waagent
             - *dataloss_systemd_unit_filename
           modprobe:
-            - filename: "blacklist-amdgpu.conf"
+            - filename: blacklist-amdgpu.conf
+              commands: [{command: blacklist, modulename: amdgpu}]
+            - filename: blacklist-intel-cstate.conf
+              commands: [{command: blacklist, modulename: intel_cstate}]
+            - filename: blacklist-floppy.conf
+              commands: [{command: blacklist, modulename: floppy}]
+            - filename: blacklist-nouveau.conf
               commands:
                 - command: blacklist
-                  modulename: "amdgpu"
-            - filename: "blacklist-intel-cstate.conf"
-              commands:
+                  modulename: nouveau
                 - command: blacklist
-                  modulename: "intel_cstate"
-            - filename: "blacklist-floppy.conf"
-              commands:
-                - command: blacklist
-                  modulename: "floppy"
-            - filename: "blacklist-nouveau.conf"
-              commands:
-                - command: blacklist
-                  modulename: "nouveau"
-                - command: blacklist
-                  modulename: "lbm-nouveau"
-            - filename: "blacklist-skylake-edac.conf"
-              commands:
-                - command: blacklist
-                  modulename: "skx_edac"
-            - filename: "blacklist-intel_uncore.conf"
-              commands:
-                - command: blacklist
-                  modulename: "intel_uncore"
-            - filename: "blacklist-acpi_cpufreq.conf"
-              commands:
-                - command: blacklist
-                  modulename: "acpi_cpufreq"
+                  modulename: lbm-nouveau
+            - filename: blacklist-skylake-edac.conf
+              commands: [{command: blacklist, modulename: skx_edac}]
+            - filename: blacklist-intel_uncore.conf
+              commands: [{command: blacklist, modulename: intel_uncore}]
+            - filename: blacklist-acpi_cpufreq.conf
+              commands: [{command: blacklist, modulename: acpi_cpufreq}]
           network_manager:
-            path: "/etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf"
+            path: /etc/NetworkManager/conf.d/99-azure-unmanaged-devices.conf
             settings:
               keyfile:
-                "unmanaged-devices":
-                  - "driver:mlx4_core"
-                  - "driver:mlx5_core"
+                unmanaged-devices:
+                  - driver:mlx4_core
+                  - driver:mlx5_core
           waagent_config:
             config:
-              "ResourceDisk.Format": false
-              "ResourceDisk.EnableSwap": false
-      "x86_64 grub2 config terminal=serial":
+              ResourceDisk.Format: false
+              ResourceDisk.EnableSwap: false
+      x86_64 grub2 config terminal=serial:
         when:
-          arch: "x86_64"
+          arch: x86_64
         shallow_merge:
           grub2_config:
             <<: *azure_common_grub2_config
-            terminal: ["serial"]
-            terminal_input: ["serial"]
-            terminal_output: ["serial"]
-      "aarch64 grub2 config terminal=console":
+            terminal: [serial]
+            terminal_input: [serial]
+            terminal_output: [serial]
+      aarch64 grub2 config terminal=console:
         when:
-          arch: "aarch64"
+          arch: aarch64
         shallow_merge:
           grub2_config:
             <<: *azure_common_grub2_config
-            terminal: ["console"]
-      "sriov udev rules are provided by WALinuxAgent on 9.6+":
+            terminal: [console]
+      sriov udev rules are provided by WALinuxAgent on 9.6+:
         when:
-          version_less_than: "9.6"
+          version_less_than: 9.6
         shallow_merge:
           udev_rules:
-            filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+            filename: /etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules
             rules:
               - comment:
-                  - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
-                  - "This interface is transparently bonded to the synthetic interface,"
-                  - "so NetworkManager should just ignore any SRIOV interfaces."
+                  - Accelerated Networking on Azure exposes a new SRIOV interface to the VM.
+                  - This interface is transparently bonded to the synthetic interface,
+                  - so NetworkManager should just ignore any SRIOV interfaces.
               - rule:
-                  - K: "SUBSYSTEM"
-                    O: "=="
-                    V: "net"
-                  - K: "DRIVERS"
-                    O: "=="
-                    V: "hv_pci"
-                  - K: "ACTION"
-                    O: "=="
-                    V: "add"
-                  - K: "ENV"
-                    A: "NM_UNMANAGED"
-                    O: "="
-                    V: "1"
-
+                  - K: SUBSYSTEM
+                    O: ==
+                    V: net
+                  - K: DRIVERS
+                    O: ==
+                    V: hv_pci
+                  - K: ACTION
+                    O: ==
+                    V: add
+                  - K: ENV
+                    A: NM_UNMANAGED
+                    O: =
+                    V: 1
   default_installer_config: &default_installer_config
     enabled_anaconda_modules: &install_config_enabled_anaconda_modules
-      - "org.fedoraproject.Anaconda.Modules.Network"
-      - "org.fedoraproject.Anaconda.Modules.Payloads"
-      - "org.fedoraproject.Anaconda.Modules.Runtime"
-      - "org.fedoraproject.Anaconda.Modules.Storage"
+      - org.fedoraproject.Anaconda.Modules.Network
+      - org.fedoraproject.Anaconda.Modules.Payloads
+      - org.fedoraproject.Anaconda.Modules.Runtime
+      - org.fedoraproject.Anaconda.Modules.Storage
     additional_dracut_modules:
-      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
-      - "ifcfg"
+      - nvdimm # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - ifcfg
     additional_drivers:
-      - "cuse"
-      - "ipmi_devintf"
-      - "ipmi_msghandler"
+      - cuse
+      - ipmi_devintf
+      - ipmi_msghandler
     default_menu: 1
     lorax_template_package: lorax-templates-rhel
     lorax_templates:
@@ -1230,155 +1061,148 @@
     lorax_logos_package: redhat-logos
     lorax_release_package: redhat-release
     conditions:
-      "x86_64 uses syslinux":
+      x86_64 uses syslinux:
         when:
-          arch: "x86_64"
+          arch: x86_64
         shallow_merge:
-          iso_boot_type: "syslinux"
+          iso_boot_type: syslinux
   supported_options_lists:
     # Common options supported by all disk image types.
     # This includes everything that is not specific to installers or
     # ostree-based images.
     supported_options_disk: &supported_options_disk
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "customizations.cacerts"
-      - "customizations.directories"
-      - "customizations.disk"
-      - "customizations.dnf"
-      - "customizations.files"
-      - "customizations.filesystem"
-      - "customizations.partitioning_mode"
-      - "customizations.fips"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.kernel"
-      - "customizations.locale"
-      - "customizations.openscap"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.timezone"
-      - "customizations.rhsm"
-
+      - distro
+      - packages
+      - modules
+      - groups
+      - enabled_modules
+      - containers
+      - customizations.cacerts
+      - customizations.directories
+      - customizations.disk
+      - customizations.dnf
+      - customizations.files
+      - customizations.filesystem
+      - customizations.partitioning_mode
+      - customizations.fips
+      - customizations.firewall
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.kernel
+      - customizations.locale
+      - customizations.openscap
+      - customizations.repositories
+      - customizations.rpm
+      - customizations.services
+      - customizations.timezone
+      - customizations.rhsm
     # options supported by base ostree image types (commit and container)
     supported_options_ostree_commit: &supported_options_ostree_commit
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "customizations.dnf"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.fips"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.kernel.name"
-      - "customizations.locale"
-      - "customizations.repositories"
-      - "customizations.services"
-      - "customizations.timezone"
-      - "customizations.rhsm"
-
+      - distro
+      - packages
+      - modules
+      - groups
+      - enabled_modules
+      - containers
+      - customizations.dnf
+      - customizations.directories
+      - customizations.files
+      - customizations.fips
+      - customizations.firewall
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.kernel.name
+      - customizations.locale
+      - customizations.repositories
+      - customizations.services
+      - customizations.timezone
+      - customizations.rhsm
     # options supported by ostree disk (deployment) image types
     supported_options_ostree_disk: &supported_options_ostree_disk
-      - "distro"
-      - "customizations.files"
-      - "customizations.directories"
-      - "customizations.disk"
-      - "customizations.dnf"
-      - "customizations.filesystem"
-      - "customizations.partitioning_mode"
-      - "customizations.fips"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.kernel.append"
-      - "customizations.locale"
-      - "customizations.services"
-
+      - distro
+      - customizations.files
+      - customizations.directories
+      - customizations.disk
+      - customizations.dnf
+      - customizations.filesystem
+      - customizations.partitioning_mode
+      - customizations.fips
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.kernel.append
+      - customizations.locale
+      - customizations.services
     # options supported by PXE image type
     # Includes everything except disk, filesystem, and partitioning_mode
     supported_options_pxe: &supported_options_pxe
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "customizations.cacerts"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.fips"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.kernel"
-      - "customizations.locale"
-      - "customizations.openscap"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.timezone"
-      - "customizations.rhsm"
-
+      - distro
+      - packages
+      - modules
+      - groups
+      - enabled_modules
+      - containers
+      - customizations.cacerts
+      - customizations.directories
+      - customizations.files
+      - customizations.fips
+      - customizations.firewall
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.kernel
+      - customizations.locale
+      - customizations.openscap
+      - customizations.repositories
+      - customizations.rpm
+      - customizations.services
+      - customizations.timezone
+      - customizations.rhsm
     # supported options for container types
     supported_options_container: &supported_options_container
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "enabled_modules"
-      - "containers"
-      - "customizations.directories"
-      - "customizations.files"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.locale"
-      - "customizations.repositories"
-      - "customizations.services"
-      - "customizations.timezone"
-
+      - distro
+      - packages
+      - modules
+      - groups
+      - enabled_modules
+      - containers
+      - customizations.directories
+      - customizations.files
+      - customizations.firewall
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.locale
+      - customizations.repositories
+      - customizations.services
+      - customizations.timezone
     ostree_server: &ostree_server
-      port: &ostree_server_port "8080"
-      config_path: &ostree_server_config_path "/etc/nginx.conf"
-
+      port: &ostree_server_port 8080
+      config_path: &ostree_server_config_path /etc/nginx.conf
 image_config:
   default:
-    default_kernel: "kernel"
-    default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml"
+    default_kernel: kernel
+    default_oscap_datastream: /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml
     install_weak_deps: true
-    locale: "C.UTF-8"
+    locale: C.UTF-8
     permissive_rhc: true
     sysconfig:
       networking: true
       no_zero_conf: true
-    timezone: "America/New_York"
+    timezone: America/New_York
     update_default_kernel: true
   conditions:
-    "oscap needs a differnt path on centos":
+    oscap needs a differnt path on centos:
       when:
-        distro_name: "centos"
+        distro_name: centos
       shallow_merge:
-        default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml"
-
+        default_oscap_datastream: /usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml
 image_types:
   # XXX: not a real pkgset but the "os" pipeline pkgset for image-installer
   # find a nicer way to represent this
@@ -1387,86 +1211,83 @@ image_types:
       os:
         - *distro_build_pkgset
         - include:
-            - "@core"
-            - "authselect-compat"
-            - "chrony"
-            - "cockpit-system"
-            - "cockpit-ws"
-            - "dhcp-client"
-            - "dnf-utils"
-            - "dosfstools"
-            - "firewalld"
-            - "iwl1000-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6000g2b-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "lvm2"
-            - "net-tools"
-            - "nfs-utils"
-            - "oddjob"
-            - "oddjob-mkhomedir"
-            - "policycoreutils"
-            - "psmisc"
-            - "python3-jsonschema"
-            - "qemu-guest-agent"
-            - "redhat-release"
-            - "redhat-release-eula"
-            - "rsync"
-            - "tar"
-            - "tcpdump"
-            - "tuned"
-          exclude:
-            - "dracut-config-rescue"
+            - '@core'
+            - authselect-compat
+            - chrony
+            - cockpit-system
+            - cockpit-ws
+            - dhcp-client
+            - dnf-utils
+            - dosfstools
+            - firewalld
+            - iwl1000-firmware
+            - iwl100-firmware
+            - iwl105-firmware
+            - iwl135-firmware
+            - iwl2000-firmware
+            - iwl2030-firmware
+            - iwl3160-firmware
+            - iwl5000-firmware
+            - iwl5150-firmware
+            - iwl6000g2a-firmware
+            - iwl6000g2b-firmware
+            - iwl6050-firmware
+            - iwl7260-firmware
+            - lvm2
+            - net-tools
+            - nfs-utils
+            - oddjob
+            - oddjob-mkhomedir
+            - policycoreutils
+            - psmisc
+            - python3-jsonschema
+            - qemu-guest-agent
+            - redhat-release
+            - redhat-release-eula
+            - rsync
+            - tar
+            - tcpdump
+            - tuned
+          exclude: [dracut-config-rescue]
           conditions: &conditions_subscription_manager_cockpit
-            "add subscription-manager-cockpit on rhel":
+            add subscription-manager-cockpit on rhel:
               when:
-                distro_name: "rhel"
+                distro_name: rhel
               append:
-                include:
-                  - "subscription-manager-cockpit"
-
+                include: [subscription-manager-cockpit]
   qcow2: &qcow2
-    name_aliases: ["guest-image"]
-    filename: "disk.qcow2"
-    mime_type: "application/x-qemu-disk"
+    name_aliases: [guest-image]
+    filename: disk.qcow2
+    mime_type: application/x-qemu-disk
     # note that unlike fedora rhel does not use the environment.KVM
     # for unknown reasons
     bootable: true
-    default_size: "10 GiB"
-    image_func: "disk"
-    exports: ["qcow2"]
+    default_size: 10 GiB
+    image_func: disk
+    exports: [qcow2]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "qcow2"
+        image_format: qcow2
       - <<: *aarch64_platform
-        image_format: "qcow2"
+        image_format: qcow2
       - <<: *ppc64le_bios_platform
-        image_format: "qcow2"
+        image_format: qcow2
       - <<: *s390x_zipl_platform
-        image_format: "qcow2"
+        image_format: qcow2
     image_config: &qcow2_image_config
-      default_target: "multi-user.target"
+      default_target: multi-user.target
       kernel_options:
-        - "console=tty0"
-        - "console=ttyS0,115200n8"
-        - "net.ifnames=0"
+        - console=tty0
+        - console=ttyS0,115200n8
+        - net.ifnames=0
       conditions:
-        "tweak the rhsm config on rhel":
+        tweak the rhsm config on rhel:
           when:
-            distro_name: "rhel"
+            distro_name: rhel
           shallow_merge:
             rhsm_config:
-              "no-subscription":
+              no-subscription:
                 dnf_plugin:
                   product_id:
                     enabled: false
@@ -1475,274 +1296,183 @@ image_types:
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "authselect-compat"
-            - "chrony"
-            - "cloud-init"
-            - "cloud-utils-growpart"
-            - "cockpit-system"
-            - "cockpit-ws"
-            - "dnf-utils"
-            - "dosfstools"
-            - "nfs-utils"
-            - "oddjob"
-            - "oddjob-mkhomedir"
-            - "psmisc"
-            - "python3-jsonschema"
-            - "qemu-guest-agent"
-            - "redhat-release"
-            - "redhat-release-eula"
-            - "rsync"
-            - "tar"
-            - "tuned"
-            - "tcpdump"
-          exclude:
-            - "aic94xx-firmware"
-            - "alsa-firmware"
-            - "alsa-lib"
-            - "alsa-tools-firmware"
-            - "biosdevname"
-            - "dnf-plugin-spacewalk"
-            - "dracut-config-rescue"
-            - "fedora-release"
-            - "fedora-repos"
-            - "firewalld"
-            - "iprutils"
-            - "ivtv-firmware"
-            - "iwl1000-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl3945-firmware"
-            - "iwl4965-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6000g2b-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "langpacks-*"
-            - "langpacks-en"
-            - "libertas-sd8787-firmware"
-            - "nss"
-            - "plymouth"
-            - "rng-tools"
-            - "udisks2"
-          conditions: &conditions_pkgsets_insigths_pkgs
-            "add insights pkgs on rhel":
-              when:
-                distro_name: "rhel"
-              append:
-                include:
-                  - "insights-client"
-                  - "subscription-manager-cockpit"
+      os: [{include: ['@core', authselect-compat, chrony, cloud-init, cloud-utils-growpart, cockpit-system, cockpit-ws, dnf-utils, dosfstools, nfs-utils, oddjob, oddjob-mkhomedir, psmisc, python3-jsonschema, qemu-guest-agent, redhat-release, redhat-release-eula, rsync, tar, tuned, tcpdump], exclude: [aic94xx-firmware, alsa-firmware, alsa-lib, alsa-tools-firmware, biosdevname, dnf-plugin-spacewalk, dracut-config-rescue, fedora-release, fedora-repos, firewalld, iprutils, ivtv-firmware, iwl1000-firmware, iwl100-firmware, iwl105-firmware, iwl135-firmware, iwl2000-firmware, iwl2030-firmware, iwl3160-firmware, iwl3945-firmware, iwl4965-firmware, iwl5000-firmware, iwl5150-firmware, iwl6000-firmware, iwl6000g2a-firmware, iwl6000g2b-firmware, iwl6050-firmware, iwl7260-firmware, langpacks-*, langpacks-en, libertas-sd8787-firmware, nss, plymouth, rng-tools, udisks2], conditions: &conditions_pkgsets_insigths_pkgs {add insights pkgs on rhel: {when: {distro_name: rhel}, append: {include: [insights-client, subscription-manager-cockpit]}}}}]
     blueprint:
       supported_options: *supported_options_disk
-
-  "vagrant-libvirt": &vagrant_libvirt
+  vagrant-libvirt: &vagrant_libvirt
     <<: *qcow2
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "vagrant-libvirt.box"
-    mime_type: "application/x-tar"
+    filename: vagrant-libvirt.box
+    mime_type: application/x-tar
     bootable: true
-    default_size: "10 GiB"
-    image_func: "disk"
-    exports: ["archive"]
+    default_size: 10 GiB
+    image_func: disk
+    exports: [archive]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "vagrant_libvirt"
+        image_format: vagrant_libvirt
       - <<: *aarch64_platform
-        image_format: "vagrant_libvirt"
+        image_format: vagrant_libvirt
     image_config:
       <<: *qcow2_image_config
-      users:
-        - name: "vagrant"
+      users: [{name: vagrant,
           # yamllint disable rule:line-length
-          key: |
-            ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
-            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key
+          key: "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key\nssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN1YdxBpNlzxDqfJyw/QKow1F+wvG9hXGoqiysfJOn5Y vagrant insecure public key\n",
           # yamllint enable rule:line-length
-      files:
-        - path: "/etc/sudoers.d/vagrant"
-          user: "root"
-          group: "root"
-          mode: 440
-          data: |
-            vagrant ALL=(ALL) NOPASSWD: ALL
+}]
+      files: [{path: /etc/sudoers.d/vagrant, user: root, group: root, mode: 440, data: "vagrant ALL=(ALL) NOPASSWD: ALL\n"}]
     blueprint:
       supported_options: *supported_options_disk
-
-  "vagrant-virtualbox":
+  vagrant-virtualbox:
     <<: *vagrant_libvirt
-    filename: "vagrant-virtualbox.box"
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "vagrant_virtualbox"
+    filename: vagrant-virtualbox.box
+    platforms: [{<<: *x86_64_bios_platform, image_format: vagrant_virtualbox}]
     blueprint:
       supported_options: *supported_options_disk
-
   oci:
     <<: *qcow2
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "qcow2"
+    platforms: [{<<: *x86_64_bios_platform, image_format: qcow2}]
     blueprint:
       supported_options: *supported_options_disk
-
   vhd: &vhd
     <<: *qcow2
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    filename: "disk.vhd"
-    mime_type: "application/x-vhd"
-    default_size: "4 GiB"
-    exports: ["vpc"]
+    filename: disk.vhd
+    mime_type: application/x-vhd
+    default_size: 4 GiB
+    exports: [vpc]
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "vhd"
+        image_format: vhd
       - <<: *aarch64_platform
-        image_format: "vhd"
+        image_format: vhd
     # based on https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/deploying_rhel_9_on_microsoft_azure/assembly_deploying-a-rhel-image-as-a-virtual-machine-on-microsoft-azure_cloud-content-azure#making-configuration-changes_configure-the-image-azure
     image_config: &image_config_vhd
       <<: *azure_image_config_base
       cloud_init:
-        - filename: "10-azure-kvp.cfg"
+        - filename: 10-azure-kvp.cfg
           config:
             reporting:
               logging:
-                type: "log"
+                type: log
               telemetry:
-                type: "hyperv"
-        - filename: "91-azure_datasource.cfg"
+                type: hyperv
+        - filename: 91-azure_datasource.cfg
           config:
             datasource:
               azure:
                 apply_network_config: false
-            datasource_list:
-              - "Azure"
+            datasource_list: [Azure]
       conditions:
         <<: *conditions_azure_image_config_base
-        "chrony is added in rhel-9.6+":
+        chrony is added in rhel-9.6+:
           when:
-            version_greater_or_equal: "9.6"
+            version_greater_or_equal: 9.6
           shallow_merge:
             time_synchronization:
-              refclocks:
-                - driver:
-                    name: "PHC"
-                    path: "/dev/ptp_hyperv"
-                  poll: 3
-                  dpoll: -2
-                  offset: 0.0
+              refclocks: [{driver: {name: PHC, path: /dev/ptp_hyperv}, poll: 3, dpoll: -2, offset: 0.0}]
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - *azure_base_pkgset
+      os: [*azure_base_pkgset]
     blueprint:
       supported_options: *supported_options_disk
-
-  "azure": &azure
+  azure: &azure
     <<: *vhd
-    mime_type: "application/xz"
-    exports: ["xz"]
-    compression: "xz"
-    filename: "disk.vhd.xz"
+    mime_type: application/xz
+    exports: [xz]
+    compression: xz
+    filename: disk.vhd.xz
     partition_table: &partition_table_azure_internal
       x86_64: &azure_rhui_partition_table_x86_64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
-        size: "64 GiB"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
+        size: 64 GiB
         partitions:
           - &azure_rhui_part_boot_efi
-            size: "500 MiB"
+            size: 500 MiB
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "vfat"
-              mountpoint: "/boot/efi"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              type: vfat
+              mountpoint: /boot/efi
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
-          # NB: we currently don't support /boot on LVM
           - &azure_rhui_part_boot
-            size: "1 GiB"
+            # NB: we currently don't support /boot on LVM
+            size: 1 GiB
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "xfs"
-              mountpoint: "/boot"
-              fstab_options: "defaults"
+              type: xfs
+              mountpoint: /boot
+              fstab_options: defaults
               fstab_freq: 0
               fstab_passno: 0
           - &azure_rhui_part_bios
-            size: "2 MiB"
+            size: 2 MiB
             bootable: true
             type: *bios_boot_partition_guid
           - &azure_rhui_part_lvm
             type: *lvm_partition_guid
-            payload_type: "lvm"
+            payload_type: lvm
             payload:
-              name: "rootvg"
-              description: "built with lvm2 and osbuild"
+              name: rootvg
+              description: built with lvm2 and osbuild
               logical_volumes:
-                - size: "1 GiB"
-                  name: "homelv"
-                  payload_type: "filesystem"
+                - size: 1 GiB
+                  name: homelv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "home"
-                    mountpoint: "/home"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "rootlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: home
+                    mountpoint: /home
+                    fstab_options: defaults
+                - size: 2 GiB
+                  name: rootlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "root"
-                    mountpoint: "/"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "tmplv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: root
+                    mountpoint: /
+                    fstab_options: defaults
+                - size: 2 GiB
+                  name: tmplv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "tmp"
-                    mountpoint: "/tmp"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "usrlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: tmp
+                    mountpoint: /tmp
+                    fstab_options: defaults
+                - size: 10 GiB
+                  name: usrlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "usr"
-                    mountpoint: "/usr"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "varlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: usr
+                    mountpoint: /usr
+                    fstab_options: defaults
+                - size: 10 GiB
+                  name: varlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "var"
-                    mountpoint: "/var"
-                    fstab_options: "defaults"
+                    type: xfs
+                    label: var
+                    mountpoint: /var
+                    fstab_options: defaults
       aarch64: &azure_rhui_partition_table_aarch64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
-        size: "64 GiB"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
+        size: 64 GiB
         partitions:
           - *azure_rhui_part_boot_efi
           # NB: we currently don't support /boot on LVM
@@ -1750,19 +1480,17 @@ image_types:
           - *azure_rhui_part_lvm
     blueprint:
       supported_options: *supported_options_disk
-
-  "azure-rhui": &azure_rhui
+  azure-rhui: &azure_rhui
     <<: *azure
     blueprint:
       supported_options: *supported_options_disk
-
-  "azure-sap-rhui":
+  azure-sap-rhui:
     <<: *azure_rhui
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "vhd"
+    platforms: [{<<: *x86_64_bios_platform, image_format: vhd}]
     image_config:
-      <<: [*image_config_vhd, *sap_image_config]
+      <<:
+        - *image_config_vhd
+        - *sap_image_config
     package_sets:
       os:
         - *azure_base_pkgset
@@ -1770,245 +1498,194 @@ image_types:
         - *sap_extras_pkgset
     blueprint:
       supported_options: *supported_options_disk
-
   azure-sapapps-rhui:
     <<: *azure_rhui
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "vhd"
+    platforms: [{<<: *x86_64_bios_platform, image_format: vhd}]
     image_config:
-      <<: [*image_config_vhd, *sapapps_image_config]
+      <<:
+        - *image_config_vhd
+        - *sapapps_image_config
     package_sets:
       os:
         - *azure_base_pkgset
         - *sap_base_pkgset
     blueprint:
       supported_options: *supported_options_disk
-
   tar:
-    filename: "root.tar.xz"
-    mime_type: "application/x-tar"
-    image_func: "tar"
-    exports: ["archive"]
+    filename: root.tar.xz
+    mime_type: application/x-tar
+    image_func: tar
+    exports: [archive]
     platforms:
-      - arch: "x86_64"
-      - arch: "aarch64"
-      - arch: "ppc64le"
-      - arch: "s390x"
+      - arch: x86_64
+      - arch: aarch64
+      - arch: ppc64le
+      - arch: s390x
     package_sets:
-      os:
-        - include:
-            - "policycoreutils"
-            - "selinux-policy-targeted"
-          exclude:
-            - "rng-tools"
+      os: [{include: [policycoreutils, selinux-policy-targeted], exclude: [rng-tools]}]
     blueprint:
       supported_options:
         # We've never tested many options or customizations with this image type
         # and we also never restricted any, but it uses the OS pipeline, so it
         # should support most standard/basic customizations
-        - "distro"
-        - "packages"
-        - "modules"
-        - "groups"
-        - "containers"
-        - "enabled_modules"
-        - "customizations.dnf"
-        - "customizations.cacerts"
-        - "customizations.directories"
-        - "customizations.files"
-        - "customizations.firewall"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.hostname"
-        - "customizations.kernel.name"
-        - "customizations.locale"
-        - "customizations.repositories"
-        - "customizations.rpm"
-        - "customizations.services"
-        - "customizations.timezone"
-
+        - distro
+        - packages
+        - modules
+        - groups
+        - containers
+        - enabled_modules
+        - customizations.dnf
+        - customizations.cacerts
+        - customizations.directories
+        - customizations.files
+        - customizations.firewall
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.hostname
+        - customizations.kernel.name
+        - customizations.locale
+        - customizations.repositories
+        - customizations.rpm
+        - customizations.services
+        - customizations.timezone
   vmdk: &vmdk
-    name_aliases: ["vsphere"]
-    filename: "disk.vmdk"
-    mime_type: "application/x-vmdk"
+    name_aliases: [vsphere]
+    filename: disk.vmdk
+    mime_type: application/x-vmdk
     bootable: true
-    default_size: "4 GiB"
-    image_func: "disk"
-    exports: ["vmdk"]
+    default_size: 4 GiB
+    image_func: disk
+    exports: [vmdk]
     required_partition_sizes: *default_required_dir_sizes
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "vmdk"
+    platforms: [{<<: *x86_64_bios_platform, image_format: vmdk}]
     image_config:
-      locale: "en_US.UTF-8"
-      kernel_options: ["ro", "net.ifnames=0"]
+      locale: en_US.UTF-8
+      kernel_options:
+        - ro
+        - net.ifnames=0
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "chrony"
-            - "cloud-init"
-            - "firewalld"
-            - "langpacks-en"
-            - "open-vm-tools"
-            - "tuned"
-          exclude:
-            - "dracut-config-rescue"
-            - "rng-tools"
+      os: [{include: ['@core', chrony, cloud-init, firewalld, langpacks-en, open-vm-tools, tuned], exclude: [dracut-config-rescue, rng-tools]}]
     blueprint:
       supported_options: *supported_options_disk
-
   ova:
     <<: *vmdk
-    name_aliases: ["vsphere-ova"]
-    filename: "image.ova"
-    mime_type: "application/ovf"
-    exports: ["archive"]
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "ova"
+    name_aliases: [vsphere-ova]
+    filename: image.ova
+    mime_type: application/ovf
+    exports: [archive]
+    platforms: [{<<: *x86_64_bios_platform, image_format: ova}]
     blueprint:
       supported_options: *supported_options_disk
-
   ec2: &ec2
-    filename: "image.raw.xz"
-    mime_type: "application/xz"
-    exports: ["xz"]
-    compression: "xz"
-    image_func: "disk"
+    filename: image.raw.xz
+    mime_type: application/xz
+    exports: [xz]
+    compression: xz
+    image_func: disk
     bootable: true
-    default_size: "10 GiB"
+    default_size: 10 GiB
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "raw"
+        image_format: raw
       - <<: *aarch64_platform
-        image_format: "raw"
+        image_format: raw
     platforms_override:
       conditions:
-        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+        Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only:
           when:
-            distro_name: "rhel"
-            version_less_than: "9.3"
+            distro_name: rhel
+            version_less_than: 9.3
           override:
             - *x86_64_bios_only_platform
             - <<: *aarch64_platform
-              image_format: "raw"
+              image_format: raw
     image_config: &ec2_image_config
-      locale: "en_US.UTF-8"
-      timezone: "UTC"
+      locale: en_US.UTF-8
+      timezone: UTC
       time_synchronization:
-        servers:
-          - hostname: "169.254.169.123"
-            prefer: true
-            iburst: true
-            minpoll: 4
-            maxpoll: 4
+        servers: [{hostname: 169.254.169.123, prefer: true, iburst: true, minpoll: 4, maxpoll: 4}]
         # empty string will remove any occurrences of the option
         # from the configuration
-        leapsectz: ""
+        leapsectz:
       keyboard:
-        keymap: "us"
-        "x11-keymap":
-          layouts: ["us"]
+        keymap: us
+        x11-keymap:
+          layouts: [us]
       enabled_services:
-        - "sshd"
-        - "NetworkManager"
-        - "nm-cloud-setup.service"
-        - "nm-cloud-setup.timer"
-        - "cloud-init"
-        - "cloud-init-local"
-        - "cloud-config"
-        - "cloud-final"
-        - "reboot.target"
-        - "tuned"
-      default_target: "multi-user.target"
+        - sshd
+        - NetworkManager
+        - nm-cloud-setup.service
+        - nm-cloud-setup.timer
+        - cloud-init
+        - cloud-init-local
+        - cloud-config
+        - cloud-final
+        - reboot.target
+        - tuned
+      default_target: multi-user.target
       update_default_kernel: true
-      default_kernel: "kernel"
+      default_kernel: kernel
       sysconfig:
         networking: true
         no_zero_conf: true
         create_default_network_scripts: true
-      systemd_logind:
-        - filename: "00-getty-fixes.conf"
-          config:
-            login:
-              nautovts: 0
-      cloud_init:
-        - filename: "00-rhel-default-user.cfg"
-          config:
-            system_info:
-              default_user:
-                name: "ec2-user"
+      systemd_logind: [{filename: 00-getty-fixes.conf, config: {login: {nautovts: 0}}}]
+      cloud_init: [{filename: 00-rhel-default-user.cfg, config: {system_info: {default_user: {name: ec2-user}}}}]
       modprobe:
-        - filename: "blacklist-nouveau.conf"
-          commands:
-            - command: blacklist
-              modulename: "nouveau"
-        - filename: "blacklist-amdgpu.conf"
-          commands:
-            - command: blacklist
-              modulename: "amdgpu"
+        - filename: blacklist-nouveau.conf
+          commands: [{command: blacklist, modulename: nouveau}]
+        - filename: blacklist-amdgpu.conf
+          commands: [{command: blacklist, modulename: amdgpu}]
       # COMPOSER-1807
-      dracut_conf:
-        - &sgdisk_dracut_conf
-          filename: "sgdisk.conf"
-          config:
-            install: ["sgdisk"]
-      systemd_dropin:
+      dracut_conf: [&sgdisk_dracut_conf {filename: sgdisk.conf, config: {install: [sgdisk]}}]
+      systemd_dropin: [
         # RHBZ#1822863
-        - unit: "nm-cloud-setup.service"
-          dropin: "10-rh-enable-for-ec2.conf"
-          config:
-            service:
-              environment:
-                - key: "NM_CLOUD_SETUP_EC2"
-                  value: "yes"
+        {unit: nm-cloud-setup.service, dropin: 10-rh-enable-for-ec2.conf, config: {service: {environment: [{key: NM_CLOUD_SETUP_EC2, value: yes}]}}}]
       authselect:
-        profile: "sssd"
+        profile: sssd
       sshd_config:
         config:
           PasswordAuthentication: false
       conditions: &ec2_image_config_cond
-        "we need dracut conf with nvme/xen on x86":
+        we need dracut conf with nvme/xen on x86:
           when:
-            arch: "x86_64"
+            arch: x86_64
           shallow_merge:
             dracut_conf:
               - *sgdisk_dracut_conf
-              - filename: "ec2.conf"
+              - filename: ec2.conf
                 config:
                   add_drivers:
-                    - "nvme"
-                    - "xen-blkfront"
-        "x86_64 specific kopts":
+                    - nvme
+                    - xen-blkfront
+        x86_64 specific kopts:
           when:
-            arch: "x86_64"
+            arch: x86_64
           shallow_merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # common
-              - "console=tty0"
-              - "console=ttyS0,115200n8"
-              - "net.ifnames=0"
-              - "nvme_core.io_timeout=4294967295"
-        "aarch64 specific kopts":
+              - console=tty0
+              - console=ttyS0,115200n8
+              - net.ifnames=0
+              - nvme_core.io_timeout=4294967295
+        aarch64 specific kopts:
           when:
-            arch: "aarch64"
+            arch: aarch64
           shallow_merge:
             # TODO: move these to the EC2 environment
             kernel_options:
               # XXX: duplicated with above x86_64 kernel defaults
-              - "console=ttyS0,115200n8"
-              - "console=tty0"
-              - "net.ifnames=0"
-              - "nvme_core.io_timeout=4294967295"
+              - console=ttyS0,115200n8
+              - console=tty0
+              - net.ifnames=0
+              - nvme_core.io_timeout=4294967295
               # aarch64 specific
-              - "iommu.strict=0"
+              - iommu.strict=0
     partition_table:
       <<: *default_partition_tables
     partition_tables_override:
@@ -2016,112 +1693,101 @@ image_types:
     package_sets:
       os:
         - *ec2_base_pkgset
-        - exclude:
-            - "alsa-lib"
+        - exclude: [alsa-lib]
     blueprint:
       supported_options: *supported_options_disk
-
   ami:
     <<: *ec2
-    name_aliases: ["aws"]
-    mime_type: "application/octet-stream"
-    filename: "image.raw"
-    exports: ["image"]
-    compression: ""
+    name_aliases: [aws]
+    mime_type: application/octet-stream
+    filename: image.raw
+    exports: [image]
+    compression:
     blueprint:
       supported_options: *supported_options_disk
-
-  "ec2-ha":
+  ec2-ha:
     <<: *ec2
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "raw"
+    platforms: [{<<: *x86_64_bios_platform, image_format: raw}]
     platforms_override:
       conditions:
         # XXX: duplicated with "ec2" but drops "aarch64", I cannot
         # find a better way to express this complex condition in YAML
-        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+        Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only:
           when:
-            distro_name: "rhel"
-            version_less_than: "9.3"
-          override:
-            - *x86_64_bios_only_platform
+            distro_name: rhel
+            version_less_than: 9.3
+          override: [*x86_64_bios_only_platform]
     package_sets:
       os:
         - *ec2_base_pkgset
         - include:
-            - "fence-agents-all"
-            - "pacemaker"
-            - "pcs"
-          exclude:
-            - "alsa-lib"
+            - fence-agents-all
+            - pacemaker
+            - pcs
+          exclude: [alsa-lib]
     blueprint:
       supported_options: *supported_options_disk
-
-  "ec2-sap":
+  ec2-sap:
     <<: *ec2
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "raw"
+    platforms: [{<<: *x86_64_bios_platform, image_format: raw}]
     platforms_override:
       conditions:
         # XXX: duplicated with "ec2" but drops "aarch64", I cannot
         # find a better way to express this complex condition in YAML
-        "Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only":
+        Keep the RHEL EC2 x86_64 images before 9.3 BIOS-only:
           when:
-            distro_name: "rhel"
-            version_less_than: "9.3"
-          override:
-            - *x86_64_bios_only_platform
+            distro_name: rhel
+            version_less_than: 9.3
+          override: [*x86_64_bios_only_platform]
     image_config:
-      <<: [*ec2_image_config, *sap_image_config]
+      <<:
+        - *ec2_image_config
+        - *sap_image_config
       conditions:
         <<: *ec2_image_config_cond
         # this needs to override the original ami key because
         # we want everything from the ami config *except* the
         # kernel comandline
-        "x86_64 specific kopts":
+        x86_64 specific kopts:
           when:
-            arch: "x86_64"
+            arch: x86_64
           shallow_merge:
             kernel_options:
               # XXX: duplicated with ami.image_config.kernel_options :(
-              - "console=ttyS0,115200n8"
-              - "console=tty0"
-              - "net.ifnames=0"
-              - "nvme_core.io_timeout=4294967295"
+              - console=ttyS0,115200n8
+              - console=tty0
+              - net.ifnames=0
+              - nvme_core.io_timeout=4294967295
               # amiSapKernelOptions()
-              - "processor.max_cstate=1"
-              - "intel_idle.max_cstate=1"
+              - processor.max_cstate=1
+              - intel_idle.max_cstate=1
     package_sets:
       os:
         - *ec2_base_pkgset
         - *sap_base_pkgset
         - *sap_extras_pkgset
-        - include:
-            - "libcanberra-gtk2"
-          exclude:
+        - include: [libcanberra-gtk2]
+          exclude: [
             # COMPOSER-1829
-            - "firewalld"
+            firewalld]
     blueprint:
       supported_options: *supported_options_disk
-
   wsl: &wsl
-    filename: "image.wsl"
-    mime_type: "application/x-tar"
-    image_func: "tar"
-    exports: ["xz"]
-    compression: "xz"
+    filename: image.wsl
+    mime_type: application/x-tar
+    image_func: tar
+    exports: [xz]
+    compression: xz
     platforms:
-      - arch: "x86_64"
-      - arch: "aarch64"
+      - arch: x86_64
+      - arch: aarch64
     image_config:
-      locale: "en_US.UTF-8"
+      locale: en_US.UTF-8
       no_selinux: true
       conditions:
-        "wsl config for rhel":
+        wsl config for rhel:
           when:
-            distro_name: "rhel"
+            distro_name: rhel
           shallow_merge:
             wsl:
               <<: *wsl_config
@@ -2130,9 +1796,9 @@ image_types:
                 oobe:
                   <<: *wsl_distribution_oobe_config
                   default_name: RedHatEnterpriseLinux-%s
-        "wsl config for almalinux":
+        wsl config for almalinux:
           when:
-            distro_name: "almalinux"
+            distro_name: almalinux
           shallow_merge:
             wsl: &wsl_distribution_config_almalinux
               <<: *wsl_config
@@ -2141,123 +1807,48 @@ image_types:
                 oobe:
                   <<: *wsl_distribution_oobe_config
                   default_name: AlmaLinux-%s
-        "cloud-init config for non-centos":
+        cloud-init config for non-centos:
           when:
-            not_distro_name: "centos"
+            not_distro_name: centos
           shallow_merge:
-            cloud_init:
-              - filename: "99_wsl.cfg"
-                config:
-                  datasource_list:
-                    - "WSL"
-                    - "None"
-                  network:
-                    config: "disabled"
+            cloud_init: [{filename: 99_wsl.cfg, config: {datasource_list: [WSL, None], network: {config: disabled}}}]
     package_sets:
-      os:
-        - include:
-            - "alternatives"
-            - "audit-libs"
-            - "basesystem"
-            - "bash"
-            - "ca-certificates"
-            - "coreutils-single"
-            - "crypto-policies-scripts"
-            - "curl-minimal"
-            - "dejavu-sans-fonts"
-            - "dnf"
-            - "filesystem"
-            - "findutils"
-            - "gdb-gdbserver"
+      os: [{include: [alternatives, audit-libs, basesystem, bash, ca-certificates, coreutils-single, crypto-policies-scripts, curl-minimal, dejavu-sans-fonts, dnf, filesystem, findutils, gdb-gdbserver,
             # Differs from official UBI, as we don't include CRB repos
             # - "gdbm"
-            - "glibc-minimal-langpack"
-            - "gmp"
-            - "gnupg2"
-            - "gobject-introspection"
-            - "hostname"
-            - "langpacks-en"
-            - "libcurl-minimal"
-            - "openssh-server"
-            - "openssl"
-            - "pam"
-            - "passwd"
-            - "procps-ng"
-            - "python3"
-            - "python3-inotify"
-            - "rootfiles"
-            - "rpm"
-            - "sed"
-            - "setup"
-            - "shadow-utils"
-            - "sudo"
-            - "systemd"
-            - "tar"
-            - "tpm2-tss"
-            - "tzdata"
-            - "util-linux"
-            - "vim-minimal"
-            - "yum"
-          exclude:
-            - "gawk-all-langpacks"
-            - "glibc-gconv-extra"
-            - "glibc-langpack-en"
-            - "openssl-pkcs11"
-            - "python-unversioned-command"
-            - "redhat-release-eula"
-            - "rpm-plugin-systemd-inhibit"
-          conditions:
-            "subscription-manager, cloud-init, and redhat-* on rhel-likes except centos":
-              when:
-                not_distro_name: "centos"
-              append:
-                include:
-                  - "subscription-manager"
-                  - "cloud-init"
-                  - "redhat-logos"
-                  - "redhat-release"
-            "wsl-setup, and centos-* on centos":
-              when:
-                distro_name: "centos"
-              append:
-                include:
-                  - "wsl-setup"
-                  - "centos-logos"
-                  - "centos-release"
+            glibc-minimal-langpack, gmp, gnupg2, gobject-introspection, hostname, langpacks-en, libcurl-minimal, openssh-server, openssl, pam, passwd, procps-ng, python3, python3-inotify, rootfiles, rpm, sed, setup, shadow-utils, sudo, systemd, tar, tpm2-tss, tzdata, util-linux, vim-minimal, yum], exclude: [gawk-all-langpacks, glibc-gconv-extra, glibc-langpack-en, openssl-pkcs11, python-unversioned-command, redhat-release-eula, rpm-plugin-systemd-inhibit], conditions: {'subscription-manager, cloud-init, and redhat-* on rhel-likes except centos': {when: {not_distro_name: centos}, append: {include: [subscription-manager, cloud-init, redhat-logos, redhat-release]}}, 'wsl-setup, and centos-* on centos': {when: {distro_name: centos}, append: {include: [wsl-setup, centos-logos, centos-release]}}}}]
     blueprint:
       supported_options:
-        - "distro"
-        - "packages"
-        - "modules"
-        - "groups"
-        - "enabled_modules"
-        - "containers"
-        - "customizations.dnf"
-        - "customizations.directories"
-        - "customizations.files"
-        - "customizations.firewall"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.hostname"
-        - "customizations.locale"
-        - "customizations.repositories"
-        - "customizations.services"
-        - "customizations.timezone"
-        - "customizations.rhsm"
-
-
-  "image-installer":
-    filename: "installer.iso"
-    mime_type: "application/x-iso9660-image"
+        - distro
+        - packages
+        - modules
+        - groups
+        - enabled_modules
+        - containers
+        - customizations.dnf
+        - customizations.directories
+        - customizations.files
+        - customizations.firewall
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.hostname
+        - customizations.locale
+        - customizations.repositories
+        - customizations.services
+        - customizations.timezone
+        - customizations.rhsm
+  image-installer:
+    filename: installer.iso
+    mime_type: application/x-iso9660-image
     bootable: true
     boot_iso: true
     # XXX: merge with boot_iso above
     use_syslinux: true
-    image_func: "image_installer"
+    image_func: image_installer
     # We don't know the variant of the OS pipeline being installed
-    iso_label: "Unknown"
-    exports: ["bootiso"]
+    iso_label: Unknown
+    exports: [bootiso]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       # TODO: Use x86_64_installer_platform for all anaconda images
@@ -2265,23 +1856,23 @@ image_types:
         packages:
           <<: *x86_64_bios_platform_packages
           firmware:
-            - "microcode_ctl"  # ??
-            - "iwl1000-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6050-firmware"
+            - microcode_ctl # ??
+            - iwl1000-firmware
+            - iwl100-firmware
+            - iwl105-firmware
+            - iwl135-firmware
+            - iwl2000-firmware
+            - iwl2030-firmware
+            - iwl3160-firmware
+            - iwl5000-firmware
+            - iwl5150-firmware
+            - iwl6050-firmware
       - *aarch64_platform
     platforms_override:
       conditions:
-        "RHEL 9.7+ adds FIPS menu":
+        RHEL 9.7+ adds FIPS menu:
           when:
-            version_greater_or_equal: "9.7"
+            version_greater_or_equal: 9.7
           override:
             # TODO: Use x86_64_installer_platform for all anaconda images
             - <<: *x86_64_bios_platform
@@ -2289,21 +1880,21 @@ image_types:
               packages:
                 <<: *x86_64_bios_platform_packages
                 firmware:
-                  - "microcode_ctl"  # ??
-                  - "iwl1000-firmware"
-                  - "iwl100-firmware"
-                  - "iwl105-firmware"
-                  - "iwl135-firmware"
-                  - "iwl2000-firmware"
-                  - "iwl2030-firmware"
-                  - "iwl3160-firmware"
-                  - "iwl5000-firmware"
-                  - "iwl5150-firmware"
+                  - microcode_ctl # ??
+                  - iwl1000-firmware
+                  - iwl100-firmware
+                  - iwl105-firmware
+                  - iwl135-firmware
+                  - iwl2000-firmware
+                  - iwl2030-firmware
+                  - iwl3160-firmware
+                  - iwl5000-firmware
+                  - iwl5150-firmware
             - <<: *aarch64_platform
               fips_menu: true
     installer_config: *default_installer_config
     image_config:
-      locale: "C.UTF-8"
+      locale: C.UTF-8
     package_sets:
       <<: *bare_metal_pkgset
       installer:
@@ -2311,242 +1902,169 @@ image_types:
         - *anaconda_pkgset
     blueprint:
       supported_options:
-        - "distro"
-        - "packages"
-        - "modules"
-        - "groups"
-        - "enabled_modules"
-        - "containers"
-        - "customizations.dnf"
-        - "customizations.installer"
-        - "customizations.cacerts"
-        - "customizations.directories"
-        - "customizations.files"
-        - "customizations.firewall"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.fips"
-        - "customizations.timezone"
-        - "customizations.hostname"
-        - "customizations.kernel.name"
-        - "customizations.locale"
-        - "customizations.openscap"
-        - "customizations.repositories"
-        - "customizations.rpm"
-        - "customizations.services"
-        - "customizations.rhsm"
-        - "customizations.kernel.append"
-
+        - distro
+        - packages
+        - modules
+        - groups
+        - enabled_modules
+        - containers
+        - customizations.dnf
+        - customizations.installer
+        - customizations.cacerts
+        - customizations.directories
+        - customizations.files
+        - customizations.firewall
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.fips
+        - customizations.timezone
+        - customizations.hostname
+        - customizations.kernel.name
+        - customizations.locale
+        - customizations.openscap
+        - customizations.repositories
+        - customizations.rpm
+        - customizations.services
+        - customizations.rhsm
+        - customizations.kernel.append
   gce:
     # this image type is set to `gcp` in image-builder-crc
     # & `osbuild-composer`, so set the alias here
-    name_aliases: ["gce-rhui", "gcp"]
-    filename: "image.tar.gz"
-    mime_type: "application/gzip"
-    image_func: "disk"
-    exports: ["archive"]
+    name_aliases:
+      - gce-rhui
+      - gcp
+    filename: image.tar.gz
+    mime_type: application/gzip
+    image_func: disk
+    exports: [archive]
     bootable: true
-    default_size: "20 GiB"
+    default_size: 20 GiB
     required_partition_sizes: *default_required_dir_sizes
-    platforms:
-      - <<: *x86_64_uefi_platform
-        image_format: "gce"
+    platforms: [{<<: *x86_64_uefi_platform, image_format: gce}]
     image_config:
-      timezone: "UTC"
+      timezone: UTC
       time_synchronization:
-        servers:
-          - hostname: "metadata.google.internal"
+        servers: [{hostname: metadata.google.internal}]
       firewall:
-        default_zone: "trusted"
+        default_zone: trusted
       enabled_services:
-        - "sshd"
-        - "rngd"
-        - "dnf-automatic.timer"
+        - sshd
+        - rngd
+        - dnf-automatic.timer
       disabled_services:
-        - "sshd-keygen@"
-        - "reboot.target"
-      default_target: "multi-user.target"
-      locale: "en_US.UTF-8"
+        - sshd-keygen@
+        - reboot.target
+      default_target: multi-user.target
+      locale: en_US.UTF-8
       keyboard:
-        keymap: "us"
+        keymap: us
       dnf_config:
         options:
           config:
             main:
-              ipresolve: "4"
+              ipresolve: 4
       dnf_automatic_config:
         config:
           commands:
             apply_updates: true
-            upgrade_type: "security"
-      yum_repos:
-        - filename: "google-cloud.repo"
-          repos:
-            - id: "google-compute-engine"
-              name: "Google Compute Engine"
-              baseurl:
-                - "https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable"
-              enabled: true
-              gpgcheck: true
-              repo_gpgcheck: true
-              gpgkey:
-                - "https://packages.cloud.google.com/yum/doc/yum-key.gpg"
-                - "https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
+            upgrade_type: security
+      yum_repos: [{filename: google-cloud.repo, repos: [{id: google-compute-engine, name: Google Compute Engine, baseurl: ['https://packages.cloud.google.com/yum/repos/google-compute-engine-el9-x86_64-stable'], enabled: true, gpgcheck: true, repo_gpgcheck: true, gpgkey: ['https://packages.cloud.google.com/yum/doc/yum-key.gpg', 'https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg']}]}]
       sshd_config:
         config:
           PasswordAuthentication: false
           ClientAliveInterval: 420
           PermitRootLogin: false
       update_default_kernel: true
-      default_kernel: "kernel-core"
+      default_kernel: kernel-core
       # XXX: ensure the "old" behavior is preserved (that is
       # likely a bug) where for GCE the sysconfig network
       # options are not set because the merge of imageConfig
       # is shallow and the previous setup was changing the
       # kernel without also changing the network options.
       sysconfig: {}
-      modprobe:
-        - filename: "blacklist-floppy.conf"
-          commands:
-            - command: blacklist
-              modulename: "floppy"
+      modprobe: [{filename: blacklist-floppy.conf, commands: [{command: blacklist, modulename: floppy}]}]
       gcp_guest_agent_config:
-        config_scope: "distro"
+        config_scope: distro
         config:
-          "InstanceSetup":
+          InstanceSetup:
             set_boto_config: false
-      kernel_options: ["net.ifnames=0", "biosdevname=0", "scsi_mod.use_blk_mq=Y", "console=ttyS0,38400n8d"]
+      kernel_options:
+        - net.ifnames=0
+        - biosdevname=0
+        - scsi_mod.use_blk_mq=Y
+        - console=ttyS0,38400n8d
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
+      os: [{include: ['@core',
             # not in Google's KS
-            - "langpacks-en"
-            - "acpid"
-            - "dhcp-client"
-            - "dnf-automatic"
-            - "net-tools"
+            langpacks-en, acpid, dhcp-client, dnf-automatic, net-tools,
             # - "openssh-server" included in core
-            - "python3"
-            - "rng-tools"
-            - "tar"
-            - "vim"
+            python3, rng-tools, tar, vim,
             # GCE guest tools
-            - "google-compute-engine"
-            - "google-osconfig-agent"
-            - "gce-disk-expand"
+            google-compute-engine, google-osconfig-agent, gce-disk-expand,
             # Not explicitly included in GCP kickstart, but present on the image
             # for time synchronization
-            - "chrony"
-            - "timedatex"
+            chrony, timedatex,
             # EFI
-            - "grub2-tools"
-            - "grub2-tools-minimal"
+            grub2-tools, grub2-tools-minimal,
             # Performance tuning
-            - "tuned"
-          exclude:
-            - "alsa-utils"
-            - "b43-fwcutter"
-            - "dmraid"
-            - "dracut-config-rescue"
-            - "eject"
-            - "gpm"
-            - "irqbalance"
-            - "microcode_ctl"
-            - "smartmontools"
-            - "aic94xx-firmware"
-            - "atmel-firmware"
-            - "b43-openfwwf"
-            - "bfa-firmware"
-            - "ipw2100-firmware"
-            - "ipw2200-firmware"
-            - "ivtv-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl1000-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl3945-firmware"
-            - "iwl4965-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "kernel-firmware"
-            - "libertas-usb8388-firmware"
-            - "ql2100-firmware"
-            - "ql2200-firmware"
-            - "ql23xx-firmware"
-            - "ql2400-firmware"
-            - "ql2500-firmware"
-            - "rt61pci-firmware"
-            - "rt73usb-firmware"
-            - "xorg-x11-drv-ati-firmware"
-            - "zd1211-firmware"
+            tuned], exclude: [alsa-utils, b43-fwcutter, dmraid, dracut-config-rescue, eject, gpm, irqbalance, microcode_ctl, smartmontools, aic94xx-firmware, atmel-firmware, b43-openfwwf, bfa-firmware, ipw2100-firmware, ipw2200-firmware, ivtv-firmware, iwl100-firmware, iwl105-firmware, iwl135-firmware, iwl1000-firmware, iwl2000-firmware, iwl2030-firmware, iwl3160-firmware, iwl3945-firmware, iwl4965-firmware, iwl5000-firmware, iwl5150-firmware, iwl6000-firmware, iwl6000g2a-firmware, iwl6050-firmware, iwl7260-firmware, kernel-firmware, libertas-usb8388-firmware, ql2100-firmware, ql2200-firmware, ql23xx-firmware, ql2400-firmware, ql2500-firmware, rt61pci-firmware, rt73usb-firmware, xorg-x11-drv-ati-firmware, zd1211-firmware,
             # RHBZ#2075815
-            - "qemu-guest-agent"
-          conditions:
-            "insights clients on rhel": *conditions_pkgsets_insights_client_on_rhel
+            qemu-guest-agent], conditions: {insights clients on rhel: *conditions_pkgsets_insights_client_on_rhel}}]
     blueprint:
       supported_options: *supported_options_disk
-
-  "minimal-raw":
-    filename: "disk.raw.xz"
-    mime_type: "application/xz"
-    compression: "xz"
+  minimal-raw:
+    filename: disk.raw.xz
+    mime_type: application/xz
+    compression: xz
     bootable: true
-    default_size: "2 GiB"
-    image_func: "disk"
-    exports: ["xz"]
+    default_size: 2 GiB
+    image_func: disk
+    exports: [xz]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - <<: *x86_64_uefi_platform
-        image_format: "raw"
+        image_format: raw
       - <<: *aarch64_platform
-        image_format: "raw"
+        image_format: raw
     partition_table:
       x86_64: &partition_table_minimal_raw_x86_64
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
-        start_offset: 8_388_608  # 8 * datasizes.MebiByte,
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
+        start_offset: 8_388_608 # 8 * datasizes.MebiByte,
         partitions:
           - &minimal_raw_partition_table_part_efi
-            size: "200 MiB"
+            size: 200 MiB
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               type: vfat
-              mountpoint: "/boot/efi"
-              label: "ESP"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              mountpoint: /boot/efi
+              label: ESP
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
           - &minimal_raw_partition_table_part_boot
-            size: "600 MiB"
+            size: 600 MiB
             type: *xboot_ldr_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               <<: *default_partition_table_part_boot_payload
           - &minimal_raw_partition_table_part_root
-            size: "2 GiB"
+            size: 2 GiB
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               <<: *default_partition_table_part_root_payload
       aarch64: &partition_table_minimal_raw_aarch64
         <<: *partition_table_minimal_raw_x86_64
     partition_tables_override:
       conditions:
-        "RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999":
+        RHEL >= 9.3 needs to have a bigger /boot, see RHEL-7999:
           when:
-            version_less_than: "9.3"
+            version_less_than: 9.3
           override:
             x86_64:
               <<: *partition_table_minimal_raw_x86_64
@@ -2554,7 +2072,7 @@ image_types:
                 - *minimal_raw_partition_table_part_efi
                 - &minimal_raw_partition_table_part_boot_500
                   <<: *minimal_raw_partition_table_part_boot
-                  size: "500 MiB"
+                  size: 500 MiB
                 - *minimal_raw_partition_table_part_root
             aarch64:
               <<: *partition_table_minimal_raw_aarch64
@@ -2564,255 +2082,97 @@ image_types:
                 - *minimal_raw_partition_table_part_root
     image_config:
       enabled_services:
-        - "NetworkManager.service"
-        - "firewalld.service"
-        - "sshd.service"
-        - "initial-setup.service"
-      systemd_dropin:
-        - unit: "grub-boot-success.timer"
-          dropin: "10-disable-if-greenboot.conf"
-          unit-type: "global"
-          config:
-            Unit:
-              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
-      files:
+        - NetworkManager.service
+        - firewalld.service
+        - sshd.service
+        - initial-setup.service
+      systemd_dropin: [{unit: grub-boot-success.timer, dropin: 10-disable-if-greenboot.conf, unit-type: global, config: {Unit: {ConditionPathExists: '!/usr/libexec/greenboot/greenboot'}}}]
+      files: [
         # NOTE: temporary workaround for a bug in initial-setup that
         # requires a kickstart file in the root directory.
-        - path: "/root/anaconda-ks.cfg"
-          user: "root"
-          group: "root"
-          data: |
-            # Run initial-setup on first boot
-            # Created by osbuild
-            firstboot --reconfig
-            lang en_US.UTF-8
-      kernel_options: ["ro"]
+        {path: /root/anaconda-ks.cfg, user: root, group: root, data: "# Run initial-setup on first boot\n# Created by osbuild\nfirstboot --reconfig\nlang en_US.UTF-8\n"}]
+      kernel_options: [ro]
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "initial-setup"
-            - "libxkbcommon"
-            - "NetworkManager-wifi"
-            - "iwl7260-firmware"
-            - "iwl3160-firmware"
+      os: [{include: ['@core', initial-setup, libxkbcommon, NetworkManager-wifi, iwl7260-firmware, iwl3160-firmware]}]
     blueprint:
       supported_options: *supported_options_disk
-
   openstack:
     <<: *qcow2
     # we have to reset the aliases otherwise this type
     # will inherit the name aliases causing a conflict
     name_aliases: []
-    default_size: "4 GiB"
+    default_size: 4 GiB
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "qcow2"
-        qcow2_compat: ""
+        image_format: qcow2
+        qcow2_compat:
       - <<: *aarch64_platform
-        image_format: "qcow2"
-        qcow2_compat: ""
+        image_format: qcow2
+        qcow2_compat:
     image_config:
-      locale: "en_US.UTF-8"
-      kernel_options: ["ro", "net.ifnames=0"]
+      locale: en_US.UTF-8
+      kernel_options:
+        - ro
+        - net.ifnames=0
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "langpacks-en"
-            - "tuned"
+      os: [{include: ['@core', langpacks-en, tuned,
             # From the lorax kickstart
-            - "cloud-init"
-            - "qemu-guest-agent"
-            - "spice-vdagent"
-          exclude:
-            - "dracut-config-rescue"
-            - "rng-tools"
+            cloud-init, qemu-guest-agent, spice-vdagent], exclude: [dracut-config-rescue, rng-tools]}]
     blueprint:
       supported_options: *supported_options_disk
-
-  "edge-commit": &edge_commit
-    name_aliases: ["rhel-edge-commit"]
-    filename: "commit.tar"
-    mime_type: "application/x-tar"
+  edge-commit: &edge_commit
+    name_aliases: [rhel-edge-commit]
+    filename: commit.tar
+    mime_type: application/x-tar
     rpm_ostree: true
-    image_func: "iot_commit"
-    exports: ["commit-archive"]
+    image_func: iot_commit
+    exports: [commit-archive]
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
-    partition_table:
-      *edge_base_partition_tables
+    partition_table: *edge_base_partition_tables
     image_config: &edge_commit_image_config
       # dropin to disable grub-boot-success.timer if greenboot present
-      systemd_dropin:
-        - unit: "grub-boot-success.timer"
-          dropin: "10-disable-if-greenboot.conf"
-          unit-type: "global"
-          config:
+      systemd_dropin: [{unit: grub-boot-success.timer, dropin: 10-disable-if-greenboot.conf, unit-type: global, config: {
             # XXX: sadly the osbuild options are upper case for "Unit" vs lower above :(
-            Unit:
-              ConditionPathExists: "!/usr/libexec/greenboot/greenboot"
+            Unit: {ConditionPathExists: '!/usr/libexec/greenboot/greenboot'}}}]
       enabled_services: &enabled_services_edge
         # XXX: shared with 9.2
-        - "NetworkManager.service"
-        - "firewalld.service"
-        - "sshd.service"
-        - "fdo-client-linuxapp.service"
+        - NetworkManager.service
+        - firewalld.service
+        - sshd.service
+        - fdo-client-linuxapp.service
         # only on rhel-9.2+ and centos
-        - "ignition-firstboot-complete.service"
-        - "coreos-ignition-write-issues.service"
+        - ignition-firstboot-complete.service
+        - coreos-ignition-write-issues.service
       conditions: &conditions_edge_commit_image_config
-        "rhel-9.1 and below do not have ignition":
+        rhel-9.1 and below do not have ignition:
           when:
-            version_less_than: "9.2"
+            version_less_than: 9.2
           shallow_merge:
             enabled_services:
               # XXX: share with the above
-              - "NetworkManager.service"
-              - "firewalld.service"
-              - "sshd.service"
-              - "fdo-client-linuxapp.service"
+              - NetworkManager.service
+              - firewalld.service
+              - sshd.service
+              - fdo-client-linuxapp.service
     package_sets:
-      os:
-        - &edge_commit_pkgset
-          include:
-            - "redhat-release"
-            - "glibc"
-            - "glibc-minimal-langpack"
-            - "nss-altfiles"
-            - "dracut-config-generic"
-            - "dracut-network"
-            - "basesystem"
-            - "bash"
-            - "platform-python"
-            - "shadow-utils"
-            - "chrony"
-            - "setup"
-            - "shadow-utils"
-            - "sudo"
-            - "systemd"
-            - "coreutils"
-            - "util-linux"
-            - "curl"
-            - "vim-minimal"
-            - "rpm"
-            - "rpm-ostree"
-            - "polkit"
-            - "lvm2"
-            - "cryptsetup"
-            - "pinentry"
-            - "e2fsprogs"
-            - "dosfstools"
-            - "keyutils"
-            - "gnupg2"
-            - "attr"
-            - "xz"
-            - "gzip"
-            - "firewalld"
-            - "iptables"
-            - "NetworkManager"
-            - "NetworkManager-wifi"
-            - "NetworkManager-wwan"
-            - "wpa_supplicant"
-            - "traceroute"
-            - "hostname"
-            - "iproute"
-            - "iputils"
-            - "openssh-clients"
-            - "procps-ng"
-            - "rootfiles"
-            - "openssh-server"
-            - "passwd"
-            - "policycoreutils"
-            - "policycoreutils-python-utils"
-            - "selinux-policy-targeted"
-            - "setools-console"
-            - "less"
-            - "tar"
-            - "rsync"
-            - "usbguard"
-            - "bash-completion"
-            - "tmux"
-            - "ima-evm-utils"
-            - "audit"
-            - "podman"
+      os: [&edge_commit_pkgset {include: [redhat-release, glibc, glibc-minimal-langpack, nss-altfiles, dracut-config-generic, dracut-network, basesystem, bash, platform-python, shadow-utils, chrony, setup, shadow-utils, sudo, systemd, coreutils, util-linux, curl, vim-minimal, rpm, rpm-ostree, polkit, lvm2, cryptsetup, pinentry, e2fsprogs, dosfstools, keyutils, gnupg2, attr, xz, gzip, firewalld, iptables, NetworkManager, NetworkManager-wifi, NetworkManager-wwan, wpa_supplicant, traceroute, hostname, iproute, iputils, openssh-clients, procps-ng, rootfiles, openssh-server, passwd, policycoreutils, policycoreutils-python-utils, selinux-policy-targeted, setools-console, less, tar, rsync, usbguard, bash-completion, tmux, ima-evm-utils, audit, podman,
             # required for cni networks but not a hard dependency of podman >= 4.2.0 (rhbz#2123210)
-            - "containernetworking-plugins"
-            - "container-selinux"
-            - "skopeo"
-            - "criu"
-            - "slirp4netns"
-            - "fuse-overlayfs"
-            - "clevis"
-            - "clevis-dracut"
-            - "clevis-luks"
-            - "greenboot"
-            - "greenboot-default-health-checks"
-            - "fdo-client"
-            - "fdo-owner-cli"
-            - "sos"
-          exclude:
-            - "rng-tools"
-            - "bootupd"
-          conditions: &conditions_pkgsets_edge_commit
-            "x86_64 specific packages for edge-commit":
-              when:
-                arch: "x86_64"
-              append: &edge_commit_x86_64_pkgset
-                include:
-                  - "grub2"
-                  - "grub2-efi-x64"
-                  - "efibootmgr"
-                  - "shim-x64"
-                  - "microcode_ctl"
-                  - "iwl1000-firmware"
-                  - "iwl100-firmware"
-                  - "iwl105-firmware"
-                  - "iwl135-firmware"
-                  - "iwl2000-firmware"
-                  - "iwl2030-firmware"
-                  - "iwl3160-firmware"
-                  - "iwl5000-firmware"
-                  - "iwl5150-firmware"
-                  - "iwl6050-firmware"
-                  - "iwl7260-firmware"
-            "aarch64 specific packages for edge-commit":
-              when:
-                arch: "aarch64"
-              append: &edge_commit_aarch64_pkgset
-                include:
-                  - "grub2-efi-aa64"
-                  - "efibootmgr"
-                  - "shim-aa64"
-                  - "iwl7260-firmware"
-            "rhel-9.2+ gets ignition":
-              when:
-                version_greater_or_equal: "9.2"
-              append:
-                include:
-                  - "ignition"
-                  - "ignition-edge"
-                  - "ssh-key-dir"
-            "rhel-9.5 and below includes dnsmasq":
-              when:
-                version_less_than: "9.6"
-              append:
-                include:
+            containernetworking-plugins, container-selinux, skopeo, criu, slirp4netns, fuse-overlayfs, clevis, clevis-dracut, clevis-luks, greenboot, greenboot-default-health-checks, fdo-client, fdo-owner-cli, sos], exclude: [rng-tools, bootupd], conditions: &conditions_pkgsets_edge_commit {x86_64 specific packages for edge-commit: {when: {arch: x86_64}, append: &edge_commit_x86_64_pkgset {include: [grub2, grub2-efi-x64, efibootmgr, shim-x64, microcode_ctl, iwl1000-firmware, iwl100-firmware, iwl105-firmware, iwl135-firmware, iwl2000-firmware, iwl2030-firmware, iwl3160-firmware, iwl5000-firmware, iwl5150-firmware, iwl6050-firmware, iwl7260-firmware]}}, aarch64 specific packages for edge-commit: {when: {arch: aarch64}, append: &edge_commit_aarch64_pkgset {include: [grub2-efi-aa64, efibootmgr, shim-aa64, iwl7260-firmware]}}, rhel-9.2+ gets ignition: {when: {version_greater_or_equal: 9.2}, append: {include: [ignition, ignition-edge, ssh-key-dir]}}, rhel-9.5 and below includes dnsmasq: {when: {version_less_than: 9.6}, append: {include: [
                   # dnsmasq removed in 9.6+ but kept in older versions
-                  - "dnsmasq"
+                  dnsmasq]}}}}]
     blueprint:
       supported_options: *supported_options_ostree_commit
-
-  "edge-container":
-    name_aliases: ["rhel-edge-container"]
-    filename: "container.tar"
-    mime_type: "application/x-tar"
+  edge-container:
+    name_aliases: [rhel-edge-container]
+    filename: container.tar
+    mime_type: application/x-tar
     rpm_ostree: true
-    image_func: "iot_container"
-    exports: ["container"]
+    image_func: iot_container
+    exports: [container]
     <<: *edge_commit
     image_config:
       <<: *edge_commit_image_config
@@ -2820,80 +2180,73 @@ image_types:
       oci:
         archive:
           cmd:
-            - "nginx"
-            - "-c"
+            - nginx
+            - -c
             - *ostree_server_config_path
-          exposed_ports:
-            - *ostree_server_port
+          exposed_ports: [*ostree_server_port]
     blueprint:
       supported_options: *supported_options_ostree_commit
-
-  "edge-raw-image":
-    name_aliases: ["rhel-edge-raw-image"]
-    filename: "image.raw.xz"
-    compression: "xz"
-    mime_type: "application/xz"
-    exports: ["xz"]
-    default_size: "10 GiB"
+  edge-raw-image:
+    name_aliases: [rhel-edge-raw-image]
+    filename: image.raw.xz
+    compression: xz
+    mime_type: application/xz
+    exports: [xz]
+    default_size: 10 GiB
     rpm_ostree: true
     bootable: true
-    image_func: "iot"
+    image_func: iot
     ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+      name: rhel-edge
+      remote_name: rhel-edge
     use_ostree_remotes: true
     platforms:
       - <<: *x86_64_edge_platform
-        image_format: "raw"
+        image_format: raw
       - <<: *aarch64_platform
-        image_format: "raw"
-    partition_table:
-      *edge_base_partition_tables
+        image_format: raw
+    partition_table: *edge_base_partition_tables
     image_config:
       <<: *edge_commit_image_config
       keyboard:
-        keymap: "us"
-      locale: "C.UTF-8"
+        keymap: us
+      locale: C.UTF-8
       lock_root_user: true
       kernel_options: &kernel_options_raw_image
-        - "modprobe.blacklist=vc4"
-        - "rw"
-        - "coreos.no_persist_ip"
+        - modprobe.blacklist=vc4
+        - rw
+        - coreos.no_persist_ip
       ostree_conf_sysroot_readonly: true
-      ignition_platform: "metal"
+      ignition_platform: metal
       conditions:
         <<: *conditions_edge_commit_image_config
-        "rhel-9.1 and below is not using ignition":
+        rhel-9.1 and below is not using ignition:
           when:
-            version_less_than: "9.2"
+            version_less_than: 9.2
           shallow_merge:
             ostree_conf_sysroot_readonly: false
-            ignition_platform: ""
-            kernel_options: ["modprobe.blacklist=vc4"]
+            ignition_platform:
+            kernel_options: [modprobe.blacklist=vc4]
     blueprint:
       supported_options: *supported_options_ostree_disk
-
   # XXX: not a real pkgset but the "containerPkgsKey"
-  "edge-container-pipeline-pkgset":
+  edge-container-pipeline-pkgset:
     package_sets:
-      os:
-        - include:
-            - "nginx"
-
-  "edge-installer":
-    name_aliases: ["rhel-edge-installer"]
-    filename: "installer.iso"
-    mime_type: "application/x-iso9660-image"
+      os: [{include: [nginx]}]
+  edge-installer:
+    name_aliases: [rhel-edge-installer]
+    filename: installer.iso
+    mime_type: application/x-iso9660-image
     rpm_ostree: true
     boot_iso: true
     # XXX: merge with boot_iso above
     use_syslinux: true
-    image_func: "iot_installer"
-    iso_label: "edge"
-    variant: "edge"
+    image_func: iot_installer
+    iso_label: edge
+    variant: edge
     ostree:
-      name: "rhel-edge"
-    exports: ["bootiso"]
+      name: rhel-edge
+    exports: [bootiso]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
       - *x86_64_uefi_platform
@@ -2903,26 +2256,25 @@ image_types:
       default_menu: 0
     image_config:
       enabled_services: *enabled_services_edge
-      locale: "en_US.UTF-8"
+      locale: en_US.UTF-8
     package_sets:
       installer:
         - *installer_pkgset
         - *anaconda_pkgset
     blueprint:
       supported_options:
-        - "distro"
-        - "customizations.installer"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.fips"
-        - "customizations.timezone"
-        - "customizations.locale"
-
-  "edge-simplified-installer":
-    name_aliases: ["rhel-edge-simplified-installer"]
-    filename: "simplified-installer.iso"
-    mime_type: "application/x-iso9660-image"
+        - distro
+        - customizations.installer
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.fips
+        - customizations.timezone
+        - customizations.locale
+  edge-simplified-installer:
+    name_aliases: [rhel-edge-simplified-installer]
+    filename: simplified-installer.iso
+    mime_type: application/x-iso9660-image
     rpm_ostree: true
     bootable: true
     boot_iso: true
@@ -2930,668 +2282,362 @@ image_types:
     use_syslinux: true
     # NOTE: RHEL 8 only supports the older Anaconda configs
     use_legacy_anaconda_config: true
-    default_size: "10 GiB"
-    image_func: "iot_simplified_installer"
-    iso_label: "edge"
-    variant: "edge"
+    default_size: 10 GiB
+    image_func: iot_simplified_installer
+    iso_label: edge
+    variant: edge
     ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+      name: rhel-edge
+      remote_name: rhel-edge
     # XXX: find better name
     use_ostree_remotes: true
-    exports: ["bootiso"]
+    exports: [bootiso]
     required_partition_sizes: *default_required_dir_sizes
     installer_config:
       additional_dracut_modules:
-        - "prefixdevname"
-        - "prefixdevname-tools"
+        - prefixdevname
+        - prefixdevname-tools
     platforms:
       - <<: *x86_64_uefi_platform
       - <<: *aarch64_platform
-    partition_table:
-      *edge_base_partition_tables
+    partition_table: *edge_base_partition_tables
     image_config:
       enabled_services: *enabled_services_edge
       keyboard:
-        keymap: "us"
-      locale: "C.UTF-8"
+        keymap: us
+      locale: C.UTF-8
       lock_root_user: true
       conditions:
-        "rhel-9.2+ uses ignition":
+        rhel-9.2+ uses ignition:
           when:
-            version_greater_or_equal: "9.2"
+            version_greater_or_equal: 9.2
           shallow_merge:
             ostree_conf_sysroot_readonly: true
-            ignition_platform: "metal"
+            ignition_platform: metal
             kernel_options:
-              - "modprobe.blacklist=vc4"
-              - "rw"
-              - "coreos.no_persist_ip"
-        "rhel < 9.2 has less kernel options":
+              - modprobe.blacklist=vc4
+              - rw
+              - coreos.no_persist_ip
+        rhel < 9.2 has less kernel options:
           when:
-            version_less_than: "9.2"
+            version_less_than: 9.2
           shallow_merge:
-            kernel_options: ["modprobe.blacklist=vc4"]
+            kernel_options: [modprobe.blacklist=vc4]
     package_sets:
       installer:
         - *installer_pkgset
         - include:
-            - "attr"
-            - "basesystem"
-            - "binutils"
-            - "bsdtar"
-            - "clevis-dracut"
-            - "clevis-luks"
-            - "cloud-utils-growpart"
-            - "coreos-installer"
-            - "coreos-installer-dracut"
-            - "coreutils"
-            - "device-mapper-multipath"
-            - "dnsmasq"
-            - "dosfstools"
-            - "dracut-live"
-            - "e2fsprogs"
-            - "fcoe-utils"
-            - "fdo-init"
-            - "gzip"
-            - "ima-evm-utils"
-            - "iproute"
-            - "iptables"
-            - "iputils"
-            - "iscsi-initiator-utils"
-            - "keyutils"
-            - "lldpad"
-            - "lvm2"
-            - "passwd"
-            - "policycoreutils"
-            - "policycoreutils-python-utils"
-            - "procps-ng"
-            - "redhat-logos"
-            - "rootfiles"
-            - "setools-console"
-            - "sudo"
-            - "traceroute"
-            - "util-linux"
+            - attr
+            - basesystem
+            - binutils
+            - bsdtar
+            - clevis-dracut
+            - clevis-luks
+            - cloud-utils-growpart
+            - coreos-installer
+            - coreos-installer-dracut
+            - coreutils
+            - device-mapper-multipath
+            - dnsmasq
+            - dosfstools
+            - dracut-live
+            - e2fsprogs
+            - fcoe-utils
+            - fdo-init
+            - gzip
+            - ima-evm-utils
+            - iproute
+            - iptables
+            - iputils
+            - iscsi-initiator-utils
+            - keyutils
+            - lldpad
+            - lvm2
+            - passwd
+            - policycoreutils
+            - policycoreutils-python-utils
+            - procps-ng
+            - redhat-logos
+            - rootfiles
+            - setools-console
+            - sudo
+            - traceroute
+            - util-linux
           conditions:
             # XXX: should we instead "<<: *conditions_edge_commit" here?
             # it will give different results
-            "x86_64 specific pkgset for edge-simplified-installer":
+            x86_64 specific pkgset for edge-simplified-installer:
               when:
-                arch: "x86_64"
+                arch: x86_64
               append:
                 <<: *edge_commit_x86_64_pkgset
-            "aarch64 specific pkgset for edge-simplified-installer":
+            aarch64 specific pkgset for edge-simplified-installer:
               when:
-                arch: "aarch64"
+                arch: aarch64
               append:
                 <<: *edge_commit_aarch64_pkgset
     blueprint:
       supported_options:
-        - "distro"
-        - "customizations.dnf"
-        - "customizations.installation_device"
-        - "customizations.filesystem"
-        - "customizations.disk"
-        - "customizations.fdo"
-        - "customizations.ignition"
-        - "customizations.kernel"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.fips"
-        - "customizations.files"
-        - "customizations.directories"
-      required_options:
-        - "customizations.installation_device"
-
-  "edge-ami": &edge_ami
-    filename: "image.raw"
-    mime_type: "application/octet-stream"
-    default_size: "10 GiB"
-    exports: ["image"]
+        - distro
+        - customizations.dnf
+        - customizations.installation_device
+        - customizations.filesystem
+        - customizations.disk
+        - customizations.fdo
+        - customizations.ignition
+        - customizations.kernel
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.fips
+        - customizations.files
+        - customizations.directories
+      required_options: [customizations.installation_device]
+  edge-ami: &edge_ami
+    filename: image.raw
+    mime_type: application/octet-stream
+    default_size: 10 GiB
+    exports: [image]
     rpm_ostree: true
     bootable: true
-    image_func: "iot"
+    image_func: iot
     ostree:
-      name: "rhel-edge"
-      remote_name: "rhel-edge"
+      name: rhel-edge
+      remote_name: rhel-edge
     use_ostree_remotes: true
     platforms:
       - <<: *x86_64_edge_platform
-        image_format: "raw"
+        image_format: raw
       - <<: *aarch64_platform
-        image_format: "raw"
-    partition_table:
-      *edge_base_partition_tables
+        image_format: raw
+    partition_table: *edge_base_partition_tables
     image_config: &image_config_edge_ami
       keyboard:
-        keymap: "us"
-      locale: "C.UTF-8"
+        keymap: us
+      locale: C.UTF-8
       lock_root_user: true
       kernel_options:
         # ami-kernel-options
-        - "console=tty0"
-        - "console=ttyS0,115200n8"
-        - "net.ifnames=0"
-        - "nvme_core.io_timeout=4294967295"
+        - console=tty0
+        - console=ttyS0,115200n8
+        - net.ifnames=0
+        - nvme_core.io_timeout=4294967295
         # edge-ami
-        - "modprobe.blacklist=vc4"
-        - "rw"
-        - "coreos.no_persist_ip"
+        - modprobe.blacklist=vc4
+        - rw
+        - coreos.no_persist_ip
       conditions: &image_config_conditions_edge_ami
-        "rhel-9.2+ uses ignitions":
+        rhel-9.2+ uses ignitions:
           when:
-            version_greater_or_equal: "9.2"
+            version_greater_or_equal: 9.2
           shallow_merge:
             ostree_conf_sysroot_readonly: true
-            ignition_platform: "metal"
-        "rhel < 9.2 uses less kernel options":
+            ignition_platform: metal
+        rhel < 9.2 uses less kernel options:
           when:
-            version_less_than: "9.2"
+            version_less_than: 9.2
           shallow_merge:
             kernel_options:
               # ami-kernel-options
-              - "console=tty0"
-              - "console=ttyS0,115200n8"
-              - "net.ifnames=0"
-              - "nvme_core.io_timeout=4294967295"
+              - console=tty0
+              - console=ttyS0,115200n8
+              - net.ifnames=0
+              - nvme_core.io_timeout=4294967295
               # edge-ami
-              - "modprobe.blacklist=vc4"
+              - modprobe.blacklist=vc4
     blueprint:
       supported_options: *supported_options_ostree_disk
-
-  "edge-vsphere":
+  edge-vsphere:
     <<: *edge_ami
-    filename: "image.vmdk"
-    mime_type: "application/x-vmdk"
-    exports: ["vmdk"]
+    filename: image.vmdk
+    mime_type: application/x-vmdk
+    exports: [vmdk]
     platforms:
       - <<: *x86_64_bios_platform
-        image_format: "vmdk"
+        image_format: vmdk
       - <<: *aarch64_platform
-        image_format: "vmdk"
+        image_format: vmdk
     image_config:
       <<: *image_config_edge_ami
       kernel_options:
-        - "modprobe.blacklist=vc4"
-        - "rw"
-        - "coreos.no_persist_ip"
+        - modprobe.blacklist=vc4
+        - rw
+        - coreos.no_persist_ip
       conditions:
         <<: *image_config_conditions_edge_ami
         # override the rhel < 9.2 from above with different options
-        "rhel < 9.2 uses less kernel options":
+        rhel < 9.2 uses less kernel options:
           when:
-            version_less_than: "9.2"
+            version_less_than: 9.2
           shallow_merge:
-            kernel_options:
-              - "modprobe.blacklist=vc4"
+            kernel_options: [modprobe.blacklist=vc4]
     blueprint:
       supported_options: *supported_options_ostree_disk
-
-  "azure-cvm":
+  azure-cvm:
     <<: *vhd
-    filename: "disk.vhd.xz"
-    mime_type: "application/xz"
-    exports: ["xz"]
-    compression: "xz"
-    default_size: "32 GiB"
-    platforms:
-      - arch: "x86_64"
-        bootloader: "uki"
-        image_format: "vhd"
-        uefi_vendor: "{{.DistroVendor}}"
-        packages:
-          uki:
-            - "efibootmgr"
-            - "kernel-uki-virt-addons"  # provides useful cmdline utilities for the UKI
-            - "shim-x64"
-            - "uki-direct"
+    filename: disk.vhd.xz
+    mime_type: application/xz
+    exports: [xz]
+    compression: xz
+    default_size: 32 GiB
+    platforms: [{arch: x86_64, bootloader: uki, image_format: vhd, uefi_vendor: '{{.DistroVendor}}', packages: {uki: [efibootmgr, kernel-uki-virt-addons, # provides useful cmdline utilities for the UKI
+            shim-x64, uki-direct]}}]
     partition_table:
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
-          - size: "512 MiB"
+          - size: 512 MiB
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               type: vfat
-              mountpoint: "/boot/efi"
-              label: "EFI-SYSTEM"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              mountpoint: /boot/efi
+              label: EFI-SYSTEM
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
-          - size: 5_368_709_120  # 5 * datasizes.GibiByte,
+          - size: 5_368_709_120 # 5 * datasizes.GibiByte,
             type: *root_partition_x86_64_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "ext4"
-              label: "root"
-              mountpoint: "/"
-              fstab_options: "defaults"
+              type: ext4
+              label: root
+              mountpoint: /
+              fstab_options: defaults
               fstab_freq: 0
               fstab_passno: 0
     image_config:
       <<: *azure_image_config_base
-      default_kernel: "kernel-uki-virt"
-      default_kernel_name: "kernel-uki-virt"
+      default_kernel: kernel-uki-virt
+      default_kernel_name: kernel-uki-virt
       no_bls: true
-      cloud_init:
-        - filename: "91-azure_datasource.cfg"
-          config:
-            datasource:
-              azure:
-                apply_network_config: false
-            datasource_list:
-              - "Azure"
+      cloud_init: [{filename: 91-azure_datasource.cfg, config: {datasource: {azure: {apply_network_config: false}}, datasource_list: [Azure]}}]
       conditions:
         <<: *conditions_azure_image_config_base
-        "x86_64 shim package version lock":
+        x86_64 shim package version lock:
           # Lock the shim package to its installed version. This is necessary
           # for UKI-based images that can become unbootable if the shim is
           # upgraded to one signed by a newer certificate that does not exist
           # in the system's database.
           # See https://issues.redhat.com/browse/RHEL-93650
           when:
-            arch: "x86_64"
+            arch: x86_64
           shallow_merge:
-            versionlock_packages:
-              - "shim-x64"
+            versionlock_packages: [shim-x64]
     package_sets:
-      os:
-        - *azure_base_pkgset
+      os: [*azure_base_pkgset]
     blueprint:
       supported_options:
         # same as disk image types, but kernel customizations are not supported
-        - "distro"
-        - "packages"
-        - "modules"
-        - "groups"
-        - "enabled_modules"
-        - "containers"
-        - "customizations.cacerts"
-        - "customizations.directories"
-        - "customizations.disk"
-        - "customizations.dnf"
-        - "customizations.files"
-        - "customizations.filesystem"
-        - "customizations.partitioning_mode"
-        - "customizations.fips"
-        - "customizations.firewall"
-        - "customizations.user"
-        - "customizations.sshkey"
-        - "customizations.group"
-        - "customizations.hostname"
-        - "customizations.locale"
-        - "customizations.openscap"
-        - "customizations.repositories"
-        - "customizations.rpm"
-        - "customizations.services"
-        - "customizations.timezone"
-        - "customizations.rhsm"
-
+        - distro
+        - packages
+        - modules
+        - groups
+        - enabled_modules
+        - containers
+        - customizations.cacerts
+        - customizations.directories
+        - customizations.disk
+        - customizations.dnf
+        - customizations.files
+        - customizations.filesystem
+        - customizations.partitioning_mode
+        - customizations.fips
+        - customizations.firewall
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.hostname
+        - customizations.locale
+        - customizations.openscap
+        - customizations.repositories
+        - customizations.rpm
+        - customizations.services
+        - customizations.timezone
+        - customizations.rhsm
   # Based on lorax runtime-install.tmpl
-  "network-installer":
-    filename: "netinst.iso"
-    mime_type: "application/x-iso9660-image"
+  network-installer:
+    filename: netinst.iso
+    mime_type: application/x-iso9660-image
     bootable: true
     boot_iso: true
-    image_func: "network-installer"
+    image_func: network-installer
     # We don't know the variant of the OS pipeline being installed
-    iso_label: "Unknown"
-    exports: ["bootiso"]
+    iso_label: Unknown
+    exports: [bootiso]
     required_partition_sizes: *default_required_dir_sizes
     installer_config: *default_installer_config
     image_config:
-      locale: "en_US.UTF-8"
+      locale: en_US.UTF-8
     platforms:
       - *x86_64_installer_platform
       - *aarch64_installer_platform
     platforms_override:
       conditions:
-        "RHEL 9.7+ adds FIPS menu":
+        RHEL 9.7+ adds FIPS menu:
           when:
-            version_greater_or_equal: "9.7"
+            version_greater_or_equal: 9.7
           override:
             - <<: *x86_64_installer_platform
               fips_menu: true
             - <<: *aarch64_installer_platform
               fips_menu: true
     package_sets:
-      installer:
-        - include:
-            - "anaconda"
-            - "anaconda-widgets"
-            - "kexec-tools-anaconda-addon"
-            - "anaconda-install-img-deps"
-            - "oscap-anaconda-addon"
-            - "redhat-release-eula"
-            - "device-mapper-multipath"
-            - "dnf"
-            - "rpm-ostree"
-            - "ostree"
-            - "pigz"
-            - "kernel"
-            - "kernel-modules"
-            - "kernel-modules-extra"
-            - "grubby"
-            - "glibc-all-langpacks"
-            - "plymouth"
-            - "anaconda-dracut"
-            - "dracut-network"
-            - "dracut-config-generic"
-            - "initscripts"
-            - "cryptsetup"
-            - "rpcbind"
-            - "kbd"
-            - "kbd-misc"
-            - "tar"
-            - "xz"
-            - "curl"
-            - "bzip2"
-            - "systemd"
-            - "rsyslog"
-            - "xorg-x11-drivers"
-            - "xorg-x11-server-Xorg"
-            - "xorg-x11-server-utils"
-            - "xorg-x11-xauth"
-            - "dbus-x11"
-            - "gsettings-desktop-schemas"
-            - "nm-connection-editor"
-            - "librsvg2"
-            - "gnome-kiosk"
-            - "xfsprogs"
-            - "device-mapper-persistent-data"
-            - "xfsdump"
-            - "libblockdev-plugins-all"
-            - "libblockdev"
-            - "udisks2"
-            - "udisks2-iscsi"
-            - "hostname"
-            - "libblockdev-lvm-dbus"
-            - "volume_key"
-            - "nss-tools"
-            - "selinux-policy-targeted"
-            - "audit"
-            - "ethtool"
-            - "openssh-server"
-            - "nfs-utils"
-            - "openssh-clients"
-            - "tigervnc-server-minimal"
-            - "tigervnc-server-module"
-            - "net-tools"
-            - "nmap-ncat"
-            - "prefixdevname"
-            - "ipcalc"
-            - "pciutils"
-            - "usbutils"
-            - "ipmitool"
-            - "mt-st"
-            - "smartmontools"
-            - "hdparm"
-            - "libmlx4"
-            - "rdma-core"
-            - "nvme-cli"
-            - "bitmap-fangsongti-fonts"
-            - "dejavu-sans-fonts"
-            - "dejavu-sans-mono-fonts"
-            - "kacst-farsi-fonts"
-            - "kacst-qurn-fonts"
-            - "lklug-fonts"
-            - "lohit-assamese-fonts"
-            - "lohit-bengali-fonts"
-            - "lohit-devanagari-fonts"
-            - "lohit-gujarati-fonts"
-            - "lohit-gurmukhi-fonts"
-            - "lohit-kannada-fonts"
-            - "lohit-odia-fonts"
-            - "lohit-tamil-fonts"
-            - "lohit-telugu-fonts"
-            - "madan-fonts"
-            - "smc-meera-fonts"
-            - "thai-scalable-waree-fonts"
-            - "sil-abyssinica-fonts"
-            - "xorg-x11-fonts-misc"
-            - "aajohan-comfortaa-fonts"
-            - "abattis-cantarell-fonts"
-            - "sil-scheherazade-fonts"
-            - "jomolhari-fonts"
-            - "khmeros-base-fonts"
-            - "sil-padauk-fonts"
-            - "google-noto-sans-cjk-ttc-fonts"
-            - "gdb-gdbserver"
-            - "libreport-plugin-reportuploader"
-            - "python3-pyatspi"
-            - "vim-minimal"
-            - "strace"
-            - "lsof"
-            - "xz"
-            - "less"
-            - "rsync"
-            - "bind-utils"
-            - "ftp"
-            - "mtr"
-            - "wget"
-            - "gdisk"
-            - "hexedit"
-            - "sg3_utils"
-            - "perl-interpreter"
-            - "restore"
-            - "spice-vdagent"
+      installer: [{include: [anaconda, anaconda-widgets, kexec-tools-anaconda-addon, anaconda-install-img-deps, oscap-anaconda-addon, redhat-release-eula, device-mapper-multipath, dnf, rpm-ostree, ostree, pigz, kernel, kernel-modules, kernel-modules-extra, grubby, glibc-all-langpacks, plymouth, anaconda-dracut, dracut-network, dracut-config-generic, initscripts, cryptsetup, rpcbind, kbd, kbd-misc, tar, xz, curl, bzip2, systemd, rsyslog, xorg-x11-drivers, xorg-x11-server-Xorg, xorg-x11-server-utils, xorg-x11-xauth, dbus-x11, gsettings-desktop-schemas, nm-connection-editor, librsvg2, gnome-kiosk, xfsprogs, device-mapper-persistent-data, xfsdump, libblockdev-plugins-all, libblockdev, udisks2, udisks2-iscsi, hostname, libblockdev-lvm-dbus, volume_key, nss-tools, selinux-policy-targeted, audit, ethtool, openssh-server, nfs-utils, openssh-clients, tigervnc-server-minimal, tigervnc-server-module, net-tools, nmap-ncat, prefixdevname, ipcalc, pciutils, usbutils, ipmitool, mt-st, smartmontools, hdparm, libmlx4, rdma-core, nvme-cli, bitmap-fangsongti-fonts, dejavu-sans-fonts, dejavu-sans-mono-fonts, kacst-farsi-fonts, kacst-qurn-fonts, lklug-fonts, lohit-assamese-fonts, lohit-bengali-fonts, lohit-devanagari-fonts, lohit-gujarati-fonts, lohit-gurmukhi-fonts, lohit-kannada-fonts, lohit-odia-fonts, lohit-tamil-fonts, lohit-telugu-fonts, madan-fonts, smc-meera-fonts, thai-scalable-waree-fonts, sil-abyssinica-fonts, xorg-x11-fonts-misc, aajohan-comfortaa-fonts, abattis-cantarell-fonts, sil-scheherazade-fonts, jomolhari-fonts, khmeros-base-fonts, sil-padauk-fonts, google-noto-sans-cjk-ttc-fonts, gdb-gdbserver, libreport-plugin-reportuploader, python3-pyatspi, vim-minimal, strace, lsof, xz, less, rsync, bind-utils, ftp, mtr, wget, gdisk, hexedit, sg3_utils, perl-interpreter, restore, spice-vdagent]}]
     blueprint:
       supported_options:
-        - "distro"
-        - "customizations.fips"
-        - "customizations.locale"
-
-  "pxe-tar-xz":
-    filename: "pxe.tar.xz"
-    compression: "xz"
-    mime_type: "application/x-tar"
-    image_func: "pxe_tar"
-    exports: ["xz"]
+        - distro
+        - customizations.fips
+        - customizations.locale
+  pxe-tar-xz:
+    filename: pxe.tar.xz
+    compression: xz
+    mime_type: application/x-tar
+    image_func: pxe_tar
+    exports: [xz]
     bootable: true
     package_sets:
-      os:
-        - include:
-            - "bash"
-            - "coreutils"
-            - "dracut-live"
-            - "dracut-network"
-            - "dracut-config-generic"
+      os: [{include: [bash, coreutils, dracut-live, dracut-network, dracut-config-generic]}]
     platforms:
       - *x86_64_bios_platform
       - *aarch64_platform
     blueprint:
       supported_options: *supported_options_pxe
-
-  "bootc-rpm-installer":
+  bootc-rpm-installer:
     # Note that this image type is partial and only used by
     # bootc-image-builder not by the "images" library directly. We
     # still keep the config here so that there is a single place for
     # all imagetype configs.
     installer_config: *default_installer_config
     package_sets:
-      installer:
-        - include:
+      installer: [{include: [
             # This is the same set as the Fedora one, but without packages not available in CentOS/RHEL:
             # atheros-firmware, brcmfmac-firmware, iwlwifi-dvm-firmware, iwlwifi-mvm-firmware, realtek-firmware, rit-meera-new-fonts
-            - aajohan-comfortaa-fonts
-            - abattis-cantarell-fonts
-            - alsa-firmware
-            - alsa-tools-firmware
-            - anaconda
-            - anaconda-dracut
-            - anaconda-install-env-deps
-            - anaconda-widgets
-            - audit
-            - bind-utils
-            - bitmap-fangsongti-fonts
-            - bzip2
-            - cryptsetup
-            - curl
-            - dbus-x11
-            - dejavu-sans-fonts
-            - dejavu-sans-mono-fonts
-            - device-mapper-persistent-data
-            - dmidecode
-            - dnf
-            - dracut-config-generic
-            - dracut-network
-            - efibootmgr
-            - ethtool
-            - fcoe-utils
-            - ftp
-            - gdb-gdbserver
-            - gdisk
-            - glibc-all-langpacks
-            - gnome-kiosk
-            - google-noto-sans-cjk-ttc-fonts
-            - grub2-tools
-            - grub2-tools-extra
-            - grub2-tools-minimal
-            - grubby
-            - gsettings-desktop-schemas
-            - hdparm
-            - hexedit
-            - hostname
-            - initscripts
-            - ipmitool
-            - jomolhari-fonts
-            - kbd
-            - kbd-misc
-            - kdump-anaconda-addon
-            - kernel
-            - khmeros-base-fonts
-            - less
-            - libblockdev-lvm-dbus
-            - libibverbs
-            - libreport-plugin-bugzilla
-            - libreport-plugin-reportuploader
-            - librsvg2
-            - linux-firmware
-            - lldpad
-            - lsof
-            - madan-fonts
-            - mt-st
-            - mtr
-            - net-tools
-            - nfs-utils
-            - nm-connection-editor
-            - nmap-ncat
-            - nss-tools
-            - openssh-clients
-            - openssh-server
-            - ostree
-            - pciutils
-            - perl-interpreter
-            - pigz
-            - plymouth
-            - prefixdevname
-            - python3-pyatspi
-            - rdma-core
-            - rng-tools
-            - rpcbind
-            - rpm-ostree
-            - rsync
-            - rsyslog
-            - selinux-policy-targeted
-            - sg3_utils
-            - sil-abyssinica-fonts
-            - sil-padauk-fonts
-            - smartmontools
-            - spice-vdagent
-            - strace
-            - systemd
-            - tar
-            - tigervnc-server-minimal
-            - tigervnc-server-module
-            - udisks2
-            - udisks2-iscsi
-            - usbutils
-            - vim-minimal
-            - volume_key
-            - wget
-            - xfsdump
-            - xfsprogs
-            - xorg-x11-drivers
-            - xorg-x11-fonts-misc
-            - xorg-x11-server-Xorg
-            - xorg-x11-xauth
-            - xrdb
-            - xz
-
+            aajohan-comfortaa-fonts, abattis-cantarell-fonts, alsa-firmware, alsa-tools-firmware, anaconda, anaconda-dracut, anaconda-install-env-deps, anaconda-widgets, audit, bind-utils, bitmap-fangsongti-fonts, bzip2, cryptsetup, curl, dbus-x11, dejavu-sans-fonts, dejavu-sans-mono-fonts, device-mapper-persistent-data, dmidecode, dnf, dracut-config-generic, dracut-network, efibootmgr, ethtool, fcoe-utils, ftp, gdb-gdbserver, gdisk, glibc-all-langpacks, gnome-kiosk, google-noto-sans-cjk-ttc-fonts, grub2-tools, grub2-tools-extra, grub2-tools-minimal, grubby, gsettings-desktop-schemas, hdparm, hexedit, hostname, initscripts, ipmitool, jomolhari-fonts, kbd, kbd-misc, kdump-anaconda-addon, kernel, khmeros-base-fonts, less, libblockdev-lvm-dbus, libibverbs, libreport-plugin-bugzilla, libreport-plugin-reportuploader, librsvg2, linux-firmware, lldpad, lsof, madan-fonts, mt-st, mtr, net-tools, nfs-utils, nm-connection-editor, nmap-ncat, nss-tools, openssh-clients, openssh-server, ostree, pciutils, perl-interpreter, pigz, plymouth, prefixdevname, python3-pyatspi, rdma-core, rng-tools, rpcbind, rpm-ostree, rsync, rsyslog, selinux-policy-targeted, sg3_utils, sil-abyssinica-fonts, sil-padauk-fonts, smartmontools, spice-vdagent, strace, systemd, tar, tigervnc-server-minimal, tigervnc-server-module, udisks2, udisks2-iscsi, usbutils, vim-minimal, volume_key, wget, xfsdump, xfsprogs, xorg-x11-drivers, xorg-x11-fonts-misc, xorg-x11-server-Xorg, xorg-x11-xauth, xrdb, xz]}]
   container: &container
-    filename: "container.tar"
-    mime_type: "application/x-tar"
-    image_func: "container"
+    filename: container.tar
+    mime_type: application/x-tar
+    image_func: container
     bootable: false
-    exports: ["container"]
+    exports: [container]
     required_partition_sizes: *default_required_dir_sizes
     platforms:
-      - arch: "x86_64"
-      - arch: "aarch64"
-      - arch: "ppc64le"
-      - arch: "s390x"
+      - arch: x86_64
+      - arch: aarch64
+      - arch: ppc64le
+      - arch: s390x
     image_config:
       no_selinux: true
       exclude_docs: true
-      locale: "C.UTF-8"
-      timezone: "Etc/UTC"
+      locale: C.UTF-8
+      timezone: Etc/UTC
     package_sets:
-      os:
-        - include:
-            - "bash"
-            - "coreutils-single"
-            - "crypto-policies-scripts"
-            - "curl-minimal"
-            - "findutils"
-            - "gdb-gdbserver"
-            - "glibc-minimal-langpack"
-            - "gzip"
-            - "python3-dnf-plugins-core"
-            - "redhat-release"
-            - "tar"
-            - "tzdata"
-            - "util-linux"
-            - "vim-minimal"
-            - "virt-what"
-            - "which"
-            - "yum"
-          exclude:
-            - "chrony"
-            - "coreutils"
-            - "coreutils-common"
-            - "libbrotli"
-            - "libcurl"
-            - "libpsl"
-            - "libssh"
-            - "libssh-config"
-            - "libxkbcommon"
-            - "publicsuffix-list-dafsa"
-            - "rpm-plugin-audit"
-            - "xkeyboard-config"
+      os: [{include: [bash, coreutils-single, crypto-policies-scripts, curl-minimal, findutils, gdb-gdbserver, glibc-minimal-langpack, gzip, python3-dnf-plugins-core, redhat-release, tar, tzdata, util-linux, vim-minimal, virt-what, which, yum], exclude: [chrony, coreutils, coreutils-common, libbrotli, libcurl, libpsl, libssh, libssh-config, libxkbcommon, publicsuffix-list-dafsa, rpm-plugin-audit, xkeyboard-config]}]
     blueprint:
       supported_options: *supported_options_container
-
   container-minimal:
     <<: *container
-    filename: "container-minimal.tar"
+    filename: container-minimal.tar
     package_sets:
-      os:
-        - include:
-            - "bash"
-            - "coreutils-single"
-            - "redhat-release"
-            - "rpm"
-            - "microdnf"
-          exclude:
-            - "coreutils"
-            - "coreutils-common"
-            - "libbrotli"
-            - "libcurl"
-            - "libpsl"
-            - "libssh"
-            - "libssh-config"
-            - "publicsuffix-list-dafsa"
-            - "rpm-plugin-audit"
+      os: [{include: [bash, coreutils-single, redhat-release, rpm, microdnf], exclude: [coreutils, coreutils-common, libbrotli, libcurl, libpsl, libssh, libssh-config, publicsuffix-list-dafsa, rpm-plugin-audit]}]

@@ -2,342 +2,322 @@
 .common:
   azure_rhui_common_pkgset: &azure_rhui_common_pkgset
     include:
-      - "@base"
-      - "@core"
-      - "authconfig"
-      - "bpftool"
-      - "bzip2"
-      - "chrony"
-      - "cloud-init"
-      - "cloud-utils-growpart"
-      - "dracut-config-generic"
-      - "dracut-norescue"
-      - "efibootmgr"
-      - "firewalld"
-      - "gdisk"
-      - "grub2-efi-x64"
-      - "grub2-pc"
-      - "grub2"
-      - "hyperv-daemons"
-      - "kernel"
-      - "lvm2"
-      - "redhat-release-eula"
-      - "redhat-support-tool"
-      - "rh-dotnetcore11"
-      - "rhn-setup"
-      - "rhui-azure-rhel7"
-      - "rsync"
-      - "shim-x64"
-      - "tar"
-      - "tcpdump"
-      - "WALinuxAgent"
-      - "yum-rhn-plugin"
-      - "yum-utils"
+      - '@base'
+      - '@core'
+      - authconfig
+      - bpftool
+      - bzip2
+      - chrony
+      - cloud-init
+      - cloud-utils-growpart
+      - dracut-config-generic
+      - dracut-norescue
+      - efibootmgr
+      - firewalld
+      - gdisk
+      - grub2-efi-x64
+      - grub2-pc
+      - grub2
+      - hyperv-daemons
+      - kernel
+      - lvm2
+      - redhat-release-eula
+      - redhat-support-tool
+      - rh-dotnetcore11
+      - rhn-setup
+      - rhui-azure-rhel7
+      - rsync
+      - shim-x64
+      - tar
+      - tcpdump
+      - WALinuxAgent
+      - yum-rhn-plugin
+      - yum-utils
     exclude:
-      - "dracut-config-rescue"
-      - "mariadb-libs"
-      - "NetworkManager-config-server"
-      - "postfix"
+      - dracut-config-rescue
+      - mariadb-libs
+      - NetworkManager-config-server
+      - postfix
     conditions: &conditions_for_insights_client
-      "add insights client on rhel":
+      add insights client on rhel:
         when:
-          distro_name: "rhel"
+          distro_name: rhel
         append:
-          include:
-            - "insights-client"
-
+          include: [insights-client]
   partitioning:
     ids:
-      - &prep_partition_dosid "41"
-      - &filesystem_linux_dosid "83"
-      - &fat16_bdosid "06"
+      - &prep_partition_dosid 41
+      - &filesystem_linux_dosid 83
+      - &fat16_bdosid 06
     guids:
-      - &bios_boot_partition_guid "21686148-6449-6E6F-744E-656564454649"
-      - &efi_system_partition_guid "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
-      - &filesystem_data_guid "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
-      - &xboot_ldr_partition_guid "BC13C2FF-59E6-4262-A352-B275FD6F7172"
-      - &lvm_partition_guid "E6D6D379-F507-44C2-A23C-238F2A3DF928"
-
+      - &bios_boot_partition_guid 21686148-6449-6E6F-744E-656564454649
+      - &efi_system_partition_guid C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+      - &filesystem_data_guid 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+      - &xboot_ldr_partition_guid BC13C2FF-59E6-4262-A352-B275FD6F7172
+      - &lvm_partition_guid E6D6D379-F507-44C2-A23C-238F2A3DF928
     default_partition_tables: &default_partition_tables
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
         partitions:
           - &bios_boot_partition
-            size: "1 MiB"
+            size: 1 MiB
             bootable: true
             type: *bios_boot_partition_guid
           - &default_partition_table_part_efi
-            size: "200 MiB"
+            size: 200 MiB
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               type: vfat
-              mountpoint: "/boot/efi"
-              label: "ESP"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              mountpoint: /boot/efi
+              label: ESP
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
           - &default_partition_table_part_boot
-            size: "500 MiB"
+            size: 500 MiB
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "xfs"
-              mountpoint: "/boot"
-              label: "boot"
-              fstab_options: "defaults"
+              type: xfs
+              mountpoint: /boot
+              label: boot
+              fstab_options: defaults
               fstab_freq: 0
               fstab_passno: 0
           - &default_partition_table_part_root
-            size: "2 GiB"
+            size: 2 GiB
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload: &default_partition_table_part_root_payload
-              type: "xfs"
-              label: "root"
-              mountpoint: "/"
-              fstab_options: "defaults"
+              type: xfs
+              label: root
+              mountpoint: /
+              fstab_options: defaults
               fstab_freq: 0
               fstab_passno: 0
     ec2_partition_tables: &ec2_partition_tables
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
-        size: "10 GiB"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
+        size: 10 GiB
         partitions:
           - *bios_boot_partition
-          - size: 6_442_450_944  # 6144 * datasizes.MebiByte
+          - size: 6_442_450_944 # 6144 * datasizes.MebiByte
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
               <<: *default_partition_table_part_root_payload
     azure_rhui_partition_tables: &azure_rhui_partition_tables
       x86_64:
-        uuid: "D209C89E-EA5E-4FBD-B161-B461CCE297E0"
-        type: "gpt"
-        size: "64 GiB"
+        uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+        type: gpt
+        size: 64 GiB
         partitions:
           - &azure_rhui_part_boot_efi
-            size: 524_288_000   # 500 * datasizes.MebiByte
+            size: 524_288_000 # 500 * datasizes.MebiByte
             type: *efi_system_partition_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "vfat"
-              mountpoint: "/boot/efi"
-              fstab_options: "defaults,uid=0,gid=0,umask=077,shortname=winnt"
+              type: vfat
+              mountpoint: /boot/efi
+              fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
               fstab_freq: 0
               fstab_passno: 2
           - &azure_rhui_part_boot
-            size: "500 MiB"
+            size: 500 MiB
             type: *filesystem_data_guid
-            payload_type: "filesystem"
+            payload_type: filesystem
             payload:
-              type: "xfs"
-              mountpoint: "/boot"
-              fstab_options: "defaults"
+              type: xfs
+              mountpoint: /boot
+              fstab_options: defaults
               fstab_freq: 0
               fstab_passno: 0
-          - size: "2 MiB"
+          - size: 2 MiB
             bootable: true
             type: *bios_boot_partition_guid
           - &azure_rhui_part_lvm
             type: *lvm_partition_guid
-            payload_type: "lvm"
+            payload_type: lvm
             payload:
-              name: "rootvg"
-              description: "built with lvm2 and osbuild"
+              name: rootvg
+              description: built with lvm2 and osbuild
               logical_volumes:
-                - size: "1 GiB"
-                  name: "homelv"
-                  payload_type: "filesystem"
+                - size: 1 GiB
+                  name: homelv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "home"
-                    mountpoint: "/home"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "rootlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: home
+                    mountpoint: /home
+                    fstab_options: defaults
+                - size: 2 GiB
+                  name: rootlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "root"
-                    mountpoint: "/"
-                    fstab_options: "defaults"
-                - size: "2 GiB"
-                  name: "tmplv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: root
+                    mountpoint: /
+                    fstab_options: defaults
+                - size: 2 GiB
+                  name: tmplv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "tmp"
-                    mountpoint: "/tmp"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "usrlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: tmp
+                    mountpoint: /tmp
+                    fstab_options: defaults
+                - size: 10 GiB
+                  name: usrlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "usr"
-                    mountpoint: "/usr"
-                    fstab_options: "defaults"
-                - size: "10 GiB"
-                  name: "varlv"
-                  payload_type: "filesystem"
+                    type: xfs
+                    label: usr
+                    mountpoint: /usr
+                    fstab_options: defaults
+                - size: 10 GiB
+                  name: varlv
+                  payload_type: filesystem
                   payload:
-                    type: "xfs"
-                    label: "var"
-                    mountpoint: "/var"
-                    fstab_options: "defaults"
-
+                    type: xfs
+                    label: var
+                    mountpoint: /var
+                    fstab_options: defaults
   disk_sizes:
     default_required_partition_sizes: &default_required_dir_sizes
-      "/": "1 GiB"
-      "/usr": "2 GiB"
-
+      /: 1 GiB
+      /usr: 2 GiB
   platforms:
     x86_64_bios_platform: &x86_64_bios_platform
-      arch: "x86_64"
-      bootloader: "grub2"
-      bios_platform: "i386-pc"
+      arch: x86_64
+      bootloader: grub2
+      bios_platform: i386-pc
       packages: &x86_64_bios_platform_packages
         bios:
-          - "dracut-config-generic"
-          - "grub2-pc"
+          - dracut-config-generic
+          - grub2-pc
       build_packages:
-        bios:
-          - "grub2-pc"
+        bios: [grub2-pc]
     x86_64_uefi_vendor_platform: &x86_64_uefi_vendor_platform
       <<: *x86_64_bios_platform
-      uefi_vendor: "{{.DistroVendor}}"
+      uefi_vendor: '{{.DistroVendor}}'
       packages:
         <<: *x86_64_bios_platform_packages
         uefi_vendor:
-          - "efibootmgr"
-          - "grub2-efi-x64"
-          - "shim-x64"
+          - efibootmgr
+          - grub2-efi-x64
+          - shim-x64
   blueprint:
     supported_options: &supported_blueprint_options
-      - "distro"
-      - "packages"
-      - "modules"
-      - "groups"
-      - "customizations.cacerts"
-      - "customizations.directories"
-      - "customizations.disk"
-      - "customizations.files"
-      - "customizations.filesystem"
-      - "customizations.partitioning_mode"
-      - "customizations.fips"
-      - "customizations.firewall"
-      - "customizations.user"
-      - "customizations.sshkey"
-      - "customizations.group"
-      - "customizations.hostname"
-      - "customizations.kernel"
-      - "customizations.locale"
-      - "customizations.repositories"
-      - "customizations.rpm"
-      - "customizations.services"
-      - "customizations.timezone"
-
+      - distro
+      - packages
+      - modules
+      - groups
+      - customizations.cacerts
+      - customizations.directories
+      - customizations.disk
+      - customizations.files
+      - customizations.filesystem
+      - customizations.partitioning_mode
+      - customizations.fips
+      - customizations.firewall
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.kernel
+      - customizations.locale
+      - customizations.repositories
+      - customizations.rpm
+      - customizations.services
+      - customizations.timezone
 image_config:
   default:
-    timezone: "America/New_York"
-    locale: "en_US.UTF-8"
-    gpgkey_files:
-      - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+    timezone: America/New_York
+    locale: en_US.UTF-8
+    gpgkey_files: [/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release]
     sysconfig:
       networking: true
       no_zero_conf: true
       create_default_network_scripts: true
-    default_kernel: "kernel"
+    default_kernel: kernel
     update_default_kernel: true
     kernel_options_bootloader: true
     # RHEL 7 grub does not support BLS
     no_bls: true
     install_weak_deps: true
-
 image_types:
-  "azure-rhui":
-    filename: "disk.vhd.xz"
-    mime_type: "application/xz"
-    image_func: "disk"
-    default_size: "64 GiB"
-    exports: ["xz"]
-    compression: "xz"
+  azure-rhui:
+    filename: disk.vhd.xz
+    mime_type: application/xz
+    image_func: disk
+    default_size: 64 GiB
+    exports: [xz]
+    compression: xz
     bootable: true
     # RHEL 7 qemu vpc subformat does not support force_size
     disk_image_vpc_force_size: false
-    platforms:
-      - <<: *x86_64_uefi_vendor_platform
-        image_format: "vhd"
+    platforms: [{<<: *x86_64_uefi_vendor_platform, image_format: vhd}]
     image_config:
-      timezone: "Etc/UTC"
-      locale: "en_US.UTF-8"
+      timezone: Etc/UTC
+      locale: en_US.UTF-8
       gpgkey_files:
-        - "/etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release"
-        - "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"
+        - /etc/pki/rpm-gpg/RPM-GPG-KEY-microsoft-azure-release
+        - /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
       selinux_force_relabel: true
       authconfig: {}
       update_default_kernel: true
-      default_kernel: "kernel-core"
+      default_kernel: kernel-core
       sysconfig:
         networking: true
         no_zero_conf: true
       enabled_services:
-        - "cloud-config"
-        - "cloud-final"
-        - "cloud-init-local"
-        - "cloud-init"
-        - "firewalld"
-        - "NetworkManager"
-        - "sshd"
-        - "waagent"
+        - cloud-config
+        - cloud-final
+        - cloud-init-local
+        - cloud-init
+        - firewalld
+        - NetworkManager
+        - sshd
+        - waagent
       sshd_config:
         config:
           ClientAliveInterval: 180
       modprobe:
-        - filename: "blacklist-amdgpu.conf"
+        - filename: blacklist-amdgpu.conf
+          commands: [{command: blacklist, modulename: amdgpu}]
+        - filename: blacklist-intel-cstate.conf
+          commands: [{command: blacklist, modulename: intel_cstate}]
+        - filename: blacklist-floppy.conf
+          commands: [{command: blacklist, modulename: floppy}]
+        - filename: blacklist-nouveau.conf
           commands:
             - command: blacklist
-              modulename: "amdgpu"
-        - filename: "blacklist-intel-cstate.conf"
-          commands:
+              modulename: nouveau
             - command: blacklist
-              modulename: "intel_cstate"
-        - filename: "blacklist-floppy.conf"
-          commands:
-            - command: blacklist
-              modulename: "floppy"
-        - filename: "blacklist-nouveau.conf"
-          commands:
-            - command: blacklist
-              modulename: "nouveau"
-            - command: blacklist
-              modulename: "lbm-nouveau"
-        - filename: "blacklist-skylake-edac.conf"
-          commands:
-            - command: blacklist
-              modulename: "skx_edac"
+              modulename: lbm-nouveau
+        - filename: blacklist-skylake-edac.conf
+          commands: [{command: blacklist, modulename: skx_edac}]
       cloud_init:
-        - filename: "06_logging_override.cfg"
+        - filename: 06_logging_override.cfg
           config:
             output:
-              all: "| tee -a /var/log/cloud-init-output.log"
-        - filename: "10-azure-kvp.cfg"
+              all: '| tee -a /var/log/cloud-init-output.log'
+        - filename: 10-azure-kvp.cfg
           config:
             reporting:
               logging:
-                type: "log"
+                type: log
               telemetry:
-                type: "hyperv"
-        - filename: "91-azure_datasource.cfg"
+                type: hyperv
+        - filename: 91-azure_datasource.cfg
           config:
             datasource:
               azure:
                 apply_network_config: false
-            datasource_list:
-              - "Azure"
+            datasource_list: [Azure]
       pwquality:
         config:
           minlen: 6
@@ -348,10 +328,10 @@ image_types:
           ocredit: 0
       waagent_config:
         config:
-          "ResourceDisk.Format": false
-          "ResourceDisk.EnableSwap": false
+          ResourceDisk.Format: false
+          ResourceDisk.EnableSwap: false
       rhsm_config:
-        "no-subscription":
+        no-subscription:
           yum_plugin:
             subscription_manager:
               enabled: false
@@ -360,247 +340,191 @@ image_types:
               auto_registration: true
             rhsm:
               manage_repos: false
-        "with-subscription":
+        with-subscription:
           subman:
             rhsmcertd:
               auto_registration: true
               # do not disable the redhat.repo management if the user
               # explicitly request the system to be subscribed
       grub2_config:
-        terminal_input: ["serial", "console"]
-        terminal_output: ["serial", "console"]
-        serial: "serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1"
+        terminal_input:
+          - serial
+          - console
+        terminal_output:
+          - serial
+          - console
+        serial: serial --speed=115200 --unit=0 --word=8 --parity=no --stop=1
         timeout: 10
       udev_rules:
-        filename: "/etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules"
+        filename: /etc/udev/rules.d/68-azure-sriov-nm-unmanaged.rules
         rules:
           - comment:
-              - "Accelerated Networking on Azure exposes a new SRIOV interface to the VM."
-              - "This interface is transparently bonded to the synthetic interface,"
-              - "so NetworkManager should just ignore any SRIOV interfaces."
+              - Accelerated Networking on Azure exposes a new SRIOV interface to the VM.
+              - This interface is transparently bonded to the synthetic interface,
+              - so NetworkManager should just ignore any SRIOV interfaces.
           - rule:
-              - K: "SUBSYSTEM"
-                O: "=="
-                V: "net"
-              - K: "DRIVERS"
-                O: "=="
-                V: "hv_pci"
-              - K: "ACTION"
-                O: "=="
-                V: "add"
-              - K: "ENV"
-                A: "NM_UNMANAGED"
-                O: "="
-                V: "1"
+              - K: SUBSYSTEM
+                O: ==
+                V: net
+              - K: DRIVERS
+                O: ==
+                V: hv_pci
+              - K: ACTION
+                O: ==
+                V: add
+              - K: ENV
+                A: NM_UNMANAGED
+                O: =
+                V: 1
       yum_config:
         config:
-          http_caching: "packages"
+          http_caching: packages
         plugins:
           langpacks:
-            locales: ["en_US.UTF-8"]
-      default_target: "multi-user.target"
+            locales: [en_US.UTF-8]
+      default_target: multi-user.target
       kernel_options:
-        - "ro"
-        - "crashkernel=auto"
-        - "console=tty1"
-        - "console=ttyS0"
-        - "earlyprintk=ttyS0"
-        - "rootdelay=300"
-        - "scsi_mod.use_blk_mq=y"
+        - ro
+        - crashkernel=auto
+        - console=tty1
+        - console=ttyS0
+        - earlyprintk=ttyS0
+        - rootdelay=300
+        - scsi_mod.use_blk_mq=y
     disk_image_part_tool: sgdisk
     partition_table:
       <<: *azure_rhui_partition_tables
     package_sets:
-      os:
-        - *azure_rhui_common_pkgset
+      os: [*azure_rhui_common_pkgset]
     blueprint:
       supported_options: *supported_blueprint_options
-
   ec2:
-    filename: "image.raw.xz"
-    mime_type: "application/xz"
-    image_func: "disk"
-    exports: ["xz"]
-    compression: "xz"
+    filename: image.raw.xz
+    mime_type: application/xz
+    image_func: disk
+    exports: [xz]
+    compression: xz
     bootable: true
-    default_size: "10 GiB"
+    default_size: 10 GiB
     required_partition_sizes: *default_required_dir_sizes
-    platforms:
-      - <<: *x86_64_bios_platform
-        image_format: "raw"
+    platforms: [{<<: *x86_64_bios_platform, image_format: raw}]
     image_config:
       files:
         # systemd-firstboot on el7 does not support --keymap option
-        - path: "/etc/vconsole.conf"
+        - path: /etc/vconsole.conf
           data: |
             FONT=latarcyrheb-sun16
             KEYMAP=us
         # This is needed to disable predictable network interface names.
         # The org.osbuild.udev.rules stage can't create empty files.
-        - path: "/etc/udev/rules.d/80-net-name-slot.rules"
-          data: ""
+        - path: /etc/udev/rules.d/80-net-name-slot.rules
+          data:
         # While cloud-init does this automatically on first boot for the specified user
         # this was in the original KS.
-        - path: "/etc/sudoers.d/ec2-user"
+        - path: /etc/sudoers.d/ec2-user
           mode: 0440
-          data: "ec2-user\tALL=(ALL)\tNOPASSWD: ALL\n"
+          data: |
+            ec2-user	ALL=(ALL)	NOPASSWD: ALL
         # The image built from the original KS has this file with this content.
-        - path: "/etc/hostname"
-          data: "localhost.localdomain\n"
-      timezone: "UTC"
+        - path: /etc/hostname
+          data: |
+            localhost.localdomain
+      timezone: UTC
       time_synchronization:
         servers:
-          - hostname: "0.rhel.pool.ntp.org"
+          - hostname: 0.rhel.pool.ntp.org
             iburst: true
-          - hostname: "1.rhel.pool.ntp.org"
+          - hostname: 1.rhel.pool.ntp.org
             iburst: true
-          - hostname: "2.rhel.pool.ntp.org"
+          - hostname: 2.rhel.pool.ntp.org
             iburst: true
-          - hostname: "3.rhel.pool.ntp.org"
+          - hostname: 3.rhel.pool.ntp.org
             iburst: true
-          - hostname: "169.254.169.123"
+          - hostname: 169.254.169.123
             prefer: true
             iburst: true
             minpoll: 4
             maxpoll: 4
         # empty string will remove any occurrences of the option from the configuration
-        leapsectz: ""
+        leapsectz:
       enabled_services:
-        - "sshd"
-        - "rsyslog"
-      default_target: "multi-user.target"
+        - sshd
+        - rsyslog
+      default_target: multi-user.target
       update_default_kernel: true
-      default_kernel: "kernel"
+      default_kernel: kernel
       sysconfig:
         networking: true
         no_zero_conf: true
         create_default_network_scripts: true
-      systemd_logind:
-        - filename: "logind.conf"
-          config:
-            login:
-              nautovts: 0
+      systemd_logind: [{filename: logind.conf, config: {login: {nautovts: 0}}}]
       cloud_init:
-        - filename: "00-rhel-default-user.cfg"
+        - filename: 00-rhel-default-user.cfg
           config:
             system_info:
               default_user:
-                name: "ec2-user"
-        - filename: "99-datasource.cfg"
+                name: ec2-user
+        - filename: 99-datasource.cfg
           config:
             datasource_list:
-              - "Ec2"
-              - "None"
-      modprobe:
-        - filename: "blacklist-nouveau.conf"
-          commands:
-            - command: blacklist
-              modulename: "nouveau"
-      dracut_conf:
-        - filename: "sgdisk.conf"
-          config:
-            install: ["sgdisk"]
+              - Ec2
+              - None
+      modprobe: [{filename: blacklist-nouveau.conf, commands: [{command: blacklist, modulename: nouveau}]}]
+      dracut_conf: [{filename: sgdisk.conf, config: {install: [sgdisk]}}]
       sshd_config:
         config:
           PasswordAuthentication: false
       selinux_force_relabel: true
       kernel_options:
-        - "ro"
-        - "console=tty0"
-        - "console=ttyS0,115200n8"
-        - "net.ifnames=0"
-        - "rd.blacklist=nouveau"
-        - "nvme_core.io_timeout=4294967295"
-        - "crashkernel=auto"
-        - "LANG=en_US.UTF-8"
-    disk_image_part_tool: "sgdisk"
+        - ro
+        - console=tty0
+        - console=ttyS0,115200n8
+        - net.ifnames=0
+        - rd.blacklist=nouveau
+        - nvme_core.io_timeout=4294967295
+        - crashkernel=auto
+        - LANG=en_US.UTF-8
+    disk_image_part_tool: sgdisk
     partition_table:
       <<: *ec2_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "authconfig"
-            - "kernel"
-            - "yum-utils"
-            - "cloud-init"
-            - "dracut-config-generic"
-            - "dracut-norescue"
-            - "grub2"
-            - "tar"
-            - "rsync"
-            - "rh-amazon-rhui-client"
-            - "redhat-cloud-client-configuration"
-            - "chrony"
-            - "cloud-utils-growpart"
-            - "gdisk"
-          exclude:
-            - "aic94xx-firmware"
-            - "alsa-firmware"
-            - "alsa-lib"
-            - "alsa-tools-firmware"
-            - "ivtv-firmware"
-            - "iwl1000-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl3945-firmware"
-            - "iwl4965-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6000g2b-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "libertas-sd8686-firmware"
-            - "libertas-sd8787-firmware"
-            - "libertas-usb8388-firmware"
-            - "biosdevname"
-            - "plymouth"
+      os: [{include: ['@core', authconfig, kernel, yum-utils, cloud-init, dracut-config-generic, dracut-norescue, grub2, tar, rsync, rh-amazon-rhui-client, redhat-cloud-client-configuration, chrony, cloud-utils-growpart, gdisk], exclude: [aic94xx-firmware, alsa-firmware, alsa-lib, alsa-tools-firmware, ivtv-firmware, iwl1000-firmware, iwl100-firmware, iwl105-firmware, iwl135-firmware, iwl2000-firmware, iwl2030-firmware, iwl3160-firmware, iwl3945-firmware, iwl4965-firmware, iwl5000-firmware, iwl5150-firmware, iwl6000-firmware, iwl6000g2a-firmware, iwl6000g2b-firmware, iwl6050-firmware, iwl7260-firmware, libertas-sd8686-firmware, libertas-sd8787-firmware, libertas-usb8388-firmware, biosdevname, plymouth,
             # NM is excluded by the original KS, but it is in the image built from it.
             # - "NetworkManager"
-            - "iprutils"
+            iprutils,
             # linux-firmware is uninstalled by the original KS, but it is a direct dependency of kernel,
             # so we can't exclude it.
             # - "linux-firmware"
-            - "firewalld"
+            firewalld]}]
     blueprint:
       supported_options: *supported_blueprint_options
-
   qcow2:
-    filename: "disk.qcow2"
-    mime_type: "application/x-qemu-disk"
+    filename: disk.qcow2
+    mime_type: application/x-qemu-disk
     bootable: true
-    default_size: "10 GiB"
-    image_func: "disk"
-    exports: ["qcow2"]
+    default_size: 10 GiB
+    image_func: disk
+    exports: [qcow2]
     required_partition_sizes: *default_required_dir_sizes
     disk_image_part_tool: sgdisk
-    platforms:
-      - <<: *x86_64_uefi_vendor_platform
-        image_format: "qcow2"
-        qcow2_compat: "0.10"
+    platforms: [{<<: *x86_64_uefi_vendor_platform, image_format: qcow2, qcow2_compat: 0.10}]
     image_config:
-      default_target: "multi-user.target"
+      default_target: multi-user.target
       selinux_force_relabel: true
       update_default_kernel: true
-      default_kernel: "kernel"
+      default_kernel: kernel
       kernel_options:
-        - "console=tty0"
-        - "console=ttyS0,115200n8"
-        - "no_timer_check"
-        - "net.ifnames=0"
-        - "crashkernel=auto"
+        - console=tty0
+        - console=ttyS0,115200n8
+        - no_timer_check
+        - net.ifnames=0
+        - crashkernel=auto
       sysconfig:
         networking: true
         no_zero_conf: true
         create_default_network_scripts: true
       rhsm_config:
-        "no-subscription":
+        no-subscription:
           yum_plugin:
             product_id:
               enabled: false
@@ -609,54 +533,8 @@ image_types:
     partition_table:
       <<: *default_partition_tables
     package_sets:
-      os:
-        - include:
-            - "@core"
-            - "kernel"
-            - "nfs-utils"
-            - "yum-utils"
-            - "cloud-init"
+      os: [{include: ['@core', kernel, nfs-utils, yum-utils, cloud-init,
             # - "ovirt-guest-agent-common"
-            - "rhn-setup"
-            - "yum-rhn-plugin"
-            - "cloud-utils-growpart"
-            - "dracut-config-generic"
-            - "tar"
-            - "tcpdump"
-            - "rsync"
-          exclude:
-            - "biosdevname"
-            - "dracut-config-rescue"
-            - "iprutils"
-            - "NetworkManager-team"
-            - "NetworkManager-tui"
-            - "NetworkManager"
-            - "plymouth"
-            - "aic94xx-firmware"
-            - "alsa-firmware"
-            - "alsa-lib"
-            - "alsa-tools-firmware"
-            - "ivtv-firmware"
-            - "iwl1000-firmware"
-            - "iwl100-firmware"
-            - "iwl105-firmware"
-            - "iwl135-firmware"
-            - "iwl2000-firmware"
-            - "iwl2030-firmware"
-            - "iwl3160-firmware"
-            - "iwl3945-firmware"
-            - "iwl4965-firmware"
-            - "iwl5000-firmware"
-            - "iwl5150-firmware"
-            - "iwl6000-firmware"
-            - "iwl6000g2a-firmware"
-            - "iwl6000g2b-firmware"
-            - "iwl6050-firmware"
-            - "iwl7260-firmware"
-            - "libertas-sd8686-firmware"
-            - "libertas-sd8787-firmware"
-            - "libertas-usb8388-firmware"
-          conditions:
-            <<: *conditions_for_insights_client
+            rhn-setup, yum-rhn-plugin, cloud-utils-growpart, dracut-config-generic, tar, tcpdump, rsync], exclude: [biosdevname, dracut-config-rescue, iprutils, NetworkManager-team, NetworkManager-tui, NetworkManager, plymouth, aic94xx-firmware, alsa-firmware, alsa-lib, alsa-tools-firmware, ivtv-firmware, iwl1000-firmware, iwl100-firmware, iwl105-firmware, iwl135-firmware, iwl2000-firmware, iwl2030-firmware, iwl3160-firmware, iwl3945-firmware, iwl4965-firmware, iwl5000-firmware, iwl5150-firmware, iwl6000-firmware, iwl6000g2a-firmware, iwl6000g2b-firmware, iwl6050-firmware, iwl7260-firmware, libertas-sd8686-firmware, libertas-sd8787-firmware, libertas-usb8388-firmware], conditions: {<<: *conditions_for_insights_client}}]
     blueprint:
       supported_options: *supported_blueprint_options
