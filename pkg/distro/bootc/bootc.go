@@ -522,9 +522,7 @@ func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	platformi := PlatformFor(t.arch.Name(), sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	// The ref is not needed and will be removed from the ctor later
-	// in time
-	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(), containerSource, "")
+	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(), containerSource)
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
@@ -668,9 +666,7 @@ func (t *BootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	platformi := PlatformFor(archStr, sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	// The ref is not needed and will be removed from the ctor later
-	// in time
-	img := image.NewAnacondaContainerInstallerLegacy(platformi, t.Filename(), containerSource, "")
+	img := image.NewAnacondaContainerInstallerLegacy(platformi, t.Filename(), containerSource)
 	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
 		return nil, nil, err
 	}
