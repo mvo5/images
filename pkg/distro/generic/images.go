@@ -969,7 +969,6 @@ func networkInstallerImage(t *imageType,
 
 	var err error
 	img.Kickstart, err = kickstart.New(customizations)
-
 	if err != nil {
 		return nil, err
 	}
