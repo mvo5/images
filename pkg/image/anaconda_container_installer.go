@@ -17,20 +17,23 @@ import (
 	"github.com/osbuild/images/pkg/runner"
 )
 
+// XXX: use this everywhere
+type AnacondaInstallerBase struct {
+	InstallerCustomizations manifest.InstallerCustomizations
+	RootfsCompression       string
+
+	Kickstart *kickstart.Options
+}
+
 type AnacondaContainerInstaller struct {
 	Base
-
-	InstallerCustomizations manifest.InstallerCustomizations
-
-	RootfsCompression string
+	AnacondaInstallerBase
 
 	Ref string
 
 	ContainerSource           container.SourceSpec
 	InstallerPayload          container.SourceSpec
 	ContainerRemoveSignatures bool
-
-	Kickstart *kickstart.Options
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
@@ -72,7 +75,7 @@ func (img *AnacondaContainerInstaller) InstantiateManifestFromContainer(m *manif
 		img.platform,
 		nil, // repos
 		"kernel",
-		img.InstallerCustomizations,
+		img.AnacondaInstallerBase.InstallerCustomizations,
 	)
 	// with bootc we need different kernel/initramfs paths
 	anacondaPipeline.BootcLivefsContainer = &img.ContainerSource

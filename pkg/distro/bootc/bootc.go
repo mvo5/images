@@ -439,6 +439,61 @@ func (t *BootcImageType) manifestForDisk(bp *blueprint.Blueprint, options distro
 	return &mf, nil, nil
 }
 
+func (t *BootcImageType) initAnacondaInstallerBaseFromSourceInfo(img *image.AnacondaInstallerBase, sourceInfo *osinfo.Info, customizations *blueprint.Customizations) error {
+	img.RootfsCompression = "zstd"
+
+	if t.arch.Name() == arch.ARCH_X86_64.String() {
+		img.InstallerCustomizations.ISOBoot = manifest.Grub2ISOBoot
+	}
+
+	img.InstallerCustomizations.Product = sourceInfo.OSRelease.Name
+	img.InstallerCustomizations.OSVersion = sourceInfo.OSRelease.VersionID
+	img.InstallerCustomizations.ISOLabel = LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
+
+	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
+	var err error
+	img.Kickstart, err = kickstart.New(customizations)
+	if err != nil {
+		return err
+	}
+	img.Kickstart.Path = osbuild.KickstartPathOSBuild
+	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
+		img.Kickstart.KernelOptionsAppend = append(img.Kickstart.KernelOptionsAppend, kopts.Append)
+	}
+	img.Kickstart.NetworkOnBoot = true
+
+	instCust, err := customizations.GetInstaller()
+	if err != nil {
+		return err
+	}
+	if instCust != nil && instCust.Modules != nil {
+		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
+		img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
+	}
+	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules,
+		anaconda.ModuleUsers,
+		anaconda.ModuleServices,
+		anaconda.ModuleSecurity,
+		// XXX: get from the imagedefs
+		anaconda.ModuleNetwork,
+		anaconda.ModulePayloads,
+		anaconda.ModuleRuntime,
+		anaconda.ModuleStorage,
+	)
+	if bpKernel := customizations.GetKernel(); bpKernel.Append != "" {
+		img.InstallerCustomizations.KernelOptionsAppend = append(img.InstallerCustomizations.KernelOptionsAppend, bpKernel.Append)
+	}
+
+	img.Kickstart.OSTree = &kickstart.OSTree{
+		OSName: "default",
+	}
+
+	// see https://github.com/osbuild/bootc-image-builder/issues/733
+	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
+
+	return nil
+}
+
 func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.ImageOptions, repos []rpmmd.RepoConfig, rng *rand.Rand) (*manifest.Manifest, []string, error) {
 	if t.arch.distro.imgref == "" {
 		return nil, nil, fmt.Errorf("internal error in bootc iso: no base image defined")
@@ -467,18 +522,17 @@ func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 	platformi := PlatformFor(t.arch.Name(), sourceInfo.UEFIVendor)
 	platformi.ImageFormat = platform.FORMAT_ISO
 
-	// XXX: tons of copied code from
-	// bootc-image-builder:‎bib/cmd/bootc-image-builder/legacy_iso.go
-	// but sharing is hard because AnacondaContainerInstaller and
-	// AnacondaContainerInstallerLegacy are different types so
-	// a shared helper to set the fields won't work (unless
-	// reflection urgh).
-
 	// The ref is not needed and will be removed from the ctor later
 	// in time
 	img := image.NewAnacondaContainerInstaller(platformi, t.Filename(), containerSource, "")
+	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
+		return nil, nil, err
+	}
 	img.ContainerRemoveSignatures = true
-	img.RootfsCompression = "zstd"
+	// we auto-detect the lorax config from the source info
+	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(sourceInfo.OSRelease)
+	img.InstallerCustomizations.LoraxTemplatePackage = LoraxTemplatePackage(sourceInfo.OSRelease)
+
 	// kernelVer is used by dracut
 	img.KernelVer = sourceInfo.KernelInfo.Version
 	img.KernelPath = fmt.Sprintf("lib/modules/%s/vmlinuz", sourceInfo.KernelInfo.Version)
@@ -490,57 +544,6 @@ func (t *BootcImageType) manifestForISO(bp *blueprint.Blueprint, options distro.
 		Local:  true,
 	}
 	img.InstallerPayload = payloadSource
-
-	if t.arch.Name() == arch.ARCH_X86_64.String() {
-		img.InstallerCustomizations.ISOBoot = manifest.Grub2ISOBoot
-	}
-
-	img.InstallerCustomizations.Product = sourceInfo.OSRelease.Name
-	img.InstallerCustomizations.OSVersion = sourceInfo.OSRelease.VersionID
-	img.InstallerCustomizations.ISOLabel = LabelForISO(&sourceInfo.OSRelease, t.arch.Name())
-
-	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
-	var err error
-	img.Kickstart, err = kickstart.New(customizations)
-	if err != nil {
-		return nil, nil, err
-	}
-	img.Kickstart.Path = osbuild.KickstartPathOSBuild
-	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
-		img.Kickstart.KernelOptionsAppend = append(img.Kickstart.KernelOptionsAppend, kopts.Append)
-	}
-	img.Kickstart.NetworkOnBoot = true
-
-	instCust, err := customizations.GetInstaller()
-	if err != nil {
-		return nil, nil, err
-	}
-	if instCust != nil && instCust.Modules != nil {
-		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
-		img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
-	}
-	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules,
-		anaconda.ModuleUsers,
-		anaconda.ModuleServices,
-		anaconda.ModuleSecurity,
-		// XXX: get from the imagedefs
-		anaconda.ModuleNetwork,
-		anaconda.ModulePayloads,
-		anaconda.ModuleRuntime,
-		anaconda.ModuleStorage,
-	)
-	if bpKernel := customizations.GetKernel(); bpKernel.Append != "" {
-		img.InstallerCustomizations.KernelOptionsAppend = append(img.InstallerCustomizations.KernelOptionsAppend, bpKernel.Append)
-	}
-
-	img.Kickstart.OSTree = &kickstart.OSTree{
-		OSName: "default",
-	}
-	img.InstallerCustomizations.LoraxTemplates = LoraxTemplates(sourceInfo.OSRelease)
-	img.InstallerCustomizations.LoraxTemplatePackage = LoraxTemplatePackage(sourceInfo.OSRelease)
-
-	// see https://github.com/osbuild/bootc-image-builder/issues/733
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
 
 	installRootfsType, err := disk.NewFSType(t.arch.distro.defaultFs)
 	if err != nil {
@@ -657,7 +660,6 @@ func (t *BootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	if installerConfig == nil {
 		return nil, nil, fmt.Errorf("empty installer config for %s", installerImgTypeName)
 	}
-
 	var customizations *blueprint.Customizations
 	if bp != nil {
 		customizations = bp.Customizations
@@ -669,58 +671,16 @@ func (t *BootcImageType) manifestForLegacyISO(bp *blueprint.Blueprint, options d
 	// The ref is not needed and will be removed from the ctor later
 	// in time
 	img := image.NewAnacondaContainerInstallerLegacy(platformi, t.Filename(), containerSource, "")
+	if err := t.initAnacondaInstallerBaseFromSourceInfo(&img.AnacondaInstallerBase, sourceInfo, customizations); err != nil {
+		return nil, nil, err
+	}
 	img.ContainerRemoveSignatures = true
-	img.RootfsCompression = "zstd"
-
-	if archStr == arch.ARCH_X86_64.String() {
-		img.InstallerCustomizations.ISOBoot = manifest.Grub2ISOBoot
-	}
-
-	img.InstallerCustomizations.Product = sourceInfo.OSRelease.Name
-	img.InstallerCustomizations.OSVersion = sourceInfo.OSRelease.VersionID
-	img.InstallerCustomizations.ISOLabel = LabelForISO(&sourceInfo.OSRelease, archStr)
 	img.ExtraBasePackages = installerPkgSet
-
-	img.InstallerCustomizations.FIPS = customizations.GetFIPS()
-	img.Kickstart, err = kickstart.New(customizations)
-	if err != nil {
-		return nil, nil, err
-	}
-	img.Kickstart.Path = osbuild.KickstartPathOSBuild
-	if kopts := customizations.GetKernel(); kopts != nil && kopts.Append != "" {
-		img.Kickstart.KernelOptionsAppend = append(img.Kickstart.KernelOptionsAppend, kopts.Append)
-	}
-	img.Kickstart.NetworkOnBoot = true
-
-	instCust, err := customizations.GetInstaller()
-	if err != nil {
-		return nil, nil, err
-	}
-	if instCust != nil && instCust.Modules != nil {
-		img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules, instCust.Modules.Enable...)
-		img.InstallerCustomizations.DisabledAnacondaModules = append(img.InstallerCustomizations.DisabledAnacondaModules, instCust.Modules.Disable...)
-	}
-	img.InstallerCustomizations.EnabledAnacondaModules = append(img.InstallerCustomizations.EnabledAnacondaModules,
-		anaconda.ModuleUsers,
-		anaconda.ModuleServices,
-		anaconda.ModuleSecurity,
-		// XXX: get from the imagedefs
-		anaconda.ModuleNetwork,
-		anaconda.ModulePayloads,
-		anaconda.ModuleRuntime,
-		anaconda.ModuleStorage,
-	)
-
-	img.Kickstart.OSTree = &kickstart.OSTree{
-		OSName: "default",
-	}
+	// our installer customizations come from the distrodefs (unlike in manifestForISO)
 	img.InstallerCustomizations.LoraxTemplates = installerConfig.LoraxTemplates
 	if installerConfig.LoraxTemplatePackage != nil {
 		img.InstallerCustomizations.LoraxTemplatePackage = *installerConfig.LoraxTemplatePackage
 	}
-
-	// see https://github.com/osbuild/bootc-image-builder/issues/733
-	img.InstallerCustomizations.ISORootfsType = manifest.SquashfsRootfs
 
 	installRootfsType, err := disk.NewFSType(t.arch.distro.defaultFs)
 	if err != nil {
