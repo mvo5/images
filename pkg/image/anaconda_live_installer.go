@@ -16,12 +16,11 @@ import (
 
 type AnacondaLiveInstaller struct {
 	Base
-	InstallerCustomizations manifest.InstallerCustomizations
-	Environment             environment.Environment
+	AnacondaInstallerBase
+
+	Environment environment.Environment
 
 	ExtraBasePackages rpmmd.PackageSet
-
-	RootfsCompression string
 
 	// Locale for the installer. This should be set to the same locale as the
 	// ISO OS payload, if known.
@@ -90,14 +89,10 @@ func (img *AnacondaLiveInstaller) InstantiateManifest(m *manifest.Manifest,
 	bootTreePipeline.KernelOpts = kernelOpts
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, livePipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-
+	// TODO: the partition table is required - make it a ctor arg or set a default one in the pipeline
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 	isoTreePipeline.KernelOpts = kernelOpts
 	isoTreePipeline.ISOBoot = img.InstallerCustomizations.ISOBoot
-
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
 
 	isoPipeline := manifest.NewISO(buildPipeline, isoTreePipeline, img.InstallerCustomizations.ISOLabel)
 	isoPipeline.SetFilename(img.filename)

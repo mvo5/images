@@ -20,15 +20,11 @@ import (
 
 type AnacondaOSTreeInstaller struct {
 	Base
-	InstallerCustomizations manifest.InstallerCustomizations
-	ExtraBasePackages       rpmmd.PackageSet
-
-	Kickstart *kickstart.Options
+	AnacondaInstallerBase
+	ExtraBasePackages rpmmd.PackageSet
 
 	// Subscription options to include
 	Subscription *subscription.ImageOptions
-
-	RootfsCompression string
 
 	Commit ostree.SourceSpec
 
@@ -114,11 +110,7 @@ func (img *AnacondaOSTreeInstaller) InstantiateManifest(m *manifest.Manifest,
 	}
 
 	isoTreePipeline := manifest.NewAnacondaInstallerISOTree(buildPipeline, anacondaPipeline, rootfsImagePipeline, bootTreePipeline)
-	isoTreePipeline.PartitionTable = efiBootPartitionTable(rng)
-	isoTreePipeline.Release = img.InstallerCustomizations.Release
-	isoTreePipeline.Kickstart = img.Kickstart
-	isoTreePipeline.RootfsCompression = img.RootfsCompression
-	isoTreePipeline.RootfsType = img.InstallerCustomizations.ISORootfsType
+	initIsoTreePipeline(isoTreePipeline, &img.AnacondaInstallerBase, rng)
 
 	isoTreePipeline.PayloadPath = "/ostree/repo"
 
